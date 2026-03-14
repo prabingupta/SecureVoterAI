@@ -1,0 +1,149 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureVoter AI | {% block title %}{% endblock %}</title>
+
+    <meta name="description" content="SecureVoter AI - AI-Secured Online Election Platform for Islington College, Kathmandu.">
+    <meta name="author" content="Islington College">
+
+    <!--
+    ══ FONTS ════════════════════════════════════════════════════════
+       Inter          — Primary UI font for headings and body text.
+                        Variable font with optical sizing (opsz 14–32).
+                        Weights loaded: 400, 500, 600, 700, 800 (+ italic 400).
+                        Used by: Harvard, MIT, Stanford, GOV.UK, Linear, Notion.
+
+       JetBrains Mono — Monospace for code, badges, IDs, tokens, and
+                        all technical/tabular data contexts.
+                        Weights loaded: 400, 500.
+    ═════════════════════════════════════════════════════════════════
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- AOS animations -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
+
+    <!-- Base CSS -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    <!-- Preconnect CDN -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+<!-- ══ NAVBAR ════════════════════════════════════════════════════ -->
+<header class="navbar" id="navbar">
+    <div class="container navbar-container">
+
+        <div class="brand">
+            <a href="{% url 'core:index' %}" class="brand-link">
+                
+                <span class="brand-name">
+                    <span class="brand-name-secure">Secure</span><span class="brand-name-voter">Voter</span> <span class="brand-name-ai">AI</span>
+                </span>
+            </a>
+        </div>
+
+        <nav class="navigation" aria-label="Main navigation">
+            <ul class="nav-menu">
+                <li><a href="{% url 'core:index' %}">
+                    <i class="fa-solid fa-house"></i> Home
+                </a></li>
+                <li><a href="{% url 'core:login' %}">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login
+                </a></li>
+                <li><a href="{% url 'core:register' %}" class="btn-register">
+                    <i class="fa-solid fa-user-plus"></i> Register
+                </a></li>
+            </ul>
+        </nav>
+
+    </div>
+</header>
+
+<!-- ══ MAIN CONTENT ══════════════════════════════════════════════ -->
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<!-- ══ FOOTER ════════════════════════════════════════════════════ -->
+<footer class="footer">
+    <div class="container footer-container">
+        <div class="footer-left">
+            <h3>SecureVoter AI</h3>
+            <p>Official AI-Secured Election Platform of Islington College, Kamal Pokhari, Kathmandu.</p>
+        </div>
+        <div class="footer-right">
+            <p><i class="fa-solid fa-location-dot"></i> Kamal Pokhari, Kathmandu, Nepal</p>
+            <p><i class="fa-solid fa-envelope"></i> support@islingtoncollege.edu.np</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2026 Islington College. All rights reserved.</p>
+    </div>
+</footer>
+
+<!-- ══ SCRIPTS — ORDER MATTERS ═══════════════════════════════════
+     1. AOS            — animation library
+     2. MediaPipe      — face_mesh.js MUST load before login.js / register.js
+     3. Camera Utils   — MediaPipe companion
+     4. index.js       — shared site utilities (slider, counters, FAQ, etc.)
+     5. extra_js block — page-specific scripts (login.js OR register.js ONLY)
+                         DO NOT add login.js or register.js here directly.
+════════════════════════════════════════════════════════════════ -->
+
+<!-- 1. AOS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!-- 2. MediaPipe FaceMesh — real browser-side liveness detection -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
+        crossorigin="anonymous"></script>
+
+<!-- 3. MediaPipe Camera Utils -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+        crossorigin="anonymous"></script>
+
+<!-- 4. Shared site JS (slider, counters, FAQ accordion, turnout bars, etc.) -->
+<script src="{% static 'js/index.js' %}"></script>
+
+<!-- 5. Page-specific JS injected by child templates ONLY.
+        login.js    → added in login.html    via the extra_js block
+        register.js → added in register.html via the extra_js block
+        Never add them here — they must not load on every page. -->
+{% block extra_js %}{% endblock %}
+
+<!-- ══ INLINE INIT ════════════════════════════════════════════════ -->
+<script>
+    // AOS scroll animations
+    AOS.init({
+        duration: 800,
+        once:     true,
+        offset:   60,
+    });
+
+    // Navbar scroll shadow
+    window.addEventListener('scroll', function () {
+        document.getElementById('navbar')
+            ?.classList.toggle('navbar-scrolled', window.scrollY > 40);
+    }, { passive: true });
+</script>
+
+</body>
+</html>

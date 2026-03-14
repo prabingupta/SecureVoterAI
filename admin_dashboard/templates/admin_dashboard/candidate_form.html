@@ -1,0 +1,159 @@
+{% extends "admin_dashboard/base.html" %}
+{% load static %}
+
+{% block title %}{% if candidate %}Edit{% else %}Add{% endif %} Candidate | Admin — SecureVoter AI{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'admin_dashboard/css/elections.css' %}" />
+{% endblock %}
+
+
+{% block content %}
+<div class="election-form-page">
+
+  <div class="page-header">
+    <p class="page-eyebrow">
+      <a href="{% url 'admin_dashboard:manage_candidates' %}" style="color:var(--clr-gold);text-decoration:none;">
+        <i class="fas fa-arrow-left"></i> Candidates
+      </a>
+      &nbsp;/&nbsp; {% if candidate %}Edit{% else %}Add New{% endif %}
+    </p>
+    <h1>{% if candidate %}Edit Candidate{% else %}Add Candidate{% endif %}</h1>
+    <p>{% if candidate %}Update the candidate details below.{% else %}Register a new candidate for an election.{% endif %}</p>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}" style="margin-bottom:1rem;">
+        <i class="fas fa-circle-info"></i> {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    action="{% if candidate %}{% url 'admin_dashboard:edit_candidate' candidate.id %}{% else %}{% url 'admin_dashboard:add_candidate' %}{% endif %}"
+    novalidate
+  >
+    {% csrf_token %}
+
+    <div class="form-card">
+
+      <div class="form-card-header">
+        <div class="form-card-icon"><i class="fas fa-user-plus"></i></div>
+        <div>
+          <h3>Candidate Details</h3>
+          <p>Fill in the form to {% if candidate %}update{% else %}register a new{% endif %} candidate.</p>
+        </div>
+      </div>
+
+      <div class="form-card-body">
+
+        <!-- Candidate name -->
+        <div class="form-group">
+          <label class="form-label" for="id_name">
+            Full Name <span style="color:var(--clr-red)">*</span>
+          </label>
+          <input
+            type="text" name="name" id="id_name"
+            class="form-control"
+            placeholder="e.g. Prabin Kumar Gupta"
+            value="{{ form_data.name|default:'' }}"
+            required
+          />
+        </div>
+
+        <!-- Election -->
+        <div class="form-group">
+          <label class="form-label" for="id_election">
+            Election <span style="color:var(--clr-red)">*</span>
+          </label>
+          <select name="election" id="id_election" class="form-control" required>
+            <option value="">— Select an election —</option>
+            {% for election in elections %}
+              <option value="{{ election.id }}"
+                {% if form_data.election_id == election.id|stringformat:"s" %}selected{% endif %}>
+                {{ election.title }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label class="form-label" for="id_description">Manifesto / Description</label>
+          <textarea
+            name="description" id="id_description"
+            class="form-control"
+            placeholder="Brief manifesto or background of the candidate…"
+          >{{ form_data.description|default:'' }}</textarea>
+          <p class="form-hint">This will be shown to voters on the ballot page.</p>
+        </div>
+
+        <!-- Photo -->
+        <div class="form-group">
+          <label class="form-label" for="id_photo">Candidate Photo</label>
+
+          {% if candidate.photo %}
+            <div style="margin-bottom:.75rem; display:flex; align-items:center; gap:1rem;">
+              <img src="{{ candidate.photo.url }}" alt="{{ candidate.name }}"
+                   style="width:72px;height:72px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--clr-border);" />
+              <div>
+                <p style="font-size:.8rem; color:var(--clr-muted); margin-bottom:.25rem;">Current photo</p>
+                <label style="display:flex;align-items:center;gap:.4rem;font-size:.8rem;cursor:pointer;color:var(--clr-red);">
+                  <input type="checkbox" name="photo-clear" style="accent-color:var(--clr-red);" />
+                  Remove photo
+                </label>
+              </div>
+            </div>
+          {% endif %}
+
+          <input
+            type="file" name="photo" id="id_photo"
+            class="form-control"
+            accept="image/jpeg,image/png,image/webp"
+            style="padding:.55rem;"
+          />
+          <p class="form-hint">JPEG, PNG or WebP. Max 2MB. Recommended: square crop.</p>
+        </div>
+
+        <!-- Photo preview -->
+        <div id="photoPreviewWrap" style="display:none; margin-bottom:1rem;">
+          <p class="form-label" style="margin-bottom:.5rem;">Preview</p>
+          <img id="photoPreview" src="" alt="Preview"
+               style="width:100px;height:100px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--clr-border-gold);" />
+        </div>
+
+      </div>
+
+      <div class="form-card-footer">
+        <a href="{% url 'admin_dashboard:manage_candidates' %}" class="btn btn-ghost">
+          <i class="fas fa-xmark"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-gold">
+          <i class="fas fa-{% if candidate %}floppy-disk{% else %}user-plus{% endif %}"></i>
+          {% if candidate %}Save Changes{% else %}Add Candidate{% endif %}
+        </button>
+      </div>
+
+    </div>
+  </form>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  document.getElementById('id_photo')?.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const wrap = document.getElementById('photoPreviewWrap');
+    const img  = document.getElementById('photoPreview');
+    const reader = new FileReader();
+    reader.onload = (e) => { img.src = e.target.result; wrap.style.display = 'block'; };
+    reader.readAsDataURL(file);
+  });
+</script>
+{% endblock %}

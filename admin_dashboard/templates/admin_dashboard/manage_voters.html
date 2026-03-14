@@ -1,0 +1,249 @@
+{% extends "admin_dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Manage Voters | Admin — SecureVoter AI{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'admin_dashboard/css/voters.css' %}" />
+{% endblock %}
+
+
+{% block content %}
+<div class="voters-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <p class="page-eyebrow"><i class="fas fa-id-card"></i> Voters</p>
+    <h1>Manage Voters</h1>
+    <p>Review AI face-verified registrations and approve or reject voter access.</p>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="voter-stats-row">
+    <div class="voter-stat">
+      <div class="voter-stat-icon gold"><i class="fas fa-users"></i></div>
+      <div>
+        <div class="voter-stat-val">{{ voters|length }}</div>
+        <div class="voter-stat-lbl">Total Registered</div>
+      </div>
+    </div>
+    <div class="voter-stat">
+      <div class="voter-stat-icon green"><i class="fas fa-user-check"></i></div>
+      <div>
+        <div class="voter-stat-val" id="approvedCount">0</div>
+        <div class="voter-stat-lbl">Approved</div>
+      </div>
+    </div>
+    <div class="voter-stat">
+      <div class="voter-stat-icon red"><i class="fas fa-clock"></i></div>
+      <div>
+        <div class="voter-stat-val" id="pendingCount">0</div>
+        <div class="voter-stat-lbl">Pending</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="page-actions">
+    <div class="page-actions-left">
+      <div class="search-bar">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="text" id="voterSearch" placeholder="Search voters…" aria-label="Search voters" />
+      </div>
+      <div class="filter-pills">
+        <button class="filter-pill active" data-filter="all">All</button>
+        <button class="filter-pill" data-filter="pending">Pending</button>
+        <button class="filter-pill" data-filter="approved">Approved</button>
+        <button class="filter-pill" data-filter="rejected">Rejected</button>
+      </div>
+    </div>
+  </div>
+
+  {% if voters %}
+    <div class="table-wrapper" role="region" aria-label="Voters table">
+      <table id="votersTable">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Voter</th>
+            <th scope="col">Student ID</th>
+            <th scope="col">Department</th>
+            <th scope="col">Face Verification</th>
+            <th scope="col">Status</th>
+            <th scope="col">Note</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for voter in voters %}
+            <tr data-status="{{ voter.approval_status|default:'pending' }}">
+
+              <td><span class="font-mono text-muted" style="font-size:.75rem;">{{ forloop.counter|stringformat:"02d" }}</span></td>
+
+              <td>
+                <div class="voter-cell">
+                  <div class="voter-avatar">
+                    {% if voter.profile_photo %}
+                      <img src="{{ voter.profile_photo.url }}" alt="{{ voter.full_name }}" />
+                    {% else %}
+                      {{ voter.full_name|slice:":2"|upper }}
+                    {% endif %}
+                  </div>
+                  <div>
+                    <div class="voter-name">{{ voter.full_name }}</div>
+                    <div class="voter-id">{{ voter.email }}</div>
+                  </div>
+                </div>
+              </td>
+
+              <td><span class="font-mono" style="font-size:.78rem;">{{ voter.student_id|default:"—" }}</span></td>
+
+              <td><span style="font-size:.82rem;">{{ voter.department|default:"—" }}</span></td>
+
+              <td>
+                {% if voter.face_embedding %}
+                  <span class="face-chip verified">
+                    <i class="fas fa-eye"></i> Verified
+                  </span>
+                {% else %}
+                  <span class="face-chip unverified">
+                    <i class="fas fa-eye-slash"></i> Not scanned
+                  </span>
+                {% endif %}
+              </td>
+
+              <td>
+                {% if voter.approval_status == 'approved' %}
+                  <span class="badge badge-approved"><i class="fas fa-check"></i> Approved</span>
+                {% elif voter.approval_status == 'rejected' %}
+                  <span class="badge badge-rejected"><i class="fas fa-xmark"></i> Rejected</span>
+                {% else %}
+                  <span class="badge badge-pending"><i class="fas fa-clock"></i> Pending</span>
+                {% endif %}
+              </td>
+
+              <td>
+                <span style="font-size:.78rem; color:var(--clr-muted);">
+                  {{ voter.approval_note|default:"—"|truncatechars:30 }}
+                </span>
+              </td>
+
+              <td>
+                <div class="td-actions">
+                  {% if voter.approval_status != 'approved' %}
+                    <a href="{% url 'admin_dashboard:approve_voter' voter.id %}"
+                       class="btn btn-success btn-sm" title="Approve {{ voter.full_name }}">
+                      <i class="fas fa-check"></i> Approve
+                    </a>
+                  {% endif %}
+                  {% if voter.approval_status != 'rejected' %}
+                    <button
+                      class="btn btn-danger btn-sm"
+                      title="Reject {{ voter.full_name }}"
+                      data-modal="rejectModal"
+                      data-voter-id="{{ voter.id }}"
+                      data-voter-name="{{ voter.full_name }}"
+                    >
+                      <i class="fas fa-xmark"></i> Reject
+                    </button>
+                  {% endif %}
+                </div>
+              </td>
+
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <div class="candidates-empty">
+      <i class="fas fa-users"></i>
+      <h3>No Voters Registered</h3>
+      <p>No students have registered to vote yet. They will appear here once they complete AI face verification.</p>
+    </div>
+  {% endif %}
+
+</div>
+
+
+<!-- ══ REJECT MODAL ══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="rejectModal" role="dialog" aria-modal="true" aria-labelledby="rejectHeading">
+  <div class="modal">
+    <button class="modal-close" id="closeRejectModal"><i class="fas fa-xmark"></i></button>
+    <div style="text-align:center; margin-bottom:1.25rem;">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,77,109,.1);border:2px solid rgba(255,77,109,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:1.3rem;color:var(--clr-red);">
+        <i class="fas fa-user-xmark"></i>
+      </div>
+      <h3 id="rejectHeading">Reject Voter?</h3>
+    </div>
+    <p>Rejecting <strong id="rejectVoterName" style="color:var(--clr-gold-light);">—</strong> will prevent them from voting. You may optionally provide a reason.</p>
+    <form method="post" id="rejectForm" action="#">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label" for="rejectNote">Rejection Reason (optional)</label>
+        <input
+          type="text" name="note" id="rejectNote"
+          class="form-control"
+          placeholder="e.g. Could not verify identity…"
+        />
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelReject">Cancel</button>
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-xmark"></i> Confirm Reject
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  // ── Search ─────────────────────────────────────────────────────
+  const voterRows = document.querySelectorAll('#votersTable tbody tr');
+  document.getElementById('voterSearch')?.addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    voterRows.forEach(r => { r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+  });
+
+  // ── Filter pills ──────────────────────────────────────────────
+  document.querySelectorAll('.filter-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const f = pill.dataset.filter;
+      voterRows.forEach(r => { r.style.display = (f === 'all' || r.dataset.status === f) ? '' : 'none'; });
+    });
+  });
+
+  // ── Voter stat counters ───────────────────────────────────────
+  let approved = 0, pending = 0;
+  voterRows.forEach(r => {
+    if (r.dataset.status === 'approved') approved++;
+    else if (r.dataset.status === 'pending') pending++;
+  });
+  document.getElementById('approvedCount').textContent = approved;
+  document.getElementById('pendingCount').textContent  = pending;
+
+  // ── Reject modal ──────────────────────────────────────────────
+  const rejectModal   = document.getElementById('rejectModal');
+  const rejectForm    = document.getElementById('rejectForm');
+  const rejectNameEl  = document.getElementById('rejectVoterName');
+
+  document.querySelectorAll('[data-modal="rejectModal"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      rejectNameEl.textContent = btn.dataset.voterName;
+      rejectForm.action = `/admin-dashboard/voters/${btn.dataset.voterId}/reject/`;
+      rejectModal.classList.add('active');
+    });
+  });
+
+  document.getElementById('closeRejectModal')?.addEventListener('click',  () => rejectModal.classList.remove('active'));
+  document.getElementById('cancelReject')?.addEventListener('click',       () => rejectModal.classList.remove('active'));
+  rejectModal?.addEventListener('click', e => { if (e.target === rejectModal) rejectModal.classList.remove('active'); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') rejectModal?.classList.remove('active'); });
+</script>
+{% endblock %}

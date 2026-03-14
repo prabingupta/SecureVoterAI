@@ -1,0 +1,18 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Django database
+db.sqlite3
+
+# Static files
+staticfiles/
+
+# MacOS
+.DS_Store
+
+# Environment variables
+.env

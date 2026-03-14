@@ -1,0 +1,219 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+
+<section id="login" class="login-section">
+  <div class="login-wrapper">
+
+    <!-- ══ LEFT PANEL — Branding ══════════════════════════════════════ -->
+    <div class="login-aside">
+      <div class="aside-inner">
+
+        <div class="aside-logo">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <h1>SecureVoter <span>AI</span></h1>
+        <p>Access the Islington College election portal.
+           Your identity is protected with AI-powered biometric verification.</p>
+
+        <ul class="aside-features">
+          <li><i class="fa-solid fa-lock"></i> End-to-End Encrypted</li>
+          <li><i class="fa-solid fa-face-smile"></i> Face Liveness Detection</li>
+          <li><i class="fa-solid fa-shield-virus"></i> Fraud Protected</li>
+          <li><i class="fa-solid fa-clock-rotate-left"></i> Audit Logged</li>
+        </ul>
+
+        <!-- Step indicators -->
+        <div class="aside-steps" id="asideSteps">
+          <div class="aside-step active" data-step="1">
+            <div class="aside-step-num">1</div>
+            <div class="aside-step-label">Credentials</div>
+          </div>
+          <div class="aside-step-connector"></div>
+          <div class="aside-step" data-step="2">
+            <div class="aside-step-num">2</div>
+            <div class="aside-step-label">Face Verification</div>
+          </div>
+        </div>
+
+        <div class="aside-footer">
+          <p>Not registered yet?</p>
+          <a href="{% url 'core:register' %}" class="aside-register-link">
+            <i class="fa-solid fa-user-plus"></i> Create an account
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ RIGHT PANEL — Form ════════════════════════════════════════ -->
+    <div class="login-main">
+
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar" style="width: 50%"></div>
+      </div>
+
+      <div class="login-form-wrap">
+
+        <!-- Django flash messages (locked account, admin notices, etc.) -->
+        {% if messages %}
+          <div class="messages-wrap" id="serverMessages">
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}">
+                <i class="fa-solid fa-circle-info"></i>
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- AJAX messages injected by login.js -->
+        <div class="messages-wrap" id="ajaxMessages" style="display:none;"></div>
+
+        <form id="loginForm" novalidate>
+          {% csrf_token %}
+
+          <!-- ══════════════════════════════════════════════════════
+               STEP 1 — Credentials
+               • Admin  → server skips face step, redirects to admin dashboard
+               • Voter  → server returns { require_face: true } → Step 2
+          ══════════════════════════════════════════════════════ -->
+          <div class="form-step active" id="loginStep1">
+
+            <div class="step-header">
+              <span class="step-tag">Step 1 of 2</span>
+              <h2>Welcome Back</h2>
+              <p>Enter your student credentials to continue.</p>
+            </div>
+
+            <div class="form-fields">
+
+              <div class="form-group">
+                <label for="student_id">
+                  <i class="fa-solid fa-id-card"></i> Student ID
+                </label>
+                <input type="text" name="student_id" id="student_id"
+                       class="form-control" placeholder="ISL-1234"
+                       autocomplete="username" required>
+                <span class="field-hint">Format: ISL-XXXX</span>
+                <span class="field-error" id="err-student_id"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="password">
+                  <i class="fa-solid fa-lock"></i> Password
+                </label>
+                <div class="input-wrap">
+                  <input type="password" name="password" id="password"
+                         class="form-control" placeholder="Enter your password"
+                         autocomplete="current-password" required>
+                  <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password">
+                    <i class="fa-solid fa-eye" id="togglePwIcon"></i>
+                  </button>
+                </div>
+                <span class="field-error" id="err-password"></span>
+              </div>
+
+              <div class="form-row-between">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="rememberMe" name="remember_me">
+                  <span class="checkbox-custom"></span>
+                  Remember me
+                </label>
+                <a href="#" class="forgot-link">Forgot password?</a>
+              </div>
+
+            </div><!-- /form-fields -->
+
+            <div class="step-actions">
+              <span></span>
+              <button type="button" class="btn btn-solid" id="step1Next">
+                Continue <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+
+          </div><!-- /loginStep1 -->
+
+
+          <!-- ══════════════════════════════════════════════════════
+               STEP 2 — Face Verification  (voters only, hidden by default)
+               login.js reveals this div only when server returns
+               { require_face: true } for an approved voter.
+          ══════════════════════════════════════════════════════ -->
+          <div class="form-step" id="loginStep2" style="display:none;">
+
+            <div class="step-header">
+              <span class="step-tag">Step 2 of 2</span>
+              <h2>Face Verification</h2>
+              <p>Blink once or move your head slightly to confirm liveness, then click Verify &amp; Login.</p>
+            </div>
+
+            <!-- Attempts remaining badge (populated by JS on failure) -->
+            <div class="attempts-badge" id="attemptsLeft" style="display:none;"></div>
+
+            <!-- Camera panel -->
+            <div class="webcam-panel">
+              <video id="loginWebcam" autoplay muted playsinline></video>
+              <canvas id="loginOverlay"></canvas>
+
+              <div class="hud-overlay">
+                <div class="scan-circle"></div>
+                <div class="scan-ring"></div>
+                <div class="corner tl"></div>
+                <div class="corner tr"></div>
+                <div class="corner bl"></div>
+                <div class="corner br"></div>
+                <div class="scan-line"></div>
+              </div>
+
+              <div class="webcam-status" id="webcamStatus">
+                <i class="fa-solid fa-circle-dot"></i>
+                <span id="webcamStatusText">Initialising camera…</span>
+              </div>
+            </div>
+
+            <!-- Liveness instruction -->
+            <div class="liveness-instruction" id="livenessInstruction">
+              <i class="fa-solid fa-eye"></i>
+              <span id="instructionText">Blink once when ready…</span>
+            </div>
+
+            <!-- Progress dots -->
+            <div class="capture-dots">
+              <span class="capture-dot" id="dot1"></span>
+              <span class="capture-dot" id="dot2"></span>
+            </div>
+
+            <div class="step-actions">
+              <button type="button" class="btn btn-ghost" id="step2Prev">
+                <i class="fa-solid fa-arrow-left"></i> Back
+              </button>
+              <button type="button" class="btn btn-solid" id="loginSubmit" disabled>
+                <i class="fa-solid fa-right-to-bracket"></i> Verify &amp; Login
+              </button>
+            </div>
+
+          </div><!-- /loginStep2 -->
+
+        </form>
+
+      </div>
+    </div><!-- /login-main -->
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/login.js' %}?v=6"></script>
+{% endblock %}

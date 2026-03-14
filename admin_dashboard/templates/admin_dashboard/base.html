@@ -1,0 +1,270 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Admin | SecureVoter AI{% endblock %}</title>
+
+  <!-- Fonts: Syne (display) + DM Sans (body) + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
+
+  <!-- Base CSS -->
+  <link rel="stylesheet" href="{% static 'admin_dashboard/css/base.css' %}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ══ TOP NAVBAR ════════════════════════════════════════════════ -->
+<header class="navbar" id="adminNavbar">
+  <div class="navbar-inner">
+
+    <a href="{% url 'admin_dashboard:dashboard' %}" class="brand">
+      <div class="brand-icon">
+        <i class="fas fa-shield-halved"></i>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">SecureVoter<span class="brand-ai">AI</span></span>
+        <span class="brand-sub">Islington College · Admin</span>
+      </div>
+    </a>
+
+    <!-- Center search -->
+    <div class="navbar-search">
+      <i class="fas fa-magnifying-glass"></i>
+      <input type="text" placeholder="Search elections, voters, alerts…" id="globalSearch" autocomplete="off" />
+      <span class="search-shortcut">⌘K</span>
+    </div>
+
+    <div class="navbar-right">
+      <!-- Notification bell -->
+      <div class="nav-notif-wrap" id="notifWrap">
+        <button class="nav-notif-btn {% if unresolved_fraud_count %}has-alerts{% endif %}" id="notifToggle" aria-label="Notifications">
+          <i class="fas fa-bell"></i>
+          {% if unresolved_fraud_count %}
+            <span class="nav-notif-badge">{{ unresolved_fraud_count }}</span>
+          {% endif %}
+        </button>
+        <div class="notif-dropdown" id="notifDropdown">
+          <div class="notif-drop-head">
+            <h4><i class="fas fa-triangle-exclamation" style="color:var(--c-error);margin-right:.3rem;font-size:.75rem;"></i>Security Alerts</h4>
+            {% if unresolved_fraud_count %}
+              <span class="notif-drop-count">{{ unresolved_fraud_count }} unread</span>
+            {% endif %}
+          </div>
+          <div class="notif-drop-body">
+            {% if recent_fraud_alerts %}
+              {% for alert in recent_fraud_alerts %}
+                <div class="notif-drop-item">
+                  <span class="ndi-dot {% if alert.alert_type == 'spoof_attempt' %}red{% elif alert.alert_type == 'unknown_device' %}blue{% else %}amber{% endif %}"></span>
+                  <div class="ndi-body">
+                    <div class="ndi-text">
+                      {% if alert.voter %}{{ alert.voter.full_name }} — {% endif %}{{ alert.get_alert_type_display }}
+                    </div>
+                    <div class="ndi-time">{{ alert.timestamp|date:"H:i · M d" }}</div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="notif-drop-empty">
+                <i class="fas fa-shield-check"></i>
+                No active alerts
+              </div>
+            {% endif %}
+          </div>
+          <div class="notif-drop-footer">
+            <a href="{% url 'admin_dashboard:notifications' %}">View all notifications →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin profile pill -->
+      <div class="admin-pill">
+        <div class="admin-avatar">{{ request.user.get_full_name|default:request.user.username|slice:":2"|upper }}</div>
+        <div class="admin-info">
+          <span class="admin-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+          <span class="admin-role">Super Admin</span>
+        </div>
+      </div>
+
+      <a href="{% url 'core:logout' %}" class="nav-logout" title="Logout">
+        <i class="fas fa-right-from-bracket"></i>
+      </a>
+
+      <!-- Mobile hamburger -->
+      <button class="nav-toggle" id="sidebarToggle" aria-label="Toggle sidebar" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+
+  </div>
+</header>
+
+<!-- ══ FLASH MESSAGES ════════════════════════════════════════════ -->
+{% if messages %}
+  <div class="messages-list" aria-live="polite">
+    {% for message in messages %}
+      <div class="message-toast {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}" role="alert">
+        <i class="{% if message.tags == 'error' %}fas fa-circle-xmark{% elif message.tags == 'success' %}fas fa-circle-check{% elif message.tags == 'warning' %}fas fa-triangle-exclamation{% else %}fas fa-circle-info{% endif %}"></i>
+        <span>{{ message }}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-xmark"></i></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<!-- ══ LAYOUT ═════════════════════════════════════════════════════ -->
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin navigation">
+
+    <div class="sidebar-scroll">
+
+      <div class="sidebar-group">
+        <p class="sidebar-section-label">Overview</p>
+        <nav>
+          <a href="{% url 'admin_dashboard:dashboard' %}"
+             class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <span class="sl-icon"><i class="fas fa-gauge-high"></i></span>
+            <span class="sl-text">Dashboard</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-group">
+        <p class="sidebar-section-label">Elections</p>
+        <nav>
+          <a href="{% url 'admin_dashboard:manage_elections' %}"
+             class="sidebar-link {% if 'election' in request.resolver_match.url_name %}active{% endif %}">
+            <span class="sl-icon"><i class="fas fa-ballot-check"></i></span>
+            <span class="sl-text">Manage Elections</span>
+          </a>
+          <a href="{% url 'admin_dashboard:manage_candidates' %}"
+             class="sidebar-link {% if 'candidate' in request.resolver_match.url_name %}active{% endif %}">
+            <span class="sl-icon"><i class="fas fa-user-tie"></i></span>
+            <span class="sl-text">Candidates</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-group">
+        <p class="sidebar-section-label">Voters</p>
+        <nav>
+          <a href="{% url 'admin_dashboard:manage_voters' %}"
+             class="sidebar-link {% if request.resolver_match.url_name == 'manage_voters' %}active{% endif %}">
+            <span class="sl-icon"><i class="fas fa-id-card"></i></span>
+            <span class="sl-text">Manage Voters</span>
+            {% if pending_count %}
+              <span class="sidebar-badge warn">{{ pending_count }}</span>
+            {% endif %}
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-group">
+        <p class="sidebar-section-label">Monitoring</p>
+        <nav>
+          <a href="{% url 'admin_dashboard:view_fraud_alerts' %}"
+             class="sidebar-link {% if request.resolver_match.url_name == 'view_fraud_alerts' %}active{% endif %}">
+            <span class="sl-icon"><i class="fas fa-triangle-exclamation"></i></span>
+            <span class="sl-text">Fraud Alerts</span>
+            {% if unresolved_fraud_count %}
+              <span class="sidebar-badge danger">{{ unresolved_fraud_count }}</span>
+            {% endif %}
+          </a>
+          <a href="{% url 'admin_dashboard:notifications' %}"
+             class="sidebar-link {% if request.resolver_match.url_name == 'notifications' %}active{% endif %}">
+            <span class="sl-icon"><i class="fas fa-bell"></i></span>
+            <span class="sl-text">Notifications</span>
+          </a>
+          <a href="{% url 'admin_dashboard:fraud_log_report' %}"
+             class="sidebar-link {% if request.resolver_match.url_name == 'fraud_log_report' %}active{% endif %}">
+            <span class="sl-icon"><i class="fas fa-file-chart-column"></i></span>
+            <span class="sl-text">Fraud Report</span>
+          </a>
+        </nav>
+      </div>
+
+    </div><!-- /sidebar-scroll -->
+
+    <div class="sidebar-footer">
+      <div class="sf-security">
+        <i class="fas fa-lock"></i>
+        <span>AES-256 Encrypted</span>
+      </div>
+      <div class="sf-copy">SecureVoter AI &copy; {% now "Y" %}</div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="admin-main" id="adminMain">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+<!-- ══ FOOTER ════════════════════════════════════════════════════ -->
+<footer class="admin-footer">
+  <div class="footer-left">
+    <strong>SecureVoter AI</strong> — Islington College Election Management System
+  </div>
+  <div class="footer-right">
+    <span><i class="fas fa-lock" style="color:var(--c-success);"></i> AES-256 Encrypted</span>
+    <span><i class="fas fa-eye" style="color:var(--c-info);"></i> AI Biometric Verified</span>
+    <span style="color:var(--c-ink-300);">&copy; {% now "Y" %}</span>
+  </div>
+</footer>
+
+<!-- ══ SCRIPTS ════════════════════════════════════════════════════ -->
+<script src="{% static 'admin_dashboard/js/main.js' %}"></script>
+<script>
+  // Sidebar toggle
+  const toggle   = document.getElementById('sidebarToggle');
+  const sidebar  = document.getElementById('adminSidebar');
+  const mainEl   = document.getElementById('adminMain');
+  toggle?.addEventListener('click', () => {
+    const open = sidebar.classList.toggle('open');
+    toggle.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', open);
+  });
+  document.addEventListener('click', (e) => {
+    if (!toggle?.contains(e.target) && !sidebar?.contains(e.target)) {
+      sidebar?.classList.remove('open');
+      toggle?.classList.remove('open');
+    }
+  });
+
+  // Navbar scroll
+  const navbar = document.getElementById('adminNavbar');
+  window.addEventListener('scroll', () => {
+    navbar?.classList.toggle('navbar-scrolled', window.scrollY > 10);
+  }, { passive: true });
+
+  // Notification dropdown
+  const notifToggle   = document.getElementById('notifToggle');
+  const notifDropdown = document.getElementById('notifDropdown');
+  notifToggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    notifDropdown?.classList.toggle('open');
+  });
+  document.addEventListener('click', () => notifDropdown?.classList.remove('open'));
+
+  // Auto-dismiss toasts
+  document.querySelectorAll('.message-toast').forEach(toast => {
+    setTimeout(() => {
+      toast.style.cssText = 'opacity:0;transform:translateX(28px);transition:all .3s ease';
+      setTimeout(() => toast.remove(), 320);
+    }, 5000);
+  });
+</script>
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,194 @@
+{% extends "admin_dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Fraud Alerts | Admin — SecureVoter AI{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'admin_dashboard/css/candidates.css' %}" />
+{% endblock %}
+
+
+{% block content %}
+<div class="fraud-page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <p class="page-eyebrow"><i class="fas fa-triangle-exclamation"></i> Security</p>
+    <h1>Fraud Alerts</h1>
+    <p>Monitor suspicious activity and review flagged incidents in Islington College elections.</p>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="fraud-summary">
+    <div class="fraud-summary-card">
+      <div class="fraud-summary-icon red"><i class="fas fa-triangle-exclamation"></i></div>
+      <div>
+        <div class="fraud-summary-val">{{ unresolved_count|default:"0" }}</div>
+        <div class="fraud-summary-lbl">Unresolved</div>
+      </div>
+    </div>
+    <div class="fraud-summary-card">
+      <div class="fraud-summary-icon orange"><i class="fas fa-clock"></i></div>
+      <div>
+        <div class="fraud-summary-val">{{ fraud_alerts|length }}</div>
+        <div class="fraud-summary-lbl">Total Alerts</div>
+      </div>
+    </div>
+    <div class="fraud-summary-card">
+      <div class="fraud-summary-icon green"><i class="fas fa-circle-check"></i></div>
+      <div>
+        <div class="fraud-summary-val">{{ resolved_count|default:"0" }}</div>
+        <div class="fraud-summary-lbl">Resolved</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts Table -->
+  {% if fraud_alerts %}
+    <div class="table-wrapper" role="region" aria-label="Fraud alerts table">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Voter</th>
+            <th scope="col">Election</th>
+            <th scope="col">Alert Type</th>
+            <th scope="col">Description</th>
+            <th scope="col">IP Address</th>
+            <th scope="col">Timestamp</th>
+            <th scope="col">Status</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for alert in fraud_alerts %}
+            <tr>
+              <td>
+                <span class="font-mono text-muted" style="font-size:.75rem;">
+                  {{ forloop.counter|stringformat:"02d" }}
+                </span>
+              </td>
+
+              <!-- Voter — FK is 'voter' on the model -->
+              <td>
+                {% if alert.voter %}
+                  <div class="voter-cell" style="gap:.65rem;">
+                    <div class="voter-avatar" style="width:30px;height:30px;font-size:.7rem;">
+                      {{ alert.voter.full_name|slice:":2"|upper }}
+                    </div>
+                    <div>
+                      <div style="font-size:.875rem; font-weight:600;">
+                        {{ alert.voter.full_name }}
+                      </div>
+                      <div class="font-mono text-muted" style="font-size:.68rem;">
+                        {{ alert.voter.student_id }}
+                      </div>
+                    </div>
+                  </div>
+                {% else %}
+                  <span class="text-muted" style="font-size:.8rem;">—</span>
+                {% endif %}
+              </td>
+
+              <!-- Election -->
+              <td>
+                <span style="font-size:.875rem; font-weight:500;">
+                  {{ alert.election.title|default:"—" }}
+                </span>
+              </td>
+
+              <!-- Alert type badge with distinct icon per type -->
+              <td>
+                {% if alert.alert_type == 'spoof_attempt' %}
+                  <span class="badge badge-rejected" style="white-space:nowrap;">
+                    <i class="fas fa-skull"></i> Spoof Attempt
+                  </span>
+                {% elif alert.alert_type == 'too_many_attempts' %}
+                  <span class="badge badge-rejected" style="white-space:nowrap;">
+                    <i class="fas fa-lock"></i> Too Many Attempts
+                  </span>
+                {% elif alert.alert_type == 'multiple_faces' %}
+                  <span class="badge badge-rejected" style="white-space:nowrap;">
+                    <i class="fas fa-users"></i> Multiple Faces
+                  </span>
+                {% elif alert.alert_type == 'unknown_device' %}
+                  <span class="badge badge-rejected" style="white-space:nowrap;">
+                    <i class="fas fa-laptop"></i> Unknown Device
+                  </span>
+                {% else %}
+                  <span class="badge badge-rejected" style="white-space:nowrap;">
+                    <i class="fas fa-face-frown"></i> Face Mismatch
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Description -->
+              <td style="max-width:220px;">
+                <span style="font-size:.8rem; color:rgba(238,242,255,.75);">
+                  {{ alert.description|truncatechars:80 }}
+                </span>
+              </td>
+
+              <!-- IP Address -->
+              <td>
+                <span class="font-mono" style="font-size:.75rem; color:var(--clr-muted);">
+                  {{ alert.ip_address|default:"—" }}
+                </span>
+              </td>
+
+              <!-- Timestamp -->
+              <td>
+                <span class="font-mono" style="font-size:.75rem; color:var(--clr-muted);">
+                  {{ alert.timestamp|date:"M d, Y" }}<br/>
+                  <span style="opacity:.6;">{{ alert.timestamp|date:"H:i" }}</span>
+                </span>
+              </td>
+
+              <!-- Status — field is 'reviewed' on the model -->
+              <td>
+                {% if alert.reviewed %}
+                  <span class="badge badge-approved">
+                    <i class="fas fa-check"></i> Reviewed
+                  </span>
+                {% else %}
+                  <span class="badge badge-pending">
+                    <span class="dot"></span> Pending
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Action -->
+              <td>
+                {% if not alert.reviewed %}
+                  <form class="review-form" method="post"
+                        action="{% url 'admin_dashboard:mark_reviewed' alert.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-sm"
+                            title="Mark as reviewed">
+                      <i class="fas fa-check"></i> Review
+                    </button>
+                  </form>
+                {% else %}
+                  <span class="text-muted" style="font-size:.8rem;">Done</span>
+                {% endif %}
+              </td>
+
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <div class="candidates-empty">
+      <i class="fas fa-shield-halved" style="color:rgba(45,206,137,.3);"></i>
+      <h3>No Fraud Alerts</h3>
+      <p>No suspicious activity has been detected. Election integrity is being maintained.</p>
+      <div class="badge badge-active" style="margin:0 auto;">
+        <span class="dot"></span> System Secure
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

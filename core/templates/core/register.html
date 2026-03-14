@@ -1,0 +1,335 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/register.css' %}">
+{% endblock %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %} 
+
+<section id="register" class="register-section">
+  <div class="register-wrapper">
+
+    <!-- ══ LEFT PANEL ════════════════════════════════════════════════════ -->
+    <div class="register-aside">
+      <div class="aside-inner">
+
+        <div class="aside-logo">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <h1>SecureVoter <span>AI</span></h1>
+        <p>Islington College's official AI-secured election platform.
+           Your identity is verified through 3-stage biometric authentication.</p>
+
+        <ul class="aside-features">
+          <li><i class="fa-solid fa-check-circle"></i> 3-Stage Liveness Detection</li>
+          <li><i class="fa-solid fa-check-circle"></i> Encrypted Face Embedding</li>
+          <li><i class="fa-solid fa-check-circle"></i> One Vote Per Student</li>
+          <li><i class="fa-solid fa-check-circle"></i> Audit-Logged &amp; Tamper-Proof</li>
+        </ul>
+
+        <div class="aside-steps">
+          <div class="aside-step active" data-step="1">
+            <div class="aside-step-num">1</div>
+            <div class="aside-step-label">Personal Info</div>
+          </div>
+          <div class="aside-step-connector"></div>
+          <div class="aside-step" data-step="2">
+            <div class="aside-step-num">2</div>
+            <div class="aside-step-label">Face Verification</div>
+          </div>
+          <div class="aside-step-connector"></div>
+          <div class="aside-step" data-step="3">
+            <div class="aside-step-num">3</div>
+            <div class="aside-step-label">Review &amp; Submit</div>
+          </div>
+        </div>
+
+        <div class="aside-footer">
+          <p>Already registered?</p>
+          <a href="{% url 'core:login' %}" class="aside-register-link">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign in
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ RIGHT PANEL ═══════════════════════════════════════════════════ -->
+    <div class="register-main">
+
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar" style="width: 33.33%"></div>
+      </div>
+
+      <div class="register-form-wrap">
+
+        <div id="jsMessages"></div>
+
+        <form method="POST" enctype="multipart/form-data" id="registrationForm" novalidate>
+          {% csrf_token %}
+
+          <!--
+            Hidden fields for liveness frames.
+            Named face_data_challenge_0 / _1 / _2 (positional, not gesture-named)
+            because the gesture order is now random — assigned by the server at
+            GET /api/liveness-challenges/ and written here by register.js v8
+            immediately before FormData is captured on submit.
+          -->
+          <input type="hidden" name="face_data_challenge_0" id="face_data_challenge_0">
+          <input type="hidden" name="face_data_challenge_1" id="face_data_challenge_1">
+          <input type="hidden" name="face_data_challenge_2" id="face_data_challenge_2">
+
+
+          <!-- ══════════════════════════════════════════════════════════
+               STEP 1 — Personal Information
+          ══════════════════════════════════════════════════════════ -->
+          <div class="form-step active" id="step1">
+
+            <div class="step-header">
+              <span class="step-tag">Step 1 of 3</span>
+              <h2>Personal Information</h2>
+              <p>Fill in your student details exactly as on your ID card.</p>
+            </div>
+
+            <div class="form-grid">
+
+              <div class="form-group full">
+                <label for="full_name">
+                  <i class="fa-solid fa-user"></i> Full Name
+                </label>
+                <input type="text" name="full_name" id="full_name" class="form-control"
+                       placeholder="e.g. Prabin Gupta" autocomplete="name" required>
+                <span class="field-error" id="err-full_name"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="student_id">
+                  <i class="fa-solid fa-id-card"></i> Student ID
+                </label>
+                <input type="text" name="student_id" id="student_id" class="form-control"
+                       placeholder="ISL-1234" pattern="ISL-\d{4}" required>
+                <span class="field-hint">Format: ISL-XXXX</span>
+                <span class="field-error" id="err-student_id"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="phone">
+                  <i class="fa-solid fa-phone"></i> Phone
+                  <span class="optional">Optional</span>
+                </label>
+                <input type="tel" name="phone" id="phone" class="form-control"
+                       placeholder="+977-XXXXXXXXX" autocomplete="tel">
+              </div>
+
+              <div class="form-group">
+                <label for="department">
+                  <i class="fa-solid fa-building-columns"></i> Department
+                </label>
+                <div class="select-wrap">
+                  <select name="department" id="department" class="form-control" required>
+                    <option value="">-- Select Department --</option>
+                    <option value="Computing">Computing</option>
+                    <option value="AI">Artificial Intelligence</option>
+                    <option value="Networking">Networking</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down select-arrow"></i>
+                </div>
+                <span class="field-error" id="err-department"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="year_of_study">
+                  <i class="fa-solid fa-calendar-alt"></i> Year of Study
+                </label>
+                <div class="select-wrap">
+                  <select name="year_of_study" id="year_of_study" class="form-control" required>
+                    <option value="">-- Select Year --</option>
+                    <option value="1">Year 1</option>
+                    <option value="2">Year 2</option>
+                    <option value="3">Year 3</option>
+                  </select>
+                  <i class="fa-solid fa-chevron-down select-arrow"></i>
+                </div>
+                <span class="field-error" id="err-year_of_study"></span>
+              </div>
+
+              <div class="form-group full">
+                <label for="password">
+                  <i class="fa-solid fa-lock"></i> Password
+                </label>
+                <div class="input-wrap">
+                  <input type="password" name="password" id="password" class="form-control"
+                         placeholder="Create a strong password" autocomplete="new-password" required>
+                  <button type="button" class="toggle-pw" id="togglePw" aria-label="Toggle password">
+                    <i class="fa-solid fa-eye" id="togglePwIcon"></i>
+                  </button>
+                </div>
+                <div class="pw-strength-wrap">
+                  <div class="pw-strength-bar">
+                    <div class="pw-strength-fill" id="pwStrengthFill"></div>
+                  </div>
+                  <span class="pw-strength-label" id="pwStrengthLabel">Enter a password</span>
+                </div>
+                <span class="field-error" id="err-password"></span>
+              </div>
+
+            </div><!-- /form-grid -->
+
+            <div class="step-actions">
+              <span></span>
+              <button type="button" class="btn btn-solid next-step" data-next="2">
+                Continue <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+
+          </div><!-- /step1 -->
+
+
+          <!-- ══════════════════════════════════════════════════════════
+               STEP 2 — Face Liveness Verification (3 stages)
+               Stage badges are rendered as placeholders here.
+               register.js v8 overwrites their icons + labels after
+               fetching the random challenge order from the server.
+          ══════════════════════════════════════════════════════════ -->
+          <div class="form-step" id="step2">
+
+            <div class="step-header">
+              <span class="step-tag">Step 2 of 3</span>
+              <h2>Liveness Verification</h2>
+              <p>Complete all 3 gestures to prove you are present.</p>
+            </div>
+
+            <!--
+              Stage progress legend.
+              IDs stageBadge1 / stageBadge2 / stageBadge3 are targeted by
+              register.js to inject the correct icon + label after the
+              server returns the random challenge sequence.
+              Default content shown while challenges are loading.
+            -->
+            <div class="liveness-stages-legend">
+              <div class="stage-badge" id="stageBadge1">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <span>Loading…</span>
+              </div>
+              <div class="stage-sep">→</div>
+              <div class="stage-badge" id="stageBadge2">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <span>Loading…</span>
+              </div>
+              <div class="stage-sep">→</div>
+              <div class="stage-badge" id="stageBadge3">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <span>Loading…</span>
+              </div>
+            </div>
+
+            <!-- Camera panel -->
+            <div class="webcam-panel">
+              <video id="webcam" autoplay muted playsinline></video>
+              <canvas id="overlay"></canvas>
+
+              <div class="hud-overlay">
+                <div class="scan-circle"></div>
+                <div class="scan-ring"></div>
+                <div class="corner tl"></div>
+                <div class="corner tr"></div>
+                <div class="corner bl"></div>
+                <div class="corner br"></div>
+                <div class="scan-line"></div>
+              </div>
+
+              <div class="webcam-status" id="webcamStatus">
+                <i class="fa-solid fa-circle-dot"></i>
+                <span id="webcamStatusText">Initialising camera…</span>
+              </div>
+            </div>
+
+            <!-- Instruction + countdown -->
+            <div class="liveness-instruction" id="livenessInstruction">
+              <i class="fa-solid fa-eye"></i>
+              <span id="instructionText">Getting ready…</span>
+              <span class="liveness-countdown" id="livenessCountdown" style="display:none;"></span>
+            </div>
+
+            <!-- Stage progress dots — titles updated dynamically by JS -->
+            <div class="capture-dots">
+              <span class="capture-dot" id="dot1" title="Stage 1"></span>
+              <span class="capture-dot" id="dot2" title="Stage 2"></span>
+              <span class="capture-dot" id="dot3" title="Stage 3"></span>
+            </div>
+
+            <!-- Retry button (hidden by default, shown on failure) -->
+            <div id="retryWrap">
+              <button type="button" id="retryBtn">
+                <i class="fa-solid fa-rotate-right"></i> Retry Liveness Check
+              </button>
+            </div>
+
+            <div class="step-actions">
+              <button type="button" class="btn btn-ghost prev-step" data-prev="1">
+                <i class="fa-solid fa-arrow-left"></i> Back
+              </button>
+              <button type="button" class="btn btn-solid next-step" data-next="3"
+                      id="step2Next" disabled>
+                Continue <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+
+          </div><!-- /step2 -->
+
+
+          <!-- ══════════════════════════════════════════════════════════
+               STEP 3 — Review & Submit
+          ══════════════════════════════════════════════════════════ -->
+          <div class="form-step" id="step3">
+
+            <div class="step-header">
+              <span class="step-tag">Step 3 of 3</span>
+              <h2>Review &amp; Submit</h2>
+              <p>Confirm your details before submitting. Your account will require admin approval before you can vote.</p>
+            </div>
+
+            <div class="review-box" id="reviewInfo"></div>
+
+            <div class="approval-notice">
+              <i class="fa-solid fa-circle-info"></i>
+              After submission your account will be reviewed by an administrator.
+              You will be able to log in once approved.
+            </div>
+
+            <label class="checkbox-label" style="margin-top:1rem;">
+              <input type="checkbox" id="agreeTerms" name="agree_terms" required>
+              <span class="checkbox-custom"></span>
+              I confirm that the information provided is accurate and I agree to the
+              <a href="#" class="link-inline">Terms &amp; Conditions</a>.
+            </label>
+            <span class="field-error" id="err-terms"></span>
+
+            <div class="step-actions">
+              <button type="button" class="btn btn-ghost prev-step" data-prev="2">
+                <i class="fa-solid fa-arrow-left"></i> Back
+              </button>
+              <button type="submit" class="btn btn-solid" id="submitBtn">
+                <i class="fa-solid fa-paper-plane"></i> Submit Registration
+              </button>
+            </div>
+
+          </div><!-- /step3 -->
+
+        </form>
+      </div>
+    </div><!-- /register-main -->
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/register.js' %}?v=8"></script>
+{% endblock %}
