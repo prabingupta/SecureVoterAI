@@ -1,13 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════════
+/* 
    SecureVoter AI — login.css
-   FULLY SELF-CONTAINED — no index.css token dependency.
-   Depends only on base.css for: --ff-heading, --ff-body, --ff-mono,
-   --navbar-height, and the global reset.
-═══════════════════════════════════════════════════════════════════ */
+   
+*/
 
-/* ─────────────────────────────────────────────────────────────────
-   1. LAYOUT
-───────────────────────────────────────────────────────────────── */
+/*
+   LAYOUT
+ */
 
 .login-section {
   min-height:   100vh;
@@ -25,9 +23,9 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   2. LEFT PANEL — BRANDING ASIDE
-───────────────────────────────────────────────────────────────── */
+/* 
+   LEFT PANEL — BRANDING ASIDE
+ */
 
 .login-aside {
   position:        sticky;
@@ -37,21 +35,17 @@
   scrollbar-width: none;
   display:         flex;
   align-items:     stretch;
-
-  /* Rich layered dark burgundy — no var() dependency */
   background:      #1a0305;
   background-image:
     radial-gradient(ellipse at 18% 82%, rgba(91,14,20,0.75) 0%, transparent 52%),
     radial-gradient(ellipse at 88% 12%, rgba(66,10,15,0.55) 0%, transparent 48%),
     linear-gradient(158deg, #2e0609 0%, #1a0305 52%, #0f0304 100%);
-
   border-top:   2px solid rgba(241,225,148,0.28);
   border-right: 1px solid rgba(241,225,148,0.07);
 }
 
 .login-aside::-webkit-scrollbar { display: none; }
 
-/* Fine diagonal texture */
 .login-aside::before {
   content:    '';
   position:   absolute;
@@ -93,7 +87,6 @@
   box-shadow:      0 0 22px rgba(241,225,148,0.12);
 }
 
-/* Brand heading */
 .aside-inner h1 {
   font-family:    var(--ff-heading, 'Inter', sans-serif);
   font-size:      2rem;
@@ -105,7 +98,6 @@
   margin-top:     0;
 }
 
-/* "AI" span — gold gradient */
 .aside-inner h1 span {
   background:              linear-gradient(110deg, #F1E194 0%, #d4c46a 100%);
   -webkit-background-clip: text;
@@ -113,7 +105,6 @@
   background-clip:         text;
 }
 
-/* Tagline */
 .aside-inner > p {
   font-family:   var(--ff-body, 'Inter', sans-serif);
   font-size:     0.9375rem;
@@ -126,10 +117,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   3. ASIDE FEATURES LIST
-───────────────────────────────────────────────────────────────── */
-
+/* ─── Aside features list ─── */
 .aside-features {
   display:        flex;
   flex-direction: column;
@@ -152,10 +140,7 @@
   transition:    background 200ms ease, color 200ms ease;
 }
 
-.aside-features li:hover {
-  background: rgba(241,225,148,0.07);
-  color:      #ffffff;
-}
+.aside-features li:hover { background: rgba(241,225,148,0.07); color: #ffffff; }
 
 .aside-features li i {
   width:           22px;
@@ -171,10 +156,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   4. ASIDE STEP INDICATORS
-───────────────────────────────────────────────────────────────── */
-
+/* Aside step indicators */
 .aside-steps {
   display:       flex;
   align-items:   center;
@@ -249,13 +231,15 @@
   height:        1px;
   background:    linear-gradient(90deg, rgba(241,225,148,0.08) 0%, rgba(241,225,148,0.25) 50%, rgba(241,225,148,0.08) 100%);
   margin-bottom: 1.2rem;
+  transition:    background 350ms ease;
+}
+
+.aside-step-connector.filled {
+  background: linear-gradient(90deg, rgba(241,225,148,0.25) 0%, rgba(241,225,148,0.60) 50%, rgba(241,225,148,0.25) 100%);
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   5. ASIDE FOOTER
-───────────────────────────────────────────────────────────────── */
-
+/* ─── Aside footer ─── */
 .aside-footer {
   margin-top:  auto;
   padding-top: 2rem;
@@ -289,9 +273,9 @@
 .aside-register-link i { font-size: 0.8em; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   6. PROGRESS BAR
-───────────────────────────────────────────────────────────────── */
+/*
+   PROGRESS BAR
+*/
 
 .progress-bar-wrap {
   position:   absolute;
@@ -310,9 +294,9 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   7. RIGHT PANEL — LOGIN MAIN
-───────────────────────────────────────────────────────────────── */
+/* 
+   RIGHT PANEL — LOGIN MAIN
+ */
 
 .login-main {
   position:        relative;
@@ -334,9 +318,9 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   8. FORM CARD
-───────────────────────────────────────────────────────────────── */
+/* 
+   FORM CARD
+ */
 
 .login-form-wrap {
   position:      relative;
@@ -366,10 +350,7 @@
 .form-step.active { display: block; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   9. STEP HEADER
-───────────────────────────────────────────────────────────────── */
-
+/*  Step header  */
 .step-header { margin-bottom: 1.85rem; }
 
 .step-tag {
@@ -410,9 +391,9 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   10. FORM GROUPS & INPUTS
-───────────────────────────────────────────────────────────────── */
+/* 
+   FORM GROUPS & INPUTS
+ */
 
 .form-fields {
   display:        flex;
@@ -438,13 +419,7 @@
   color:          #2d1114;
 }
 
-.form-group label i {
-  font-size:  0.78em;
-  color:      #7a1219;
-  opacity:    0.85;
-  width:      14px;
-  text-align: center;
-}
+.form-group label i { font-size: 0.78em; color: #7a1219; opacity: 0.85; width: 14px; text-align: center; }
 
 .form-control {
   width:          100%;
@@ -462,58 +437,19 @@
   outline:        none;
 }
 
-.form-control::placeholder {
-  color:       #c4a8aa;
-  font-weight: 400;
-}
-
+.form-control::placeholder { color: #c4a8aa; font-weight: 400; }
 .form-control:hover:not(:disabled) { border-color: #e8d8d9; }
+.form-control:focus { border-color: #5b0e14; box-shadow: 0 0 0 3.5px rgba(91,14,20,0.11); background: #fdf2f2; }
+.form-control.invalid { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.10); }
+.form-control.valid   { border-color: #16803d; box-shadow: 0 0 0 3px rgba(22,128,61,0.08); }
+.form-control:disabled { background: #fdf9f4; color: #9a6065; cursor: not-allowed; }
 
-.form-control:focus {
-  border-color: #5b0e14;
-  box-shadow:   0 0 0 3.5px rgba(91,14,20,0.11);
-  background:   #fdf2f2;
-}
-
-.form-control.error {
-  border-color: #dc2626;
-  box-shadow:   0 0 0 3px rgba(220,38,38,0.10);
-}
-
-.form-control:disabled {
-  background: #fdf9f4;
-  color:      #9a6065;
-  cursor:     not-allowed;
-}
-
-.field-hint {
-  font-family:    var(--ff-mono, 'JetBrains Mono', monospace);
-  font-size:      0.75rem;
-  font-weight:    400;
-  color:          #6b3338;
-  letter-spacing: 0.04em;
-}
-
-.field-error {
-  font-family: var(--ff-body, 'Inter', sans-serif);
-  font-size:   0.8rem;
-  font-weight: 500;
-  color:       #dc2626;
-  min-height:  1rem;
-  display:     block;
-}
+.field-hint  { font-family: var(--ff-mono, 'JetBrains Mono', monospace); font-size: 0.75rem; font-weight: 400; color: #6b3338; letter-spacing: 0.04em; }
+.field-error { font-family: var(--ff-body, 'Inter', sans-serif); font-size: 0.8rem; font-weight: 500; color: #dc2626; min-height: 1rem; display: block; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   11. PASSWORD TOGGLE
-───────────────────────────────────────────────────────────────── */
-
-.input-wrap {
-  position:    relative;
-  display:     flex;
-  align-items: center;
-}
-
+/* ─── Password toggle ─── */
+.input-wrap { position: relative; display: flex; align-items: center; }
 .input-wrap .form-control { padding-right: 3rem; }
 
 .toggle-pw {
@@ -535,33 +471,13 @@
 }
 
 .toggle-pw:hover { color: #5b0e14; }
-
-.toggle-pw:focus-visible {
-  outline:        2px solid #5b0e14;
-  outline-offset: 2px;
-  border-radius:  4px;
-}
+.toggle-pw:focus-visible { outline: 2px solid #5b0e14; outline-offset: 2px; border-radius: 4px; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   12. CHECKBOX
-───────────────────────────────────────────────────────────────── */
+/* ─── Checkbox ─── */
+.checkbox-label { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; user-select: none; }
 
-.checkbox-label {
-  display:     flex;
-  align-items: center;
-  gap:         0.6rem;
-  cursor:      pointer;
-  user-select: none;
-}
-
-.checkbox-label input[type="checkbox"] {
-  position:       absolute;
-  opacity:        0;
-  width:          0;
-  height:         0;
-  pointer-events: none;
-}
+.checkbox-label input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
 
 .checkbox-custom {
   width:           18px;
@@ -592,55 +508,22 @@
   transition:       transform 150ms ease;
 }
 
-.checkbox-label input:checked + .checkbox-custom {
-  background:   #5b0e14;
-  border-color: #5b0e14;
-  box-shadow:   0 0 0 3px rgba(91,14,20,0.12);
-}
+.checkbox-label input:checked + .checkbox-custom { background: #5b0e14; border-color: #5b0e14; box-shadow: 0 0 0 3px rgba(91,14,20,0.12); }
+.checkbox-label input:checked + .checkbox-custom::after { border-color: #fff; transform: rotate(45deg) scale(1); }
 
-.checkbox-label input:checked + .checkbox-custom::after {
-  border-color: #fff;
-  transform:    rotate(45deg) scale(1);
-}
+.checkbox-label span:not(.checkbox-custom) { font-family: var(--ff-body, 'Inter', sans-serif); font-size: 0.9rem; font-weight: 400; color: #4a1e22; }
 
-.checkbox-label span:not(.checkbox-custom) {
-  font-family: var(--ff-body, 'Inter', sans-serif);
-  font-size:   0.9rem;
-  font-weight: 400;
-  color:       #4a1e22;
-}
+.form-row-between { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 
-
-/* ─────────────────────────────────────────────────────────────────
-   13. FORGOT LINK / ROW
-───────────────────────────────────────────────────────────────── */
-
-.form-row-between {
-  display:         flex;
-  align-items:     center;
-  justify-content: space-between;
-  gap:             1rem;
-  flex-wrap:       wrap;
-}
-
-.forgot-link {
-  font-family:     var(--ff-body, 'Inter', sans-serif);
-  font-size:       0.9rem;
-  font-weight:     600;
-  color:           #5b0e14;
-  text-decoration: none;
-  transition:      color 180ms ease;
-  white-space:     nowrap;
-}
-
+.forgot-link { font-family: var(--ff-body, 'Inter', sans-serif); font-size: 0.9rem; font-weight: 600; color: #5b0e14; text-decoration: none; transition: color 180ms ease; white-space: nowrap; }
 .forgot-link:hover { color: #420a0f; text-decoration: underline; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   14. BUTTONS
-───────────────────────────────────────────────────────────────── */
+/* 
+   BUTTONS 
+ */
 
-.btn {
+.login-main .btn {
   display:         inline-flex;
   align-items:     center;
   justify-content: center;
@@ -661,49 +544,29 @@
                    transform 120ms ease;
 }
 
-.btn:disabled,
-.btn[disabled] {
-  opacity:        0.45;
-  cursor:         not-allowed;
-  pointer-events: none;
-}
+.login-main .btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.login-main .btn:focus-visible { outline: 2.5px solid #5b0e14; outline-offset: 3px; }
 
-.btn:focus-visible {
-  outline:        2.5px solid #5b0e14;
-  outline-offset: 3px;
-}
-
-.btn-solid {
+.login-main .btn-solid {
   background:   linear-gradient(135deg, #420a0f 0%, #5b0e14 55%, #7a1219 100%);
   color:        #ffffff;
   border-color: #5b0e14;
   box-shadow:   0 2px 10px rgba(91,14,20,0.24);
 }
 
-.btn-solid:hover:not(:disabled) {
+.login-main .btn-solid:hover:not(:disabled) {
   background:   #420a0f;
   border-color: #420a0f;
   box-shadow:   0 6px 22px rgba(91,14,20,0.42);
   transform:    translateY(-1px);
 }
 
-.btn-solid:active:not(:disabled) {
-  transform:  translateY(0);
-  box-shadow: 0 2px 8px rgba(91,14,20,0.20);
-}
+.login-main .btn-solid:active:not(:disabled) { transform: translateY(0); box-shadow: 0 2px 8px rgba(91,14,20,0.20); }
 
-.btn-ghost {
-  background:   transparent;
-  color:        #5b0e14;
-  border-color: rgba(91,14,20,0.22);
-}
+.login-main .btn-ghost { background: transparent; color: #5b0e14; border-color: rgba(91,14,20,0.22); }
+.login-main .btn-ghost:hover:not(:disabled) { background: #fdf2f2; border-color: #9e1920; }
 
-.btn-ghost:hover:not(:disabled) {
-  background:   #fdf2f2;
-  border-color: #9e1920;
-}
-
-.btn .spinner {
+.login-main .btn .spinner {
   width:            14px;
   height:           14px;
   border:           2px solid rgba(255,255,255,0.30);
@@ -716,9 +579,9 @@
 @keyframes btn-spin { to { transform: rotate(360deg); } }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   15. STEP ACTIONS
-───────────────────────────────────────────────────────────────── */
+/* 
+   STEP ACTIONS
+*/
 
 .step-actions {
   display:         flex;
@@ -733,18 +596,13 @@
 .step-actions > span:first-child:empty + .btn { margin-left: auto; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   16. MESSAGES & ALERTS
-───────────────────────────────────────────────────────────────── */
+/* 
+   MESSAGES & ALERTS
+*/
 
-.messages-wrap {
-  display:        flex;
-  flex-direction: column;
-  gap:            0.5rem;
-  margin-bottom:  1.25rem;
-}
+.messages-wrap { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem; }
 
-.alert {
+.login-main .alert {
   display:       flex;
   align-items:   flex-start;
   gap:           0.7rem;
@@ -755,25 +613,26 @@
   font-size:     0.9rem;
   font-weight:   400;
   line-height:   1.65;
+  margin-bottom: 0;
 }
 
-.alert i { font-size: 0.9rem; flex-shrink: 0; margin-top: 2px; }
+.login-main .alert i { font-size: 0.9rem; flex-shrink: 0; margin-top: 2px; }
 
-.alert-success   { background: #f0fdf4; border-color: #bbf7d0; color: #14532d; }
-.alert-success i { color: #16803d; }
-.alert-error,
-.alert-danger    { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-.alert-error i,
-.alert-danger i  { color: #dc2626; }
-.alert-warning   { background: #fffbeb; border-color: #fde68a; color: #78350f; }
-.alert-warning i { color: #d97706; }
-.alert-info      { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
-.alert-info i    { color: #2563eb; }
+.login-main .alert-success   { background: #f0fdf4; border-color: #bbf7d0; color: #14532d; }
+.login-main .alert-success i { color: #16803d; }
+.login-main .alert-error,
+.login-main .alert-danger    { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.login-main .alert-error i,
+.login-main .alert-danger i  { color: #dc2626; }
+.login-main .alert-warning   { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+.login-main .alert-warning i { color: #d97706; }
+.login-main .alert-info      { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
+.login-main .alert-info i    { color: #2563eb; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   17. WEBCAM PANEL
-───────────────────────────────────────────────────────────────── */
+/* 
+   WEBCAM PANEL
+ */
 
 .webcam-panel {
   position:      relative;
@@ -807,23 +666,12 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   18. HUD OVERLAY
-───────────────────────────────────────────────────────────────── */
-
-.hud-overlay {
-  position:       absolute;
-  inset:          0;
-  pointer-events: none;
-  z-index:        5;
-}
+/* ─── HUD overlay ─── */
+.hud-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
 
 .scan-circle {
-  position:      absolute;
-  top:           50%;
-  left:          50%;
-  width:         130px;
-  height:        162px;
+  position: absolute; top: 50%; left: 50%;
+  width: 130px; height: 162px;
   border-radius: 50%;
   border:        2px solid rgba(241,225,148,0.45);
   transform:     translate(-50%, -52%);
@@ -831,10 +679,8 @@
 
 .scan-ring {
   position:           absolute;
-  top:                50%;
-  left:               50%;
-  width:              148px;
-  height:             180px;
+  top: 50%; left: 50%;
+  width: 148px; height: 180px;
   border-radius:      50%;
   border:             2px solid transparent;
   border-top-color:   rgba(241,225,148,0.68);
@@ -853,7 +699,7 @@
 
 .scan-line {
   position:   absolute;
-  top:        0; left: 0; right: 0;
+  top: 0; left: 0; right: 0;
   height:     2px;
   background: linear-gradient(90deg, transparent 0%, rgba(241,225,148,0.0) 20%, rgba(241,225,148,0.58) 50%, rgba(241,225,148,0.0) 80%, transparent 100%);
   animation:  scan-move 2.6s ease-in-out infinite;
@@ -892,15 +738,12 @@
 .webcam-status.ready i { color: #22c55e; animation: none; }
 .webcam-status.error i { color: #f87171; animation: none; }
 
-@keyframes status-pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.38; }
-}
+@keyframes status-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.38; } }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   19. LIVENESS INSTRUCTIONS
-───────────────────────────────────────────────────────────────── */
+/*
+   LIVENESS INSTRUCTIONS
+*/
 
 .liveness-instruction {
   display:        flex;
@@ -916,52 +759,41 @@
   font-weight:    500;
   color:          #2d1114;
   line-height:    1.5;
+  transition:     background 250ms ease, border-color 250ms ease, color 250ms ease;
 }
 
-.liveness-instruction i {
-  font-size:   1rem;
-  color:       #7a1219;
-  flex-shrink: 0;
-  animation:   blink-hint 2s ease-in-out infinite;
-}
+.liveness-instruction i { font-size: 1rem; color: #7a1219; flex-shrink: 0; animation: blink-hint 2s ease-in-out infinite; }
+.liveness-instruction.success > i, .liveness-instruction.error > i { animation: none; }
 
-@keyframes blink-hint {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.32; }
-}
+.liveness-instruction.success { background: #f0fdf4; border-color: rgba(22,128,61,0.28); color: #14532d !important; }
+.liveness-instruction.success i { color: #16803d; }
+.liveness-instruction.error   { background: #fef2f2; border-color: rgba(220,38,38,0.28); color: #991b1b !important; }
+.liveness-instruction.error i { color: #dc2626; }
+
+@keyframes blink-hint { 0%, 100% { opacity: 1; } 50% { opacity: 0.32; } }
 
 #instructionText { flex: 1; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   20. CAPTURE DOTS & ATTEMPTS BADGE
-───────────────────────────────────────────────────────────────── */
+/* 
+   CAPTURE DOTS & ATTEMPTS BADGE
+ */
 
-.capture-dots {
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  gap:             0.6rem;
-  margin-bottom:   0.9rem;
-}
+.capture-dots { display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-bottom: 0.9rem; }
 
 .capture-dot {
   display:       inline-block;
-  width:         11px;
-  height:        11px;
+  width:         11px; height: 11px;
   border-radius: 50%;
   border:        2px solid rgba(91,14,20,0.24);
   background:    transparent;
   transition:    all 300ms ease;
 }
 
-.capture-dot.filled { background: #5b0e14; border-color: #5b0e14; box-shadow: 0 0 8px rgba(91,14,20,0.38); }
+.capture-dot.done   { background: #5b0e14; border-color: #5b0e14; box-shadow: 0 0 8px rgba(91,14,20,0.38); }
 .capture-dot.active { border-color: #5b0e14; animation: dot-pulse 0.9s ease-in-out infinite; }
 
-@keyframes dot-pulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.4); }
-}
+@keyframes dot-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.4); } }
 
 .attempts-badge {
   display:       flex;
@@ -988,9 +820,9 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   21. RESPONSIVE
-───────────────────────────────────────────────────────────────── */
+/* 
+   RESPONSIVE
+ */
 
 @media (max-width: 1024px) {
   .login-wrapper { grid-template-columns: 340px 1fr; }
@@ -1001,11 +833,13 @@
   .login-wrapper { grid-template-columns: 1fr; }
   .login-aside   { display: none; }
   .login-section { align-items: flex-start; }
+
   .login-main {
     padding:         2.5rem 1.25rem;
     justify-content: flex-start;
     min-height:      calc(100vh - var(--navbar-height, 64px));
   }
+
   .login-form-wrap { max-width: 100%; padding: 2rem 1.5rem; }
   .webcam-panel    { max-height: 220px; }
 }
@@ -1014,8 +848,9 @@
   .login-main      { padding: 1.5rem 1rem; }
   .login-form-wrap { padding: 1.5rem 1.25rem; border-radius: 12px; }
   .step-header h2  { font-size: 1.45rem; }
-  .btn             { padding: 0.72rem 1.2rem; font-size: 0.9375rem; }
+  .login-main .btn { padding: 0.72rem 1.2rem; font-size: 0.9375rem; }
   .webcam-panel    { max-height: 190px; border-radius: 10px; }
-  .step-actions    { flex-direction: column-reverse; gap: 0.65rem; }
+
+  .step-actions { flex-direction: column-reverse; gap: 0.65rem; }
   .step-actions .btn { width: 100%; justify-content: center; }
 }

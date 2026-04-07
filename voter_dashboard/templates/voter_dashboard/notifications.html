@@ -1,0 +1,119 @@
+{% extends 'voter_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Notifications{% endblock %}
+{% block navbar_title %}Notifications{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'voter_dashboard/css/notifications.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="notif-page">
+
+  <!-- Header -->
+  <div class="section-header">
+    <div>
+      <span class="section-tag">Inbox</span>
+      <h3>
+        Your Notifications
+        {% if notifications %}
+          <span class="notif-count-chip">{{ notifications|length }}</span>
+        {% endif %}
+      </h3>
+    </div>
+    {% if notifications %}
+      <button class="btn btn-ghost" id="markAllReadBtn">
+        <i class="fa-solid fa-check-double"></i> Mark all as read
+      </button>
+    {% endif %}
+  </div>
+
+  {% if notifications %}
+    <div class="notif-list" id="notifList">
+      {% for notif in notifications %}
+        <div class="notif-item {% if not notif.is_read %}unread{% endif %}"
+             id="notif-{{ notif.id }}">
+
+          <!-- Icon -->
+          <div class="notif-icon
+            {% if notif.notif_type == 'election_open' %}open
+            {% elif notif.notif_type == 'election_close' %}close
+            {% elif notif.notif_type == 'results_published' %}results
+            {% else %}general{% endif %}"
+            aria-hidden="true">
+            {% if notif.notif_type == 'election_open' %}
+              <i class="fa-solid fa-play-circle"></i>
+            {% elif notif.notif_type == 'election_close' %}
+              <i class="fa-solid fa-stop-circle"></i>
+            {% elif notif.notif_type == 'results_published' %}
+              <i class="fa-solid fa-chart-bar"></i>
+            {% else %}
+              <i class="fa-solid fa-circle-info"></i>
+            {% endif %}
+          </div>
+
+          <!-- Body -->
+          <div class="notif-body">
+
+            <div class="notif-title">
+              {% if not notif.is_read %}
+                <span class="notif-unread-dot" aria-label="Unread"></span>
+              {% endif %}
+              {{ notif.title }}
+            </div>
+
+            <p class="notif-message">{{ notif.message }}</p>
+
+            <div class="notif-time">
+              <i class="fa-regular fa-clock"></i>
+              {{ notif.created_at|date:"d M Y" }}
+              &nbsp;at&nbsp;
+              {{ notif.created_at|date:"H:i" }}
+
+              {% if notif.election %}
+                <span class="notif-sep"></span>
+                <span class="notif-election-tag">
+                  <i class="fa-solid fa-check-to-slot"></i>
+                  {{ notif.election.title|truncatechars:28 }}
+                </span>
+              {% endif %}
+            </div>
+
+          </div>
+
+          <!-- Actions -->
+          <div class="notif-actions">
+            {% if not notif.is_read %}
+              <button class="notif-btn"
+                      data-mark-read="{{ notif.id }}"
+                      title="Mark as read"
+                      aria-label="Mark notification as read">
+                <i class="fa-solid fa-check"></i>
+              </button>
+            {% endif %}
+            <button class="notif-btn delete"
+                    data-delete-notif="{{ notif.id }}"
+                    title="Delete notification"
+                    aria-label="Delete notification">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="fa-regular fa-bell-slash"></i>
+      </div>
+      <h4>No Notifications Yet</h4>
+      <p>You're all caught up. Notifications about elections opening, closing, and results will appear here.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

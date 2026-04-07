@@ -1,649 +1,326 @@
-/* ═══════════════════════════════════════════════════════════════════
-   SecureVoter AI — Voter Dashboard / profile.css
-   ─────────────────────────────────────────────────────────────────
-   Voter profile page: sticky identity card, AI verification panel,
-   voting history table, account security section.
-   Requires: base.css tokens + Inter + JetBrains Mono
-═══════════════════════════════════════════════════════════════════ */
+/* 
+ Voter Dashboard / profile.css
+  */
 
 
-/* ─────────────────────────────────────────────────────────────────
-   PAGE WRAPPER
-───────────────────────────────────────────────────────────────── */
 
 .profile-page {
   display:        flex;
   flex-direction: column;
-  gap:            2rem;
+  gap:            1.75rem;
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   1. TWO-COLUMN LAYOUT
-───────────────────────────────────────────────────────────────── */
-
-.profile-grid {
-  display:               grid;
-  grid-template-columns: 288px 1fr;
-  gap:                   1.5rem;
-  align-items:           start;
-}
-
-.profile-right {
-  display:        flex;
-  flex-direction: column;
-  gap:            1.5rem;
-}
-
-
-/* ─────────────────────────────────────────────────────────────────
-   2. IDENTITY CARD (left column, sticky)
-───────────────────────────────────────────────────────────────── */
-
-.profile-card {
-  background:    var(--c-surface-base);
-  border:        1px solid var(--c-border-blush);
-  border-top:    3px solid var(--c-primary-700);
-  border-radius: var(--radius-xl);
+.profile-header {
+  display:       flex;
+  align-items:   center;
+  gap:           1.5rem;
+  flex-wrap:     wrap;
+  background:    var(--vd-surface);
+  border:        1px solid var(--vd-border);
+  border-top:    3px solid var(--vd-primary-700);
+  border-radius: var(--vd-radius-xl);
+  padding:       1.75rem 2rem;
+  box-shadow:    var(--vd-shadow-card);
+  position:      relative;
   overflow:      hidden;
-  position:      sticky;
-  top:           calc(var(--navbar-height) + 1.25rem);
-  box-shadow:    var(--shadow-card);
 }
 
-/* ── Card header ─────────────────────────────────────────────── */
-
-.profile-card-header {
-  display:         flex;
-  flex-direction:  column;
-  align-items:     center;
-  text-align:      center;
-  padding:         2rem 1.5rem 1.5rem;
-  border-bottom:   1px solid var(--c-border-light);
-  position:        relative;
-  overflow:        hidden;
-  background:      linear-gradient(180deg, var(--c-primary-50) 0%, var(--c-surface-base) 100%);
+.profile-header::before {
+  content:    '';
+  position:   absolute;
+  top:        3px; left: 8%; width: 84%; height: 1px;
+  background: var(--vd-grad-gold-shimmer);
 }
 
-/* Ambient wash behind avatar */
-.profile-card-header::before {
+.profile-header::after {
   content:        '';
   position:       absolute;
-  top:   -50px; left: 50%;
-  transform:      translateX(-50%);
-  width:          200px; height: 200px;
+  top: -50px; right: -40px;
+  width:          180px; height: 180px;
   border-radius:  50%;
-  background:     radial-gradient(circle, rgba(91,14,20,0.06) 0%, transparent 68%);
+  background:     radial-gradient(circle, rgba(91,14,20,0.05) 0%, transparent 68%);
   pointer-events: none;
 }
 
-/* Gold shimmer line across bottom of header */
-.profile-card-header::after {
-  content:    '';
-  position:   absolute;
-  bottom: 0; left: 8%; width: 84%; height: 1px;
-  background: var(--grad-gold-shimmer);
-}
-
-/* ── Avatar ─────────────────────────────────────────────────── */
 
 .profile-avatar-wrap {
-  position:    relative;
-  margin-bottom:1.1rem;
-  display:     flex;
-  align-items: center;
-  justify-content:center;
-}
-
-/* Spinning dashed scan ring */
-.avatar-scan-ring {
-  position:      absolute;
-  width:         98px;
-  height:        98px;
-  border-radius: 50%;
-  border:        2px dashed rgba(91,14,20,0.22);
-  animation:     scan-spin 10s linear infinite;
-  pointer-events:none;
-}
-
-@keyframes scan-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-.profile-avatar {
-  width:           82px;
-  height:          82px;
+  width:           76px;
+  height:          76px;
   border-radius:   50%;
-  background:      var(--grad-primary);
-  border:          3px solid rgba(91,14,20,0.18);
-  box-shadow:      0 0 0 4px var(--c-primary-100), var(--shadow-primary);
+  background:      var(--vd-grad-primary);
+  color:           var(--vd-accent-300);
   display:         flex;
   align-items:     center;
   justify-content: center;
-  font-family:     var(--ff-heading);
-  font-size:       1.65rem;
+  font-family:     var(--vd-ff-heading);
+  font-size:       1.75rem;
   font-weight:     800;
-  color:           var(--c-accent-300);
   letter-spacing:  -0.02em;
+  border:          3px solid rgba(91,14,20,0.18);
+  box-shadow:      0 0 0 4px var(--vd-primary-100), 0 4px 16px rgba(91,14,20,0.22);
+  flex-shrink:     0;
   overflow:        hidden;
   position:        relative;
-  flex-shrink:     0;
+  z-index:         1;
 }
 
-.profile-avatar img {
+.profile-avatar-wrap img {
   width:         100%;
   height:        100%;
   object-fit:    cover;
-  object-position:center top;
+  object-position: center top;
   border-radius: 50%;
   display:       block;
 }
 
-/* Green verified tick */
-.avatar-verified-badge {
-  position:        absolute;
-  bottom: 0; right: 0;
-  width:           22px; height: 22px;
-  border-radius:   50%;
-  background:      linear-gradient(135deg, var(--c-success-600) 0%, var(--c-live-500) 100%);
-  border:          2px solid var(--c-surface-base);
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  font-size:       0.55rem;
-  color:           #fff;
-  box-shadow:      0 2px 8px rgba(22,128,61,0.30);
-}
 
-.profile-name {
-  font-family:    var(--ff-heading);
-  font-size:      1.25rem;
+.profile-info { flex: 1; min-width: 0; position: relative; z-index: 1; }
+
+.profile-info h3 {
+  font-family:    var(--vd-ff-heading);
+  font-size:      1.375rem;
   font-weight:    800;
-  color:          var(--c-ink-800);
+  color:          var(--vd-ink-800);
   letter-spacing: -0.02em;
   line-height:    1.2;
   margin-bottom:  0.3rem;
-  position:       relative;
-  z-index:        1;
 }
 
-.profile-student-id {
-  font-family:    var(--ff-mono);
-  font-size:      0.72rem;
-  font-weight:    400;
-  letter-spacing: 0.09em;
-  color:          var(--c-ink-400);
-  max-width:      none;
-  line-height:    1;
-  margin-bottom:  0.9rem;
-  position:       relative;
-  z-index:        1;
-}
-
-/* Face verification chip */
-.face-verification-status {
-  display:        inline-flex;
-  align-items:    center;
-  gap:            0.45rem;
-  padding:        0.32rem 0.88rem;
-  border-radius:  var(--radius-full);
-  font-family:    var(--ff-mono);
-  font-size:      0.68rem;
-  font-weight:    500;
-  letter-spacing: 0.07em;
-  border:         1px solid transparent;
-  position:       relative;
-  z-index:        1;
-}
-
-.face-verification-status.verified {
-  background:   var(--c-success-100);
-  border-color: rgba(22,128,61,0.22);
-  color:        var(--c-success-700);
-}
-
-.pulse-dot {
-  display:       inline-block;
-  width:         7px; height: 7px;
-  border-radius: 50%;
-  background:    var(--c-live-500);
-  box-shadow:    0 0 7px var(--c-live-glow);
-  flex-shrink:   0;
-  animation:     dot-pulse 2s ease-in-out infinite;
-}
-
-@keyframes dot-pulse {
-  0%,100% { opacity: 1;   transform: scale(1);    }
-  50%     { opacity: 0.5; transform: scale(0.78); }
-}
-
-
-/* ── Islington college chip ──────────────────────────────────── */
-
-.college-chip {
-  display:       flex;
-  align-items:   center;
-  gap:           0.75rem;
-  padding:       1rem 1.25rem;
-  background:    var(--c-primary-50);
-  border-bottom: 1px solid var(--c-border-light);
-}
-
-.college-chip-icon {
-  width:           36px;
-  height:          36px;
-  border-radius:   var(--radius-md);
-  background:      var(--c-primary-100);
-  border:          1px solid var(--c-border-primary);
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  font-size:       0.95rem;
-  color:           var(--c-primary-700);
-  flex-shrink:     0;
-}
-
-.college-chip-text h4 {
-  font-family:    var(--ff-heading);
-  font-size:      0.875rem;
-  font-weight:    700;
-  color:          var(--c-ink-700);
-  letter-spacing: -0.01em;
-  line-height:    1.2;
-  margin-bottom:  0.2rem;
-}
-
-.college-chip-text p {
-  font-family:    var(--ff-mono);
-  font-size:      0.68rem;
-  color:          var(--c-ink-400);
-  letter-spacing: 0.05em;
+.profile-info p {
+  font-family:    var(--vd-ff-mono);
+  font-size:      0.80rem;
+  color:          var(--vd-ink-500);
+  letter-spacing: 0.04em;
   max-width:      none;
   line-height:    1;
 }
 
-/* ── Detail rows ─────────────────────────────────────────────── */
 
-.profile-card-body {
-  display:        flex;
-  flex-direction: column;
-}
-
-.profile-detail-row {
-  display:       flex;
-  align-items:   center;
-  justify-content:space-between;
-  gap:           0.75rem;
-  padding:       0.7rem 1.25rem;
-  border-bottom: 1px solid var(--c-border-light);
-  transition:    background var(--dur-fast) var(--ease-out);
-}
-
-.profile-detail-row:last-child { border-bottom: none; }
-.profile-detail-row:hover      { background: var(--c-surface-warm); }
-
-.detail-key {
-  display:        flex;
-  align-items:    center;
-  gap:            0.42rem;
-  font-family:    var(--ff-mono);
-  font-size:      0.68rem;
-  font-weight:    500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color:          var(--c-ink-400);
-  flex-shrink:    0;
-  min-width:      88px;
-}
-
-.detail-key i { font-size: 0.75em; color: var(--c-primary-600); }
-
-.detail-value {
-  font-family:  var(--ff-body);
-  font-size:    0.8125rem;
-  font-weight:  500;
-  color:        var(--c-ink-600);
-  text-align:   right;
-  word-break:   break-word;
-  line-height:  1.4;
-}
-
-
-/* ─────────────────────────────────────────────────────────────────
-   3. SECTION CARDS (right column)
-───────────────────────────────────────────────────────────────── */
-
-.profile-section-card {
-  background:    var(--c-surface-base);
-  border:        1px solid var(--c-border-light);
-  border-radius: var(--radius-xl);
-  overflow:      hidden;
-  box-shadow:    var(--shadow-card);
-}
-
-/* Section head */
-.profile-section-head {
-  display:         flex;
-  align-items:     center;
-  justify-content: space-between;
-  gap:             1rem;
-  padding:         1.25rem 1.5rem;
-  border-bottom:   1px solid var(--c-border-light);
-  background:      var(--c-surface-warm);
-}
-
-.profile-section-head-left {
+.profile-header .welcome-badges {
   display:     flex;
-  align-items: center;
-  gap:         0.85rem;
-  flex:        1;
-  min-width:   0;
+  gap:         0.5rem;
+  flex-wrap:   wrap;
+  flex-shrink: 0;
+  position:    relative;
+  z-index:     1;
+  margin-left: auto;
 }
 
-/* Icon box */
-.section-icon {
-  width:           42px;
-  height:          42px;
-  border-radius:   var(--radius-md);
-  background:      var(--c-primary-100);
-  border:          1px solid var(--c-border-primary);
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  font-size:       1rem;
-  color:           var(--c-primary-700);
-  flex-shrink:     0;
+
+.settings-card {
+  background:    var(--vd-surface);
+  border:        1px solid var(--vd-border);
+  border-radius: var(--vd-radius-xl);
+  padding:       1.75rem;
+  box-shadow:    var(--vd-shadow-card);
 }
 
-.section-icon.gold-icon {
-  background:   var(--c-accent-100);
-  border-color: rgba(163,112,0,0.20);
-  color:        var(--c-accent-800);
-}
-
-.profile-section-head-left > div h3 {
-  font-family:    var(--ff-heading);
+.settings-card h4 {
+  font-family:    var(--vd-ff-heading);
   font-size:      1.0625rem;
   font-weight:    700;
-  color:          var(--c-ink-700);
+  color:          var(--vd-ink-700);
   letter-spacing: -0.015em;
-  line-height:    1.2;
-  margin-bottom:  0.2rem;
+  margin-bottom:  1.25rem;
+  padding-bottom: 0.85rem;
+  border-bottom:  1px solid var(--vd-border);
+  display:        flex;
+  align-items:    center;
+  gap:            0.5rem;
 }
 
-.profile-section-head-left > div p {
-  font-family: var(--ff-body);
-  font-size:   0.8rem;
-  color:       var(--c-ink-400);
-  max-width:   none;
-  line-height: 1;
-}
-
-/* Section body */
-.profile-section-body { padding: 1.5rem; }
+.settings-card h4 i { font-size: 0.9em; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   4. AI VERIFICATION GRID
-───────────────────────────────────────────────────────────────── */
-
-.ai-verification-grid {
+.info-grid {
   display:               grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap:                   0.75rem;
 }
 
-.ai-verify-item {
-  display:        flex;
-  flex-direction: column;
-  gap:            0.38rem;
-  padding:        0.88rem 1rem;
-  background:     var(--c-surface-warm);
-  border:         1px solid var(--c-border-light);
-  border-radius:  var(--radius-md);
+.info-item {
+  background:    var(--vd-warm);
+  border:        1px solid var(--vd-border);
+  border-radius: var(--vd-radius-md);
+  padding:       0.9rem 1.1rem;
   transition:
-    border-color var(--dur-fast) var(--ease-out),
-    background   var(--dur-fast) var(--ease-out);
+    border-color var(--vd-dur-fast) var(--vd-ease),
+    background   var(--vd-dur-fast) var(--vd-ease);
 }
 
-.ai-verify-item:hover {
-  border-color: var(--c-border-blush);
-  background:   var(--c-surface-blush);
+.info-item:hover {
+  border-color: var(--vd-border-strong);
+  background:   var(--vd-primary-50);
 }
 
-.ai-verify-label {
-  font-family:    var(--ff-mono);
+.info-item label {
+  display:        block;
+  font-family:    var(--vd-ff-mono);
   font-size:      0.65rem;
-  font-weight:    500;
-  letter-spacing: 0.09em;
+  font-weight:    600;
+  letter-spacing: 0.10em;
   text-transform: uppercase;
-  color:          var(--c-ink-400);
+  color:          var(--vd-ink-400);
+  margin-bottom:  0.38rem;
   line-height:    1;
 }
 
-.ai-verify-value {
-  display:        flex;
-  align-items:    center;
-  gap:            0.42rem;
-  font-family:    var(--ff-body);
-  font-size:      0.875rem;
-  font-weight:    600;
-  line-height:    1.35;
+.info-item span {
+  display:     block;
+  font-family: var(--vd-ff-body);
+  font-size:   0.9375rem;
+  font-weight: 600;
+  color:       var(--vd-ink-700);
+  line-height: 1.3;
+  word-break:  break-word;
 }
 
-.ai-verify-value i { font-size: 0.82em; flex-shrink: 0; }
-
-/* Colour variants — green for ok, burgundy for blue/primary */
-.ai-verify-value.ok {
-  color: var(--c-success-700);
-}
-
-.ai-verify-value.ok i { color: var(--c-success-600); }
-
-/* ".blue" → uses primary burgundy in this palette */
-.ai-verify-value.blue {
-  color: var(--c-primary-700);
-}
-
-.ai-verify-value.blue i { color: var(--c-primary-500); }
-
-.ai-verify-value.warn {
-  color: var(--c-warning-500);
-}
-
-
-/* ─────────────────────────────────────────────────────────────────
-   5. VOTING HISTORY TABLE
-───────────────────────────────────────────────────────────────── */
 
 .vote-history-table-wrap {
-  overflow-x: auto;
+  overflow-x:                 auto;
   -webkit-overflow-scrolling: touch;
+  margin: 0 -1.75rem;
 }
 
 .vote-history-table-wrap table {
-  width:      100%;
-  min-width:  560px;
+  width:     100%;
+  min-width: 480px;
+  border-collapse: collapse;
 }
 
-/* Head */
-.vote-history-table-wrap thead tr {
-  border-bottom: 1px solid var(--c-border-blush);
-}
+.vote-history-table-wrap thead tr { border-bottom: 1px solid var(--vd-border); }
 
 .vote-history-table-wrap th {
-  padding:        0.72rem 1.25rem;
-  font-family:    var(--ff-mono);
+  padding:        0.72rem 1.75rem;
+  font-family:    var(--vd-ff-mono);
   font-size:      0.65rem;
-  font-weight:    500;
+  font-weight:    600;
   letter-spacing: 0.10em;
   text-transform: uppercase;
-  color:          var(--c-ink-400);
+  color:          var(--vd-ink-400);
   text-align:     left;
   white-space:    nowrap;
-  background:     var(--c-surface-warm);
+  background:     var(--vd-warm);
 }
 
-.vote-history-table-wrap th:first-child { padding-left: 1.75rem; }
-.vote-history-table-wrap th:last-child  { padding-right: 1.75rem; text-align: right; }
-
-/* Body rows */
 .vote-history-table-wrap tbody tr {
-  border-bottom: 1px solid var(--c-border-light);
-  transition:    background var(--dur-fast) var(--ease-out);
+  border-bottom: 1px solid var(--vd-border);
+  transition:    background var(--vd-dur-fast) var(--vd-ease);
 }
 
 .vote-history-table-wrap tbody tr:last-child { border-bottom: none; }
-.vote-history-table-wrap tbody tr:hover      { background: var(--c-surface-warm); }
+.vote-history-table-wrap tbody tr:hover      { background: var(--vd-warm); }
 
 .vote-history-table-wrap td {
-  padding:     0.88rem 1.25rem;
-  font-family: var(--ff-body);
+  padding:     0.88rem 1.75rem;
+  font-family: var(--vd-ff-body);
   font-size:   0.875rem;
-  color:       var(--c-ink-600);
+  color:       var(--vd-ink-600);
   vertical-align: middle;
   line-height: 1.4;
 }
 
-.vote-history-table-wrap td:first-child { padding-left: 1.75rem; }
-.vote-history-table-wrap td:last-child  { padding-right: 1.75rem; text-align: right; }
+.td-election { font-weight: 600; color: var(--vd-ink-700); max-width: 220px; }
 
-/* Election title cell */
-.td-election {
-  font-weight: 600 !important;
-  color:       var(--c-ink-700) !important;
-  max-width:   220px;
-}
-
-/* Candidate cell */
-.td-candidate {
-  display:     flex;
-  align-items: center;
-  gap:         0.5rem;
-}
+.td-candidate { display: flex; align-items: center; gap: 0.5rem; }
 
 .td-candidate-dot {
   width:         8px;
   height:        8px;
   border-radius: 50%;
-  background:    var(--c-primary-400);
+  background:    var(--vd-primary-400);
   box-shadow:    0 0 7px rgba(91,14,20,0.25);
   flex-shrink:   0;
 }
 
-.td-candidate-name {
-  font-family: var(--ff-body);
-  font-size:   0.875rem;
-  font-weight: 500;
-  color:       var(--c-ink-600);
-}
+.td-candidate-name { font-size: 0.875rem; font-weight: 500; color: var(--vd-ink-600); }
 
-/* Encrypted badge */
 .encrypted-badge {
   display:        inline-flex;
   align-items:    center;
   gap:            0.35rem;
   padding:        0.22em 0.7em;
-  border-radius:  var(--radius-full);
-  background:     var(--c-success-100);
+  border-radius:  var(--vd-radius-full);
+  background:     var(--vd-success-100);
   border:         1px solid rgba(22,128,61,0.22);
-  color:          var(--c-success-700);
-  font-family:    var(--ff-mono);
+  color:          var(--vd-success-700);
+  font-family:    var(--vd-ff-mono);
   font-size:      0.68rem;
   font-weight:    500;
   letter-spacing: 0.05em;
   white-space:    nowrap;
 }
 
-.encrypted-badge i { font-size: 0.78em; }
-
-/* Timestamp */
 .td-timestamp {
-  font-family:    var(--ff-mono) !important;
-  font-size:      0.72rem !important;
+  font-family:    var(--vd-ff-mono);
+  font-size:      0.72rem;
   letter-spacing: 0.04em;
+  color:          var(--vd-ink-400);
   white-space:    nowrap;
-  color:          var(--c-ink-400) !important;
 }
-
-
-/* ─────────────────────────────────────────────────────────────────
-   6. VOTE HISTORY EMPTY STATE
-───────────────────────────────────────────────────────────────── */
 
 .vote-history-empty {
   display:        flex;
   flex-direction: column;
   align-items:    center;
   text-align:     center;
-  padding:        3.5rem 2rem;
+  padding:        3rem 1.5rem;
   gap:            0.75rem;
 }
 
 .vote-history-empty > i {
   font-size:    2.5rem;
-  color:        var(--c-primary-200);
-  margin-bottom:0.4rem;
+  color:        var(--vd-primary-200);
+  margin-bottom: 0.4rem;
 }
 
 .vote-history-empty > p {
-  font-family:  var(--ff-body);
-  font-size:    1.0625rem;
-  color:        var(--c-ink-500);
-  max-width:    36ch;
-  margin:       0 auto;
-  line-height:  1.75;
+  font-family: var(--vd-ff-body);
+  font-size:   1rem;
+  color:       var(--vd-ink-500);
+  max-width:   34ch;
+  margin:      0 auto;
+  line-height: 1.72;
+}
+
+.privacy-notice {
+  display:       flex;
+  align-items:   flex-start;
+  gap:           0.65rem;
+  padding:       0.85rem 1.1rem;
+  margin:        1.1rem 1.75rem 1.25rem;
+  background:    var(--vd-primary-50);
+  border:        1px solid var(--vd-border-primary);
+  border-radius: var(--vd-radius-md);
+}
+
+.privacy-notice i {
+  font-size:   0.85rem;
+  color:       var(--vd-primary-600);
+  flex-shrink: 0;
+  margin-top:  3px;
+}
+
+.privacy-notice p {
+  font-family: var(--vd-ff-body);
+  font-size:   0.8125rem;
+  color:       var(--vd-ink-500);
+  line-height: 1.7;
+  max-width:   none;
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   7. RESPONSIVE
-───────────────────────────────────────────────────────────────── */
-
-@media (max-width: 1024px) {
-  .profile-grid { grid-template-columns: 260px 1fr; }
-}
-
-@media (max-width: 820px) {
-  .profile-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-card {
-    position:     static;
-    max-width:    480px;
-    margin-left:  auto;
-    margin-right: auto;
-  }
-
-  .ai-verification-grid { grid-template-columns: 1fr 1fr; }
-}
-
-@media (max-width: 560px) {
-  .profile-section-head {
-    flex-direction: column;
-    align-items:    flex-start;
-    gap:            0.75rem;
-  }
-
-  .ai-verification-grid { grid-template-columns: 1fr; }
-
-  .profile-section-body { padding: 1.25rem; }
-
+@media (max-width: 680px) {
+  .profile-header  { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .profile-header .welcome-badges { margin-left: 0; }
+  .info-grid { grid-template-columns: 1fr 1fr; }
+  .settings-card { padding: 1.35rem; }
+  .vote-history-table-wrap { margin: 0 -1.35rem; }
   .vote-history-table-wrap th,
-  .vote-history-table-wrap td {
-    padding: 0.7rem 1rem;
-  }
-
-  .vote-history-table-wrap th:first-child,
-  .vote-history-table-wrap td:first-child { padding-left: 1rem; }
-
-  .vote-history-table-wrap th:last-child,
-  .vote-history-table-wrap td:last-child  { padding-right: 1rem; }
+  .vote-history-table-wrap td { padding: 0.72rem 1.35rem; }
 }
 
-@media (max-width: 400px) {
-  .profile-name { font-size: 1.125rem; }
-  .college-chip { padding: 0.85rem 1rem; }
+@media (max-width: 440px) {
+  .info-grid { grid-template-columns: 1fr; }
 }

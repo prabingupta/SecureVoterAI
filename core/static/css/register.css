@@ -1,13 +1,12 @@
-/* ═══════════════════════════════════════════════════════════════════
+/* 
    SecureVoter AI — register.css
-   FULLY SELF-CONTAINED — no index.css token dependency.
-   Depends only on base.css for: --ff-heading, --ff-body, --ff-mono,
-   --navbar-height, and the global reset.
-═══════════════════════════════════════════════════════════════════ */
+   
+*/
 
-/* ─────────────────────────────────────────────────────────────────
-   1. LAYOUT
-───────────────────────────────────────────────────────────────── */
+
+/* 
+   LAYOUT
+*/
 
 .register-section {
   min-height:   100vh;
@@ -25,9 +24,9 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   2. LEFT PANEL — BRANDING ASIDE
-───────────────────────────────────────────────────────────────── */
+/* 
+   LEFT PANEL — BRANDING ASIDE
+ */
 
 .register-aside {
   position:        sticky;
@@ -37,13 +36,11 @@
   scrollbar-width: none;
   display:         flex;
   align-items:     stretch;
-
   background:      #1a0305;
   background-image:
     radial-gradient(ellipse at 22% 78%, rgba(91,14,20,0.80) 0%, transparent 52%),
     radial-gradient(ellipse at 82% 14%, rgba(66,10,15,0.58) 0%, transparent 48%),
     linear-gradient(158deg, #2e0609 0%, #1a0305 52%, #0f0304 100%);
-
   border-top:   2px solid rgba(241,225,148,0.28);
   border-right: 1px solid rgba(241,225,148,0.07);
 }
@@ -120,10 +117,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   3. ASIDE FEATURES LIST
-───────────────────────────────────────────────────────────────── */
-
+/* ─── Aside features list ─── */
 .aside-features {
   display:        flex;
   flex-direction: column;
@@ -146,10 +140,7 @@
   transition:    background 200ms ease, color 200ms ease;
 }
 
-.aside-features li:hover {
-  background: rgba(241,225,148,0.07);
-  color:      #ffffff;
-}
+.aside-features li:hover { background: rgba(241,225,148,0.07); color: #ffffff; }
 
 .aside-features li i {
   width:           22px;
@@ -165,10 +156,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   4. ASIDE STEP INDICATORS — 3 STEPS
-───────────────────────────────────────────────────────────────── */
-
+/* ─── Aside step indicators (3 steps) ─── */
 .aside-steps {
   display:       flex;
   align-items:   center;
@@ -249,49 +237,17 @@
   background:    linear-gradient(90deg, rgba(241,225,148,0.08) 0%, rgba(241,225,148,0.24) 50%, rgba(241,225,148,0.08) 100%);
   margin-bottom: 1.05rem;
   flex-shrink:   0;
+  transition:    background 350ms ease;
+}
+
+.aside-step-connector.filled {
+  background: linear-gradient(90deg, rgba(241,225,148,0.25) 0%, rgba(241,225,148,0.55) 50%, rgba(241,225,148,0.25) 100%);
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   5. ASIDE FOOTER
-───────────────────────────────────────────────────────────────── */
-
-.register-aside .aside-footer {
-  margin-top:  auto;
-  padding-top: 1.85rem;
-  border-top:  1px solid rgba(255,255,255,0.09);
-}
-
-.register-aside .aside-footer > p {
-  font-family:   var(--ff-body, 'Inter', sans-serif);
-  font-size:     0.875rem;
-  font-weight:   400;
-  color:         rgba(255,255,255,0.42);
-  margin-bottom: 0.6rem;
-  margin-top:    0;
-  max-width:     none;
-}
-
-.aside-register-link {
-  display:         inline-flex;
-  align-items:     center;
-  gap:             0.5rem;
-  font-family:     var(--ff-body, 'Inter', sans-serif);
-  font-size:       0.9375rem;
-  font-weight:     600;
-  letter-spacing:  0.01em;
-  color:           #F1E194;
-  text-decoration: none;
-  transition:      opacity 200ms ease, gap 200ms ease;
-}
-
-.aside-register-link:hover { opacity: 0.78; gap: 0.7rem; }
-.aside-register-link i { font-size: 0.8em; }
-
-
-/* ─────────────────────────────────────────────────────────────────
-   6. PROGRESS BAR
-───────────────────────────────────────────────────────────────── */
+/* 
+   PROGRESS BAR
+ */
 
 .progress-bar-wrap {
   position:   absolute;
@@ -310,9 +266,9 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   7. RIGHT PANEL — REGISTER MAIN
-───────────────────────────────────────────────────────────────── */
+/* 
+   RIGHT PANEL — REGISTER MAIN
+ */
 
 .register-main {
   position:        relative;
@@ -334,9 +290,9 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   8. FORM WRAP
-───────────────────────────────────────────────────────────────── */
+/* 
+   FORM WRAP
+ */
 
 .register-form-wrap {
   position:      relative;
@@ -358,15 +314,11 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   9. FORM STEPS
-───────────────────────────────────────────────────────────────── */
+/* 
+   FORM STEPS
+ */
 
-.form-step {
-  display:   none;
-  animation: stepReveal 360ms cubic-bezier(0.16,1,0.3,1) both;
-}
-
+.form-step { display: none; animation: stepReveal 360ms cubic-bezier(0.16,1,0.3,1) both; }
 .form-step.active { display: block; }
 
 @keyframes stepReveal {
@@ -375,10 +327,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   10. STEP HEADER
-───────────────────────────────────────────────────────────────── */
-
+/* ─── Step header ─── */
 .step-header { margin-bottom: 1.85rem; }
 
 .step-tag {
@@ -419,9 +368,9 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   11. FORM GRID
-───────────────────────────────────────────────────────────────── */
+/* 
+   FORM GRID & GROUPS
+ */
 
 .form-grid {
   display:               grid;
@@ -432,16 +381,7 @@
 
 .form-group.full { grid-column: 1 / -1; }
 
-
-/* ─────────────────────────────────────────────────────────────────
-   12. FORM GROUPS & INPUTS
-───────────────────────────────────────────────────────────────── */
-
-.form-group {
-  display:        flex;
-  flex-direction: column;
-  gap:            0.4rem;
-}
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; }
 
 .form-group label {
   display:        flex;
@@ -454,13 +394,7 @@
   color:          #2d1114;
 }
 
-.form-group label i {
-  font-size:  0.76em;
-  color:      #7a1219;
-  opacity:    0.85;
-  width:      14px;
-  text-align: center;
-}
+.form-group label i { font-size: 0.76em; color: #7a1219; opacity: 0.85; width: 14px; text-align: center; }
 
 .form-control {
   width:          100%;
@@ -479,48 +413,15 @@
 }
 
 .form-control::placeholder { color: #c4a8aa; font-weight: 400; }
-
 .form-control:hover:not(:disabled) { border-color: #e8d8d9; }
-
-.form-control:focus {
-  border-color: #5b0e14;
-  box-shadow:   0 0 0 3.5px rgba(91,14,20,0.11);
-  background:   #fdf2f2;
-}
-
-.form-control.error {
-  border-color: #dc2626;
-  box-shadow:   0 0 0 3px rgba(220,38,38,0.10);
-}
-
-/* invalid class used by register.js validation */
-.form-control.invalid {
-  border-color: #dc2626;
-  box-shadow:   0 0 0 3px rgba(220,38,38,0.10);
-}
-
-.form-control.valid {
-  border-color: #16803d;
-  box-shadow:   0 0 0 3px rgba(22,128,61,0.08);
-}
-
-.form-control:disabled {
-  background: #fdf9f4;
-  color:      #9a6065;
-  cursor:     not-allowed;
-}
+.form-control:focus { border-color: #5b0e14; box-shadow: 0 0 0 3.5px rgba(91,14,20,0.11); background: #fdf2f2; }
+.form-control.invalid { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.10); }
+.form-control.valid   { border-color: #16803d; box-shadow: 0 0 0 3px rgba(22,128,61,0.08); }
+.form-control:disabled { background: #fdf9f4; color: #9a6065; cursor: not-allowed; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   13. SELECT DROPDOWN
-───────────────────────────────────────────────────────────────── */
-
-.select-wrap {
-  position:    relative;
-  display:     flex;
-  align-items: center;
-}
-
+/* ─── Select dropdown ─── */
+.select-wrap { position: relative; display: flex; align-items: center; }
 .select-wrap .form-control { padding-right: 2.6rem; cursor: pointer; }
 
 .select-arrow {
@@ -534,22 +435,11 @@
   transition:     transform 200ms ease, color 200ms ease;
 }
 
-.select-wrap:focus-within .select-arrow {
-  transform: translateY(-50%) rotate(180deg);
-  color:     #5b0e14;
-}
+.select-wrap:focus-within .select-arrow { transform: translateY(-50%) rotate(180deg); color: #5b0e14; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   14. PASSWORD TOGGLE & INPUT WRAP
-───────────────────────────────────────────────────────────────── */
-
-.input-wrap {
-  position:    relative;
-  display:     flex;
-  align-items: center;
-}
-
+/* ─── Password toggle ─── */
+.input-wrap { position: relative; display: flex; align-items: center; }
 .input-wrap .form-control { padding-right: 3rem; }
 
 .toggle-pw {
@@ -571,12 +461,7 @@
 }
 
 .toggle-pw:hover { color: #5b0e14; }
-
-.toggle-pw:focus-visible {
-  outline:        2px solid #5b0e14;
-  outline-offset: 2px;
-  border-radius:  4px;
-}
+.toggle-pw:focus-visible { outline: 2px solid #5b0e14; outline-offset: 2px; border-radius: 4px; }
 
 .optional {
   font-family:    var(--ff-mono, 'JetBrains Mono', monospace);
@@ -592,25 +477,12 @@
   margin-left:    0.25rem;
 }
 
+.req { color: #ff4d6d; margin-left: 2px; font-weight: 700; }
 
-/* ─────────────────────────────────────────────────────────────────
-   15. PASSWORD STRENGTH
-───────────────────────────────────────────────────────────────── */
 
-.pw-strength-wrap {
-  display:     flex;
-  align-items: center;
-  gap:         0.65rem;
-  margin-top:  0.5rem;
-}
-
-.pw-strength-bar {
-  flex:          1;
-  height:        4px;
-  background:    #ece4e4;
-  border-radius: 999px;
-  overflow:      hidden;
-}
+/*  Password strength  */
+.pw-strength-wrap { display: flex; align-items: center; gap: 0.65rem; margin-top: 0.5rem; }
+.pw-strength-bar  { flex: 1; height: 4px; background: #ece4e4; border-radius: 999px; overflow: hidden; }
 
 .pw-strength-fill {
   height:        100%;
@@ -633,34 +505,16 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   16. FIELD HINTS & ERRORS
-───────────────────────────────────────────────────────────────── */
-
-.field-hint {
-  font-family:    var(--ff-mono, 'JetBrains Mono', monospace);
-  font-size:      0.75rem;
-  font-weight:    400;
-  color:          #6b3338;
-  letter-spacing: 0.04em;
-}
-
-.field-error {
-  font-family: var(--ff-body, 'Inter', sans-serif);
-  font-size:   0.8rem;
-  font-weight: 500;
-  color:       #dc2626;
-  min-height:  1rem;
-  display:     block;
-  line-height: 1.4;
-}
+/* Field hints & errors  */
+.field-hint  { font-family: var(--ff-mono, 'JetBrains Mono', monospace); font-size: 0.75rem; font-weight: 400; color: #6b3338; letter-spacing: 0.04em; }
+.field-error { font-family: var(--ff-body, 'Inter', sans-serif); font-size: 0.8rem; font-weight: 500; color: #dc2626; min-height: 1rem; display: block; line-height: 1.4; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   17. BUTTONS
-───────────────────────────────────────────────────────────────── */
+/* 
+   BUTTONS 
+ */
 
-.btn {
+.register-main .btn {
   display:         inline-flex;
   align-items:     center;
   justify-content: center;
@@ -681,36 +535,29 @@
                    transform 120ms ease;
 }
 
-.btn:disabled,
-.btn[disabled] { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.register-main .btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.register-main .btn:focus-visible { outline: 2.5px solid #5b0e14; outline-offset: 3px; }
 
-.btn:focus-visible { outline: 2.5px solid #5b0e14; outline-offset: 3px; }
-
-.btn-solid {
+.register-main .btn-solid {
   background:   linear-gradient(135deg, #420a0f 0%, #5b0e14 55%, #7a1219 100%);
   color:        #ffffff;
   border-color: #5b0e14;
   box-shadow:   0 2px 10px rgba(91,14,20,0.24);
 }
 
-.btn-solid:hover:not(:disabled) {
+.register-main .btn-solid:hover:not(:disabled) {
   background:   #420a0f;
   border-color: #420a0f;
   box-shadow:   0 6px 22px rgba(91,14,20,0.42);
   transform:    translateY(-1px);
 }
 
-.btn-solid:active:not(:disabled) { transform: translateY(0); box-shadow: 0 2px 8px rgba(91,14,20,0.20); }
+.register-main .btn-solid:active:not(:disabled) { transform: translateY(0); box-shadow: 0 2px 8px rgba(91,14,20,0.20); }
 
-.btn-ghost {
-  background:   transparent;
-  color:        #5b0e14;
-  border-color: rgba(91,14,20,0.22);
-}
+.register-main .btn-ghost { background: transparent; color: #5b0e14; border-color: rgba(91,14,20,0.22); }
+.register-main .btn-ghost:hover:not(:disabled) { background: #fdf2f2; border-color: #9e1920; }
 
-.btn-ghost:hover:not(:disabled) { background: #fdf2f2; border-color: #9e1920; }
-
-.btn .spinner {
+.register-main .btn .spinner {
   width:            14px;
   height:           14px;
   border:           2px solid rgba(255,255,255,0.30);
@@ -723,9 +570,9 @@
 @keyframes btn-spin { to { transform: rotate(360deg); } }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   18. STEP ACTIONS
-───────────────────────────────────────────────────────────────── */
+/* 
+   STEP ACTIONS
+ */
 
 .step-actions {
   display:         flex;
@@ -740,20 +587,14 @@
 .step-actions > span:first-child:empty { flex: 1; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   19. MESSAGES
-───────────────────────────────────────────────────────────────── */
+/* 
+   MESSAGES
+ */
 
-#jsMessages {
-  display:        flex;
-  flex-direction: column;
-  gap:            0.5rem;
-  margin-bottom:  1rem;
-}
-
+#jsMessages { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
 #jsMessages:empty { display: none; }
 
-.alert {
+.register-main .alert {
   display:       flex;
   align-items:   flex-start;
   gap:           0.7rem;
@@ -764,99 +605,26 @@
   font-size:     0.9rem;
   font-weight:   400;
   line-height:   1.65;
+  margin-bottom: 0;
 }
 
-.alert i { font-size: 0.9rem; flex-shrink: 0; margin-top: 2px; }
+.register-main .alert i { font-size: 0.9rem; flex-shrink: 0; margin-top: 2px; }
 
-.alert-success   { background: #f0fdf4; border-color: #bbf7d0; color: #14532d; }
-.alert-success i { color: #16803d; }
-.alert-error,
-.alert-danger    { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-.alert-error i,
-.alert-danger i  { color: #dc2626; }
-.alert-warning   { background: #fffbeb; border-color: #fde68a; color: #78350f; }
-.alert-warning i { color: #d97706; }
-.alert-info      { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
-.alert-info i    { color: #2563eb; }
-
-
-/* ─────────────────────────────────────────────────────────────────
-   20. LIVENESS STAGE LEGEND
-───────────────────────────────────────────────────────────────── */
-
-.liveness-stages-legend {
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  gap:             0.5rem;
-  margin-bottom:   1.1rem;
-  flex-wrap:       wrap;
-}
-
-/* ── Stage badge base ─── */
-.stage-badge {
-  display:        inline-flex;
-  align-items:    center;
-  gap:            0.4rem;
-  padding:        0.4rem 1rem;
-  border-radius:  999px;
-  background:     #fdf9f4;
-  border:         1.5px solid #e8d8d9;
-  font-family:    var(--ff-body, 'Inter', sans-serif);
-  font-size:      0.82rem;
-  font-weight:    600;
-  color:          #4a1e22;
-  transition:     background 280ms ease, border-color 280ms ease,
-                  color 280ms ease, box-shadow 280ms ease;
-  min-width:      90px;
-  justify-content: center;
-}
-
-.stage-badge i { font-size: 0.72em; flex-shrink: 0; }
-
-/* Loading state — shown while register.js fetches challenges */
-.stage-badge .fa-spin {
-  color:   #9a6065;
-  opacity: 0.7;
-}
-
-/* Font Awesome fa-spin uses this keyframe — define locally as fallback
-   in case FA's own animation hasn't loaded yet */
-@keyframes fa-spin {
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.fa-spin {
-  animation: fa-spin 1s linear infinite;
-}
-
-/* Active stage currently being performed */
-.stage-badge.active {
-  background:   #f8e4e5;
-  border-color: #9e1920;
-  color:        #5b0e14;
-  box-shadow:   0 0 0 3px rgba(91,14,20,0.08);
-}
-
-/* Completed stage */
-.stage-badge.done {
-  background:   #f0fdf4;
-  border-color: rgba(22,128,61,0.38);
-  color:        #14532d;
-}
-
-.stage-sep {
-  font-family:  var(--ff-mono, 'JetBrains Mono', monospace);
-  font-size:    0.72rem;
-  color:        #e8d8d9;
-  flex-shrink:  0;
-}
+.register-main .alert-success   { background: #f0fdf4; border-color: #bbf7d0; color: #14532d; }
+.register-main .alert-success i { color: #16803d; }
+.register-main .alert-error,
+.register-main .alert-danger    { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.register-main .alert-error i,
+.register-main .alert-danger i  { color: #dc2626; }
+.register-main .alert-warning   { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+.register-main .alert-warning i { color: #d97706; }
+.register-main .alert-info      { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
+.register-main .alert-info i    { color: #2563eb; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   21. WEBCAM PANEL
-───────────────────────────────────────────────────────────────── */
+/* 
+   WEBCAM PANEL
+ */
 
 .webcam-panel {
   position:      relative;
@@ -889,19 +657,11 @@
   pointer-events: none;
 }
 
-
-/* ─────────────────────────────────────────────────────────────────
-   22. HUD OVERLAY
-───────────────────────────────────────────────────────────────── */
-
 .hud-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
 
 .scan-circle {
-  position:      absolute;
-  top:           50%;
-  left:          50%;
-  width:         120px;
-  height:        150px;
+  position: absolute; top: 50%; left: 50%;
+  width: 120px; height: 150px;
   border-radius: 50%;
   border:        2px solid rgba(241,225,148,0.42);
   transform:     translate(-50%, -52%);
@@ -909,10 +669,8 @@
 
 .scan-ring {
   position:           absolute;
-  top:                50%;
-  left:               50%;
-  width:              138px;
-  height:             168px;
+  top: 50%; left: 50%;
+  width: 138px; height: 168px;
   border-radius:      50%;
   border:             2px solid transparent;
   border-top-color:   rgba(241,225,148,0.65);
@@ -931,7 +689,7 @@
 
 .scan-line {
   position:   absolute;
-  left:       0; right: 0;
+  left: 0; right: 0;
   height:     2px;
   background: linear-gradient(90deg, transparent 0%, rgba(241,225,148,0.0) 18%, rgba(241,225,148,0.55) 50%, rgba(241,225,148,0.0) 82%, transparent 100%);
   animation:  scan-sweep 2.8s ease-in-out infinite;
@@ -943,11 +701,6 @@
   92%  { opacity: 1; }
   100% { top: 86%; opacity: 0; }
 }
-
-
-/* ─────────────────────────────────────────────────────────────────
-   23. WEBCAM STATUS
-───────────────────────────────────────────────────────────────── */
 
 .webcam-status {
   position:        absolute;
@@ -975,15 +728,12 @@
 .webcam-status.ready i { color: #22c55e; animation: none; }
 .webcam-status.error i { color: #f87171; animation: none; }
 
-@keyframes status-blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.35; }
-}
+@keyframes status-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   24. LIVENESS INSTRUCTION
-───────────────────────────────────────────────────────────────── */
+/* 
+   LIVENESS INSTRUCTIONS
+*/
 
 .liveness-instruction {
   display:        flex;
@@ -1002,159 +752,44 @@
   transition:     background 250ms ease, border-color 250ms ease, color 250ms ease;
 }
 
-.liveness-instruction > i {
-  font-size:   0.95rem;
-  color:       #7a1219;
-  flex-shrink: 0;
-  animation:   gesture-hint 2.2s ease-in-out infinite;
-}
+.liveness-instruction > i { font-size: 0.95rem; color: #7a1219; flex-shrink: 0; animation: gesture-hint 2.2s ease-in-out infinite; }
+.liveness-instruction.success > i, .liveness-instruction.error > i { animation: none; }
 
-/* Override animation when success/error state is active */
-.liveness-instruction.success > i,
-.liveness-instruction.error   > i { animation: none; }
-
-.liveness-instruction.success {
-  background:   #f0fdf4;
-  border-color: rgba(22,128,61,0.28);
-  color:        #14532d !important;
-}
-
+.liveness-instruction.success { background: #f0fdf4; border-color: rgba(22,128,61,0.28); color: #14532d !important; }
 .liveness-instruction.success > i { color: #16803d; }
-
-.liveness-instruction.error {
-  background:   #fef2f2;
-  border-color: rgba(220,38,38,0.28);
-  color:        #991b1b !important;
-}
-
+.liveness-instruction.error   { background: #fef2f2; border-color: rgba(220,38,38,0.28); color: #991b1b !important; }
 .liveness-instruction.error > i { color: #dc2626; }
 
-@keyframes gesture-hint {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.30; }
-}
+@keyframes gesture-hint { 0%, 100% { opacity: 1; } 50% { opacity: 0.30; } }
 
 #instructionText { flex: 1; }
 
-.liveness-countdown {
-  font-family:    var(--ff-mono, 'JetBrains Mono', monospace);
-  font-size:      0.88rem;
-  font-weight:    700;
-  color:          #5b0e14;
-  background:     #f8e4e5;
-  border-radius:  6px;
-  padding:        0.15rem 0.5rem;
-  flex-shrink:    0;
-  min-width:      1.6rem;
-  text-align:     center;
-  transition:     background 200ms ease, color 200ms ease;
-}
 
-/* Urgent: last second */
-.liveness-countdown.urgent {
-  background: rgba(220,38,38,0.12);
-  color:      #dc2626;
-  animation:  countdown-pulse 0.5s ease-in-out infinite;
-}
+/* 
+   CAPTURE DOTS
+ */
 
-@keyframes countdown-pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.45; }
-}
-
-
-/* ─────────────────────────────────────────────────────────────────
-   25. CAPTURE DOTS
-───────────────────────────────────────────────────────────────── */
-
-.capture-dots {
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  gap:             0.58rem;
-  margin-bottom:   0.85rem;
-}
+.capture-dots { display: flex; align-items: center; justify-content: center; gap: 0.58rem; margin-bottom: 0.85rem; }
 
 .capture-dot {
   display:       inline-block;
-  width:         11px;
-  height:        11px;
+  width:         11px; height: 11px;
   border-radius: 50%;
   border:        2px solid rgba(91,14,20,0.24);
   background:    transparent;
   transition:    all 300ms ease;
 }
 
-/* active — currently performing this stage */
-.capture-dot.active {
-  border-color: #5b0e14;
-  background:   rgba(91,14,20,0.12);
-  animation:    dot-pulse 0.9s ease-in-out infinite;
-}
+.capture-dot.active { border-color: #5b0e14; background: rgba(91,14,20,0.12); animation: dot-pulse 0.9s ease-in-out infinite; }
+.capture-dot.done   { background: #16803d; border-color: #16803d; box-shadow: 0 0 8px rgba(22,128,61,0.30); animation: none; transform: scale(1.1); }
+.capture-dot.fail   { background: #dc2626; border-color: #dc2626; box-shadow: 0 0 8px rgba(220,38,38,0.30); animation: none; }
 
-/* done — stage passed (green) */
-.capture-dot.done {
-  background:   #16803d;
-  border-color: #16803d;
-  box-shadow:   0 0 8px rgba(22,128,61,0.30);
-  animation:    none;
-  transform:    scale(1.1);
-}
-
-/* fail — stage timed out (red) */
-.capture-dot.fail {
-  background:   #dc2626;
-  border-color: #dc2626;
-  box-shadow:   0 0 8px rgba(220,38,38,0.30);
-  animation:    none;
-}
-
-@keyframes dot-pulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.4); }
-}
+@keyframes dot-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.4); } }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   26. RETRY BUTTON
-───────────────────────────────────────────────────────────────── */
-
-#retryWrap {
-  display:         flex;
-  justify-content: center;
-  margin-bottom:   0.8rem;
-}
-
-/* Hidden by default — JS sets display:'' to show */
-#retryWrap[style*="display: none"] { display: none !important; }
-
-#retryBtn {
-  display:        inline-flex;
-  align-items:    center;
-  gap:            0.45rem;
-  background:     transparent;
-  color:          #5b0e14;
-  border:         1.5px solid rgba(91,14,20,0.24);
-  border-radius:  10px;
-  padding:        0.55rem 1.3rem;
-  font-family:    var(--ff-body, 'Inter', sans-serif);
-  font-size:      0.9rem;
-  font-weight:    600;
-  letter-spacing: 0.01em;
-  cursor:         pointer;
-  transition:     background 200ms ease, border-color 200ms ease, transform 120ms ease;
-}
-
-#retryBtn:hover { background: #fdf2f2; border-color: #9e1920; transform: translateY(-1px); }
-#retryBtn i     { font-size: 0.85em; }
-
-
-/* ─────────────────────────────────────────────────────────────────
-   27. REVIEW STEP
-   Two formats supported:
-     (a) <dl><dt>…</dt><dd>…</dd></dl>  — legacy
-     (b) .review-item / .review-label / .review-value — used by register.js v8
-───────────────────────────────────────────────────────────────── */
+/* 
+   REVIEW STEP
+*/
 
 .review-box {
   background:    #fdf9f4;
@@ -1166,38 +801,6 @@
   line-height:   1.75;
 }
 
-/* ── (a) DL format ── */
-.review-box dl {
-  display:               grid;
-  grid-template-columns: auto 1fr;
-  gap:                   0.35rem 1.5rem;
-}
-
-.review-box dt {
-  font-family:    var(--ff-body, 'Inter', sans-serif);
-  font-weight:    600;
-  font-size:      0.85rem;
-  letter-spacing: 0.005em;
-  color:          #2d1114;
-  padding-top:    0.1rem;
-}
-
-.review-box dd {
-  font-family: var(--ff-body, 'Inter', sans-serif);
-  font-weight: 400;
-  color:       #4a1e22;
-  font-size:   0.9375rem;
-  word-break:  break-word;
-}
-
-.review-box hr {
-  border:      none;
-  border-top:  1px solid #e8d8d9;
-  margin:      0.8rem 0;
-  grid-column: 1 / -1;
-}
-
-/* ── (b) review-item format — used by register.js v8 populateReview() ── */
 .review-item {
   display:         flex;
   align-items:     baseline;
@@ -1228,40 +831,12 @@
   word-break:  break-word;
 }
 
-/* Green tick for the "Face Verified" row when all stages passed */
-.review-value.verified {
-  color:       #14532d;
-  font-weight: 600;
-}
+.review-value.verified { color: #14532d; font-weight: 600; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   28. APPROVAL NOTICE
-───────────────────────────────────────────────────────────────── */
-
-.approval-notice {
-  display:       flex;
-  align-items:   flex-start;
-  gap:           0.7rem;
-  background:    linear-gradient(135deg, #fffdf5 0%, #ffffff 100%);
-  border:        1px solid rgba(163,112,0,0.22);
-  border-left:   4px solid #c98b00;
-  border-radius: 10px;
-  padding:       0.9rem 1.15rem;
-  font-family:   var(--ff-body, 'Inter', sans-serif);
-  font-size:     0.9rem;
-  font-weight:   400;
-  color:         #5a3d00;
-  line-height:   1.70;
-  margin-bottom: 0.6rem;
-}
-
-.approval-notice i { font-size: 0.9rem; color: #a37000; flex-shrink: 0; margin-top: 2px; }
-
-
-/* ─────────────────────────────────────────────────────────────────
-   29. CUSTOM CHECKBOX
-───────────────────────────────────────────────────────────────── */
+/* 
+   CUSTOM CHECKBOX
+ */
 
 .checkbox-label {
   display:     flex;
@@ -1276,13 +851,7 @@
   line-height: 1.65;
 }
 
-.checkbox-label input[type="checkbox"] {
-  position:       absolute;
-  opacity:        0;
-  width:          0;
-  height:         0;
-  pointer-events: none;
-}
+.checkbox-label input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
 
 .checkbox-custom {
   width:           18px;
@@ -1314,38 +883,16 @@
   transition:       transform 150ms ease;
 }
 
-.checkbox-label input:checked + .checkbox-custom {
-  background:   #5b0e14;
-  border-color: #5b0e14;
-  box-shadow:   0 0 0 3px rgba(91,14,20,0.12);
-}
-
-.checkbox-label input:checked + .checkbox-custom::after {
-  border-color: #fff;
-  transform:    rotate(45deg) scale(1);
-}
+.checkbox-label input:checked + .checkbox-custom { background: #5b0e14; border-color: #5b0e14; box-shadow: 0 0 0 3px rgba(91,14,20,0.12); }
+.checkbox-label input:checked + .checkbox-custom::after { border-color: #fff; transform: rotate(45deg) scale(1); }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   30. INLINE LINK
-───────────────────────────────────────────────────────────────── */
-
-.link-inline {
-  font-family:     var(--ff-body, 'Inter', sans-serif);
-  font-weight:     600;
-  color:           #5b0e14;
-  text-decoration: none;
-  border-bottom:   1px solid transparent;
-  transition:      border-color 180ms ease, color 180ms ease;
-}
-
+/* Inline link  */
+.link-inline { font-family: var(--ff-body, 'Inter', sans-serif); font-weight: 600; color: #5b0e14; text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 180ms ease, color 180ms ease; }
 .link-inline:hover { color: #420a0f; border-color: #9e1920; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   31. SHAKE ANIMATION — used by register.js on validation failure
-───────────────────────────────────────────────────────────────── */
-
+/* Shake animation  */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   20%       { transform: translateX(-6px); }
@@ -1353,13 +900,12 @@
   60%       { transform: translateX(-4px); }
   80%       { transform: translateX(4px); }
 }
-
 .shake { animation: shake 0.4s ease both; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   32. RESPONSIVE
-───────────────────────────────────────────────────────────────── */
+/* 
+   RESPONSIVE
+ */
 
 @media (max-width: 1024px) {
   .register-wrapper { grid-template-columns: 310px 1fr; }
@@ -1370,41 +916,27 @@
   .register-wrapper { grid-template-columns: 1fr; }
   .register-aside   { display: none; }
 
-  .register-main {
-    padding:         2.25rem 1.25rem 3rem;
-    justify-content: flex-start;
-  }
-
+  .register-main { padding: 2.25rem 1.25rem 3rem; justify-content: flex-start; }
   .register-form-wrap { max-width: 100%; padding: 2rem 1.5rem; }
 
   .form-grid       { grid-template-columns: 1fr; }
   .form-group.full { grid-column: 1; }
+  .webcam-panel    { max-height: 230px; }
 
-  .webcam-panel { max-height: 230px; }
+  .step-actions       { flex-wrap: wrap; gap: 0.65rem; }
+  .step-actions .btn  { flex: 1; min-width: 120px; justify-content: center; }
 
-  .step-actions      { flex-wrap: wrap; gap: 0.65rem; }
-  .step-actions .btn { flex: 1; min-width: 120px; justify-content: center; }
-
-  .review-item { flex-direction: column; gap: 0.2rem; }
+  .review-item  { flex-direction: column; gap: 0.2rem; }
   .review-value { text-align: left; }
 }
 
 @media (max-width: 480px) {
   .register-main      { padding: 1.5rem 1rem 2.5rem; }
   .register-form-wrap { padding: 1.5rem 1.25rem; border-radius: 12px; }
-
-  .step-header h2 { font-size: 1.4rem; }
-  .btn            { padding: 0.72rem 1.2rem; font-size: 0.9375rem; }
-
-  .webcam-panel { max-height: 180px; border-radius: 10px; }
-
-  .liveness-stages-legend { gap: 0.3rem; }
-  .stage-badge            { padding: 0.3rem 0.7rem; font-size: 0.76rem; min-width: 70px; }
-
-  .step-actions      { flex-direction: column-reverse; }
-  .step-actions .btn { width: 100%; }
-
-  .review-box       { padding: 1.1rem 1rem; }
-  .review-box dl    { grid-template-columns: 1fr; gap: 0.15rem; }
-  .review-box dt    { margin-top: 0.5rem; }
+  .step-header h2     { font-size: 1.4rem; }
+  .register-main .btn { padding: 0.72rem 1.2rem; font-size: 0.9375rem; }
+  .webcam-panel       { max-height: 180px; border-radius: 10px; }
+  .step-actions       { flex-direction: column-reverse; }
+  .step-actions .btn  { width: 100%; }
+  .review-box         { padding: 1.1rem 1rem; }
 }

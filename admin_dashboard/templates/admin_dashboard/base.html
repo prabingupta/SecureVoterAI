@@ -42,9 +42,11 @@
     </div>
 
     <div class="navbar-right">
+
       <!-- Notification bell -->
       <div class="nav-notif-wrap" id="notifWrap">
-        <button class="nav-notif-btn {% if unresolved_fraud_count %}has-alerts{% endif %}" id="notifToggle" aria-label="Notifications">
+        <button class="nav-notif-btn {% if unresolved_fraud_count %}has-alerts{% endif %}"
+                id="notifToggle" aria-label="Notifications">
           <i class="fas fa-bell"></i>
           {% if unresolved_fraud_count %}
             <span class="nav-notif-badge">{{ unresolved_fraud_count }}</span>
@@ -52,7 +54,11 @@
         </button>
         <div class="notif-dropdown" id="notifDropdown">
           <div class="notif-drop-head">
-            <h4><i class="fas fa-triangle-exclamation" style="color:var(--c-error);margin-right:.3rem;font-size:.75rem;"></i>Security Alerts</h4>
+            <h4>
+              <i class="fas fa-triangle-exclamation"
+                 style="color:var(--c-error);margin-right:.3rem;font-size:.75rem;"></i>
+              Security Alerts
+            </h4>
             {% if unresolved_fraud_count %}
               <span class="notif-drop-count">{{ unresolved_fraud_count }} unread</span>
             {% endif %}
@@ -61,10 +67,14 @@
             {% if recent_fraud_alerts %}
               {% for alert in recent_fraud_alerts %}
                 <div class="notif-drop-item">
-                  <span class="ndi-dot {% if alert.alert_type == 'spoof_attempt' %}red{% elif alert.alert_type == 'unknown_device' %}blue{% else %}amber{% endif %}"></span>
+                  <span class="ndi-dot
+                    {% if alert.alert_type == 'spoof_attempt' %}red
+                    {% elif alert.alert_type == 'unknown_device' %}blue
+                    {% else %}amber{% endif %}"></span>
                   <div class="ndi-body">
                     <div class="ndi-text">
-                      {% if alert.voter %}{{ alert.voter.full_name }} — {% endif %}{{ alert.get_alert_type_display }}
+                      {% if alert.voter %}{{ alert.voter.full_name }} — {% endif %}
+                      {{ alert.get_alert_type_display }}
                     </div>
                     <div class="ndi-time">{{ alert.timestamp|date:"H:i · M d" }}</div>
                   </div>
@@ -85,9 +95,13 @@
 
       <!-- Admin profile pill -->
       <div class="admin-pill">
-        <div class="admin-avatar">{{ request.user.get_full_name|default:request.user.username|slice:":2"|upper }}</div>
+        <div class="admin-avatar">
+          {{ request.user.get_full_name|default:request.user.username|slice:":2"|upper }}
+        </div>
         <div class="admin-info">
-          <span class="admin-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+          <span class="admin-name">
+            {{ request.user.get_full_name|default:request.user.username }}
+          </span>
           <span class="admin-role">Super Admin</span>
         </div>
       </div>
@@ -97,35 +111,48 @@
       </a>
 
       <!-- Mobile hamburger -->
-      <button class="nav-toggle" id="sidebarToggle" aria-label="Toggle sidebar" aria-expanded="false">
+      <button class="nav-toggle" id="sidebarToggle"
+              aria-label="Toggle sidebar" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
-    </div>
 
+    </div>
   </div>
 </header>
+
 
 <!-- ══ FLASH MESSAGES ════════════════════════════════════════════ -->
 {% if messages %}
   <div class="messages-list" aria-live="polite">
     {% for message in messages %}
-      <div class="message-toast {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}" role="alert">
-        <i class="{% if message.tags == 'error' %}fas fa-circle-xmark{% elif message.tags == 'success' %}fas fa-circle-check{% elif message.tags == 'warning' %}fas fa-triangle-exclamation{% else %}fas fa-circle-info{% endif %}"></i>
+      <div class="message-toast
+        {% if message.tags == 'error' %}error
+        {% elif message.tags == 'success' %}success
+        {% elif message.tags == 'warning' %}warning
+        {% else %}info{% endif %}" role="alert">
+        <i class="
+          {% if message.tags == 'error' %}fas fa-circle-xmark
+          {% elif message.tags == 'success' %}fas fa-circle-check
+          {% elif message.tags == 'warning' %}fas fa-triangle-exclamation
+          {% else %}fas fa-circle-info{% endif %}"></i>
         <span>{{ message }}</span>
-        <button class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-xmark"></i></button>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+          <i class="fas fa-xmark"></i>
+        </button>
       </div>
     {% endfor %}
   </div>
 {% endif %}
 
+
 <!-- ══ LAYOUT ═════════════════════════════════════════════════════ -->
 <div class="admin-layout">
 
-  <!-- SIDEBAR -->
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════════ -->
   <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin navigation">
-
     <div class="sidebar-scroll">
 
+      <!-- Overview -->
       <div class="sidebar-group">
         <p class="sidebar-section-label">Overview</p>
         <nav>
@@ -134,9 +161,15 @@
             <span class="sl-icon"><i class="fas fa-gauge-high"></i></span>
             <span class="sl-text">Dashboard</span>
           </a>
+          <a href="{% url 'admin_dashboard:analytics_dashboard' %}"
+             class="sidebar-link {% if request.resolver_match.url_name == 'analytics_dashboard' %}active{% endif %}">
+            <span class="sl-icon"><i class="fas fa-chart-mixed"></i></span>
+            <span class="sl-text">Analytics</span>
+          </a>
         </nav>
       </div>
 
+      <!-- Elections -->
       <div class="sidebar-group">
         <p class="sidebar-section-label">Elections</p>
         <nav>
@@ -153,6 +186,7 @@
         </nav>
       </div>
 
+      <!-- Voters -->
       <div class="sidebar-group">
         <p class="sidebar-section-label">Voters</p>
         <nav>
@@ -167,6 +201,7 @@
         </nav>
       </div>
 
+      <!-- Monitoring -->
       <div class="sidebar-group">
         <p class="sidebar-section-label">Monitoring</p>
         <nav>
@@ -201,14 +236,16 @@
       <div class="sf-copy">SecureVoter AI &copy; {% now "Y" %}</div>
     </div>
 
-  </aside>
+  </aside><!-- /admin-sidebar -->
 
-  <!-- MAIN CONTENT -->
+
+  <!-- ══ MAIN CONTENT ══════════════════════════════════════════════ -->
   <main class="admin-main" id="adminMain">
     {% block content %}{% endblock %}
   </main>
 
-</div>
+</div><!-- /admin-layout -->
+
 
 <!-- ══ FOOTER ════════════════════════════════════════════════════ -->
 <footer class="admin-footer">
@@ -222,13 +259,13 @@
   </div>
 </footer>
 
+
 <!-- ══ SCRIPTS ════════════════════════════════════════════════════ -->
 <script src="{% static 'admin_dashboard/js/main.js' %}"></script>
 <script>
-  // Sidebar toggle
-  const toggle   = document.getElementById('sidebarToggle');
-  const sidebar  = document.getElementById('adminSidebar');
-  const mainEl   = document.getElementById('adminMain');
+  // Sidebar toggle (mobile)
+  const toggle  = document.getElementById('sidebarToggle');
+  const sidebar = document.getElementById('adminSidebar');
   toggle?.addEventListener('click', () => {
     const open = sidebar.classList.toggle('open');
     toggle.classList.toggle('open', open);
@@ -241,7 +278,7 @@
     }
   });
 
-  // Navbar scroll
+  // Navbar scroll shadow
   const navbar = document.getElementById('adminNavbar');
   window.addEventListener('scroll', () => {
     navbar?.classList.toggle('navbar-scrolled', window.scrollY > 10);
@@ -256,7 +293,7 @@
   });
   document.addEventListener('click', () => notifDropdown?.classList.remove('open'));
 
-  // Auto-dismiss toasts
+  // Auto-dismiss toasts after 5 seconds
   document.querySelectorAll('.message-toast').forEach(toast => {
     setTimeout(() => {
       toast.style.cssText = 'opacity:0;transform:translateX(28px);transition:all .3s ease';

@@ -1,58 +1,192 @@
-/* ═══════════════════════════════════════════════════════════════
-   SecureVoter AI — Voters CSS
-   Voter stats · Voter table · Face-verify chips
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SecureVoter AI — Admin Dashboard / voters.css
+   Requires: base.css
+   Covers: voter stats row, voter table enhancements,
+           approval status badges, reject modal
+═══════════════════════════════════════════════════════════════════ */
 
-.voters-page { max-width: 1280px; }
 
-/* ── Voter Stats Row ──────────────────────────────────────────── */
-.voter-stats-row { display: flex; gap: var(--sp-5); margin-bottom: var(--sp-7); flex-wrap: wrap; }
+/* ─────────────────────────────────────────────────────────────────
+   PAGE WRAPPER
+───────────────────────────────────────────────────────────────── */
+
+.voters-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            1.5rem;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   1. VOTER STATS ROW
+───────────────────────────────────────────────────────────────── */
+
+.voter-stats-row {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   1rem;
+}
+
 .voter-stat {
-  display: flex; align-items: center; gap: var(--sp-4);
-  padding: var(--sp-5) var(--sp-6); background: var(--c-surface-0);
-  border: 1px solid var(--c-surface-300); border-radius: var(--r-lg);
-  flex: 1; min-width: 160px; box-shadow: var(--shadow-xs);
-  transition: box-shadow var(--t-fast), transform var(--t-fast);
-  border-top: 3px solid transparent;
+  display:       flex;
+  align-items:   center;
+  gap:           0.85rem;
+  padding:       1.25rem 1.4rem;
+  background:    var(--c-surface);
+  border:        1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  box-shadow:    var(--shadow-card);
+  position:      relative;
+  overflow:      hidden;
+  transition:
+    border-color var(--dur-mid) var(--ease),
+    box-shadow   var(--dur-mid) var(--ease),
+    transform    var(--dur-mid) var(--ease);
 }
-.voter-stat:nth-child(1) { border-top-color: var(--c-primary-700); }
-.voter-stat:nth-child(2) { border-top-color: var(--c-success); }
-.voter-stat:nth-child(3) { border-top-color: var(--c-error); }
-.voter-stat:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
-.voter-stat-icon { width: 42px; height: 42px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
-.voter-stat-icon.gold  { background: var(--c-primary-50);  color: var(--c-primary-700); border: 1px solid var(--c-primary-100); }
-.voter-stat-icon.green { background: var(--c-success-bg);  color: var(--c-success);     border: 1px solid var(--c-success-bd); }
-.voter-stat-icon.red   { background: var(--c-error-bg);    color: var(--c-error);       border: 1px solid var(--c-error-bd); }
-.voter-stat-val { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; letter-spacing: -0.04em; color: var(--c-ink-900); line-height: 1.1; }
-.voter-stat-lbl { font-family: var(--font-mono); font-size: .68rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--c-ink-400); margin-top: 2px; }
 
-/* ── Voter Table ──────────────────────────────────────────────── */
-#votersTable .voter-avatar { width: 36px; height: 36px; font-size: .66rem; }
-.voter-name { font-size: .875rem; font-weight: 700; color: var(--c-ink-800); line-height: 1.2; }
-.voter-id   { font-family: var(--font-mono); font-size: .66rem; color: var(--c-ink-400); margin-top: 1px; }
-
-/* ── Face Verify Chips ────────────────────────────────────────── */
-.face-chip {
-  display: inline-flex; align-items: center; gap: var(--sp-2);
-  padding: 4px 12px; border-radius: var(--r-full);
-  font-family: var(--font-mono); font-size: .68rem; font-weight: 600; white-space: nowrap;
+.voter-stat:hover {
+  border-color: var(--c-border-strong);
+  box-shadow:   var(--shadow-hover);
+  transform:    translateY(-2px);
 }
-.face-chip.verified   { background: var(--c-success-bg); color: var(--c-success); border: 1px solid var(--c-success-bd); }
-.face-chip.unverified { background: var(--c-surface-100); color: var(--c-ink-400); border: 1px solid var(--c-surface-300); }
-.face-chip i { font-size: .68rem; }
 
-/* ── Staggered row animation ──────────────────────────────────── */
-#votersTable tbody tr { animation: row-slide-in var(--t-slow) var(--ease-out) both; }
-#votersTable tbody tr:nth-child(1)  { animation-delay: 30ms; }
-#votersTable tbody tr:nth-child(2)  { animation-delay: 60ms; }
-#votersTable tbody tr:nth-child(3)  { animation-delay: 90ms; }
-#votersTable tbody tr:nth-child(4)  { animation-delay: 120ms; }
-#votersTable tbody tr:nth-child(n+5){ animation-delay: 150ms; }
-@keyframes row-slide-in { from { opacity:0; transform:translateX(-6px); } to { opacity:1; transform:translateX(0); } }
+/* Subtle accent glow on hover */
+.voter-stat::after {
+  content:    '';
+  position:   absolute;
+  top: 0; left: 0; right: 0;
+  height:     2px;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  opacity:    0;
+  transition: opacity var(--dur-mid) var(--ease);
+}
 
-#votersTable tbody tr[data-status="approved"] { border-left: 3px solid var(--c-success); }
-#votersTable tbody tr[data-status="rejected"] { border-left: 3px solid var(--c-error); opacity: .7; }
-#votersTable tbody tr[data-status="pending"]  { border-left: 3px solid var(--c-warning); }
+.voter-stat:nth-child(1)::after { background: var(--grad-gold); }
+.voter-stat:nth-child(2)::after { background: linear-gradient(90deg, var(--c-success-dk), #22c55e); }
+.voter-stat:nth-child(3)::after { background: linear-gradient(90deg, var(--c-error-dk), var(--c-error)); }
+.voter-stat:hover::after        { opacity: 1; }
 
-/* ── Responsive ───────────────────────────────────────────────── */
-@media (max-width: 640px) { .voter-stats-row { flex-direction: column; } .voter-stat { flex: none; } }
+.voter-stat-icon {
+  width:           46px;
+  height:          46px;
+  border-radius:   var(--r-md);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       1.1rem;
+  flex-shrink:     0;
+  transition:      transform var(--dur-mid) var(--ease);
+}
+
+.voter-stat:hover .voter-stat-icon { transform: scale(1.08); }
+
+.voter-stat-icon.gold  { background: var(--c-gold-100);   color: var(--c-gold-800);  border: 1px solid rgba(163,112,0,0.20); }
+.voter-stat-icon.green { background: var(--c-success-bg); color: var(--c-success-dk);border: 1px solid rgba(22,128,61,0.20); }
+.voter-stat-icon.red   { background: var(--c-error-bg);   color: var(--c-error);     border: 1px solid rgba(220,38,38,0.20); }
+
+.voter-stat-val {
+  font-size:      2.1rem;
+  font-weight:    800;
+  color:          var(--c-ink-800);
+  letter-spacing: -0.04em;
+  line-height:    1;
+  margin-bottom:  0.22rem;
+}
+
+.voter-stat-lbl {
+  font-family:    var(--font-mono);
+  font-size:      0.62rem;
+  font-weight:    500;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color:          var(--c-ink-400);
+  line-height:    1;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   2. VOTER TABLE ENHANCEMENTS
+      Base table styles come from base.css (.table-wrapper, table).
+      These additions handle voter-specific columns.
+───────────────────────────────────────────────────────────────── */
+
+/* Voter name cell — matches base voter-cell but with hover state */
+#votersTable .voter-cell {
+  cursor: default;
+}
+
+/* Profile photo inside voter avatar */
+#votersTable .voter-avatar img {
+  width:         100%;
+  height:        100%;
+  object-fit:    cover;
+  border-radius: var(--r-sm);
+  display:       block;
+}
+
+/* Highlight pending rows subtly */
+#votersTable tbody tr[data-status="pending"] {
+  background: rgba(253,243,199,0.35);
+}
+
+#votersTable tbody tr[data-status="pending"]:hover td {
+  background: rgba(253,243,199,0.55);
+}
+
+/* Highlight approved rows subtly */
+#votersTable tbody tr[data-status="approved"] {
+  background: rgba(240,253,244,0.40);
+}
+
+#votersTable tbody tr[data-status="approved"]:hover td {
+  background: rgba(240,253,244,0.65);
+}
+
+/* Reject form inside table */
+#votersTable .td-actions form { display: inline; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   3. REJECT MODAL FORM
+      Modal shell comes from base.css (.modal-overlay, .modal).
+      This section styles the inner rejection note field.
+───────────────────────────────────────────────────────────────── */
+
+#rejectModal .modal { border-top-color: var(--c-error); }
+
+#rejectModal .form-group {
+  margin-top: 0.5rem;
+}
+
+#rejectNote {
+  width:         100%;
+  padding:       0.65rem 1rem;
+  border:        1.5px solid var(--c-border);
+  border-radius: var(--r-md);
+  font-size:     0.875rem;
+  color:         var(--c-ink-700);
+  background:    var(--c-surface);
+  outline:       none;
+  transition:    border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  box-sizing:    border-box;
+}
+
+#rejectNote:focus {
+  border-color: var(--c-error);
+  box-shadow:   0 0 0 3px rgba(220,38,38,0.09);
+}
+
+#rejectNote::placeholder { color: var(--c-ink-400); }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .voter-stats-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+  .voter-stats-row { grid-template-columns: 1fr; }
+}

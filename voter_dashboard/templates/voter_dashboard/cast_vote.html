@@ -1,404 +1,222 @@
 {% extends 'voter_dashboard/base.html' %}
 {% load static %}
 
-{% block title %}Cast Vote — {{ election.title }} | SecureVoter AI{% endblock %}
+{% block title %}Cast Vote — {{ election.title }}{% endblock %}
+{% block navbar_title %}Cast Vote{% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'voter_dashboard/css/cast_vote.css' %}" />
+<link rel="stylesheet" href="{% static 'voter_dashboard/css/cast_vote.css' %}">
 {% endblock %}
 
 
 {% block content %}
 <div class="vote-page">
 
-  <!-- ============================================================
-       PAGE HEADER
-       ============================================================ -->
-  <div class="page-header">
-    <div class="page-header-meta">
-      <a
-        href="{% url 'voter_dashboard:dashboard' %}"
-        class="badge badge-muted"
-        style="text-decoration:none; cursor:pointer;"
-        aria-label="Back to dashboard"
-      >
-        <i class="fas fa-arrow-left" aria-hidden="true"></i> Dashboard
-      </a>
-      <span style="color:var(--clr-border);" aria-hidden="true">/</span>
-      <span class="page-eyebrow">Cast Vote</span>
+  {% if error %}
+    <div class="error-banner show">
+      <i class="fa-solid fa-circle-xmark"></i> {{ error }}
     </div>
-    <h1>Select Your Candidate</h1>
-    <p>
-      Review each candidate carefully before submitting.
-      Your vote is <strong style="color:var(--clr-white);">final and encrypted</strong> —
-      it cannot be changed after submission.
-    </p>
+  {% endif %}
+
+  <!-- Election Info -->
+  <div class="election-info">
+    <h2>{{ election.title }}</h2>
+    {% if election.description %}
+      <p>{{ election.description }}</p>
+    {% endif %}
+    <div class="election-meta-row">
+      <div class="election-meta-item">
+        <i class="fa-regular fa-calendar"></i>
+        Opens {{ election.start_time|date:"d M Y, H:i" }}
+      </div>
+      <div class="election-meta-item">
+        <i class="fa-regular fa-calendar-xmark"></i>
+        Closes {{ election.end_time|date:"d M Y, H:i" }}
+      </div>
+      <div class="election-meta-item">
+        <i class="fa-solid fa-users"></i>
+        {{ candidates|length }} candidate{{ candidates|length|pluralize }}
+      </div>
+    </div>
   </div>
 
+  <!-- Security Bar -->
+  <div class="security-bar">
+    <div class="security-item">
+      <i class="fa-solid fa-lock"></i> AES-256 Encrypted
+    </div>
+    <div class="security-divider"></div>
+    <div class="security-item">
+      <i class="fa-solid fa-eye"></i> Face Verified
+    </div>
+    <div class="security-divider"></div>
+    <div class="security-item">
+      <i class="fa-solid fa-shield-halved"></i> Tamper-Proof
+    </div>
+    <div class="security-divider"></div>
+    <div class="security-item">
+      <i class="fa-solid fa-user-secret"></i> Anonymous Ballot
+    </div>
+  </div>
 
-  <!-- ============================================================
-       ELECTION INFO PANEL
-       ============================================================ -->
-  <section class="election-info-panel" aria-labelledby="electionTitle">
+  <!-- STEP 1: Liveness + Face Gate -->
+  <div class="liveness-gate" id="livenessGate">
 
-    <div class="election-info-header">
+    <div class="gate-head">
+      <div class="gate-icon"><i class="fa-solid fa-eye"></i></div>
       <div>
-        <h2 class="election-info-title" id="electionTitle">{{ election.title }}</h2>
-        <p class="election-info-desc">
-          {{ election.description|default:"Cast your vote for the candidate of your choice. Your selection will be encrypted and securely stored." }}
+        <h3>Identity Verification Required</h3>
+        <p>
+          Complete a quick face gesture (blink, turn left, or turn right) to confirm
+          you are the registered voter. The ballot unlocks only after your face matches
+          the one on record.
         </p>
       </div>
-      <span class="badge badge-live" role="status" aria-label="Election is live">
-        <span class="dot" aria-hidden="true"></span> Live
-      </span>
     </div>
 
-    <div class="election-info-meta" role="list" aria-label="Election details">
-      <div class="info-meta-item" role="listitem">
-        <i class="fas fa-calendar-day" aria-hidden="true"></i>
-        <span>Opens:</span>
-        <strong>{{ election.start_time|date:"D, M d Y · H:i" }}</strong>
-      </div>
-      <div class="info-meta-item" role="listitem">
-        <i class="fas fa-calendar-xmark" aria-hidden="true"></i>
-        <span>Closes:</span>
-        <strong>{{ election.end_time|date:"D, M d Y · H:i" }}</strong>
-      </div>
-      <div class="info-meta-item" role="listitem">
-        <i class="fas fa-users" aria-hidden="true"></i>
-        <span>Candidates:</span>
-        <strong>{{ candidates|length }}</strong>
-      </div>
-      <div class="info-meta-item" role="listitem">
-        <i class="fas fa-university" aria-hidden="true"></i>
-        <span>Institution:</span>
-        <strong>Islington College</strong>
+    <!-- Error banner (gate-level) -->
+    <div class="error-banner" id="gateError">
+      <i class="fa-solid fa-circle-xmark"></i>
+      <span id="gateErrorMsg">Verification failed.</span>
+    </div>
+
+    <!-- Camera -->
+    <div class="cam-wrap">
+      <video id="voteWebcam" autoplay muted playsinline></video>
+      <div class="cam-status" id="camStatus">
+        <i class="fa-solid fa-circle-dot"></i>
+        <span id="camStatusText">Starting camera…</span>
       </div>
     </div>
 
-  </section>
-  <!-- /election info -->
+    <!-- Challenge instruction -->
+    <div class="challenge-bar" id="challengeBar">
+      <i class="fa-solid fa-eye" id="challengeIcon"></i>
+      <span id="challengeText">Loading face detection…</span>
+    </div>
 
+    <!-- Actions -->
+    <div class="gate-actions">
+      <button class="btn-verify" id="btnVerify" disabled>
+        <i class="fa-solid fa-circle-check"></i> Confirm Identity
+      </button>
+      <div class="gate-dots">
+        <span class="gate-dot" id="gdot1"></span>
+        <span class="gate-dot" id="gdot2"></span>
+      </div>
+    </div>
 
-  <!-- ============================================================
-       SECURITY INDICATOR BAR
-       ============================================================ -->
-  <div class="security-bar" role="status" aria-label="Security features active">
-    <div class="security-item">
-      <i class="fas fa-lock" aria-hidden="true"></i>
-      AES-256 Encrypted
-    </div>
-    <div class="security-divider" aria-hidden="true"></div>
-    <div class="security-item">
-      <i class="fas fa-eye" aria-hidden="true"></i>
-      Face Verified
-    </div>
-    <div class="security-divider" aria-hidden="true"></div>
-    <div class="security-item">
-      <i class="fas fa-shield-halved" aria-hidden="true"></i>
-      Tamper-Proof
-    </div>
-    <div class="security-divider" aria-hidden="true"></div>
-    <div class="security-item">
-      <i class="fas fa-user-secret" aria-hidden="true"></i>
-      Anonymous Ballot
-    </div>
+  </div><!-- /liveness-gate -->
+
+  <!-- Verified Banner (shown after gate passes) -->
+  <div class="verified-banner" id="verifiedBanner">
+    <i class="fa-solid fa-shield-check"></i>
+    Identity confirmed — you may now cast your vote below.
   </div>
 
+  <!-- STEP 2: Ballot Form (hidden until liveness passes) -->
+  <div class="candidate-form-section" id="candidateFormSection">
 
-  <!-- ============================================================
-       VOTE FORM
-       ============================================================ -->
-  <form
-    method="post"
-    id="voteForm"
-    action="{% url 'voter_dashboard:cast_vote' election.id %}"
-    novalidate
-    aria-labelledby="candidateSectionTitle"
-  >
-    {% csrf_token %}
+    <form method="post" id="voteForm"
+          action="{% url 'voter_dashboard:cast_vote' election.id %}">
+      {% csrf_token %}
+      <h3>Choose One Candidate</h3>
+      <p>Tap a card to select. Only one candidate can be chosen.</p>
 
-    <h3 class="vote-form-title" id="candidateSectionTitle">
-      <i class="fas fa-list-check" style="color:var(--clr-blue-light);margin-right:0.5rem;" aria-hidden="true"></i>
-      Choose One Candidate
-    </h3>
-    <p class="vote-form-subtitle">
-      Tap a card to select. You must select exactly one candidate before submitting.
-    </p>
-
-    <!-- Candidates grid -->
-    <fieldset style="border:none;padding:0;margin:0;" aria-required="true">
-      <legend class="visually-hidden">Select a candidate to vote for</legend>
-
-      <div class="candidates-grid" role="radiogroup" aria-label="Candidates">
-
+      <div class="candidates-grid">
         {% for candidate in candidates %}
-
-          <!-- Hidden real radio -->
-          <input
-            type="radio"
-            id="candidate_{{ candidate.id }}"
-            name="candidate"
-            value="{{ candidate.id }}"
-            class="candidate-radio-input"
-            required
-            aria-label="Vote for {{ candidate.name }}"
-          />
-
-          <!-- Visual card label -->
-          <label
-            for="candidate_{{ candidate.id }}"
-            class="candidate-card-label"
-            aria-label="{{ candidate.name }}{% if candidate.description %} – {{ candidate.description|truncatechars:80 }}{% endif %}"
-          >
-
-            <!-- Photo -->
-            <div class="candidate-photo-wrap" aria-hidden="true">
+          <input type="radio"
+                 class="candidate-radio"
+                 id="cand_{{ candidate.id }}"
+                 name="candidate"
+                 value="{{ candidate.id }}">
+          <label for="cand_{{ candidate.id }}" class="candidate-card">
+            <div class="candidate-photo">
               {% if candidate.photo %}
-                <img
-                  src="{{ candidate.photo.url }}"
-                  alt="{{ candidate.name }}"
-                  loading="lazy"
-                />
+                <img src="{{ candidate.photo.url }}" alt="{{ candidate.name }}">
               {% else %}
-                <div class="candidate-photo-placeholder" aria-hidden="true">
+                <div class="candidate-initials">
                   {{ candidate.name|slice:":2"|upper }}
                 </div>
               {% endif %}
             </div>
-
-            <!-- Card body -->
-            <div class="candidate-card-body">
-              <span class="candidate-number">
+            <div class="candidate-body">
+              <span class="candidate-num">
                 Candidate {{ forloop.counter|stringformat:"02d" }}
               </span>
-              <h4 class="candidate-name">{{ candidate.name }}</h4>
-
+              <div class="candidate-name">{{ candidate.name }}</div>
               {% if candidate.description %}
-                <p class="candidate-desc">{{ candidate.description }}</p>
-              {% else %}
-                <p class="candidate-desc" style="font-style:italic; opacity:0.6;">
-                  No additional information provided.
+                <p class="candidate-desc">
+                  {{ candidate.description|truncatechars:80 }}
                 </p>
               {% endif %}
-
-              <!-- Selection indicator -->
-              <div class="candidate-select-indicator" aria-hidden="true">
-                <div class="select-circle">
-                  <i class="fas fa-check"></i>
-                </div>
-                <span class="select-label">Select</span>
+              <div class="select-ring">
+                <i class="fa-solid fa-check"></i>
               </div>
-
             </div>
           </label>
-
         {% empty %}
-          <div
-            class="alert alert-warning"
-            style="grid-column:1/-1;"
-            role="alert"
-          >
-            <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+          <p style="color:#6b7280;grid-column:1/-1;">
             No candidates have been registered for this election yet.
-            Please contact the Student Affairs Office.
-          </div>
+          </p>
         {% endfor %}
-
-      </div>
-      <!-- /candidates-grid -->
-    </fieldset>
-
-
-    <!-- ============================================================
-         VOTE SUBMISSION AREA
-         ============================================================ -->
-    <div class="vote-submit-area">
-
-      <div class="vote-submit-disclaimer" role="note" aria-label="Important notice">
-        <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
-        <p>
-          <strong style="color:var(--clr-gold-light);">Important:</strong>
-          By clicking <em>Submit My Vote</em>, you confirm that your choice is final.
-          Votes are encrypted immediately upon submission and <strong style="color:var(--clr-white);">cannot be undone,
-          altered, or retracted</strong>. Each registered voter may only vote once per election.
-        </p>
       </div>
 
-      <div class="vote-submit-actions">
-        <a
-          href="{% url 'voter_dashboard:dashboard' %}"
-          class="btn-back-vote"
-          aria-label="Cancel and return to dashboard"
-        >
-          <i class="fas fa-arrow-left" aria-hidden="true"></i>
-          Cancel
-        </a>
-        <button
-          type="button"
-          class="btn-submit-vote"
-          id="openConfirmBtn"
-          aria-label="Review and submit your vote"
-          disabled
-        >
-          <i class="fas fa-check-to-slot" aria-hidden="true"></i>
-          Submit My Vote
+      <div class="submit-area">
+        <div class="submit-disclaimer">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <p>
+            <strong>Important:</strong> By clicking <em>Submit My Vote</em> your
+            choice is final. Votes are encrypted immediately and
+            <strong>cannot be undone, altered, or retracted</strong>.
+            Each voter may only vote once per election.
+          </p>
+        </div>
+        <div class="submit-actions">
+          <a href="{% url 'voter_dashboard:dashboard' %}" class="btn-cancel-vote">
+            <i class="fa-solid fa-arrow-left"></i> Cancel
+          </a>
+          <button type="button" class="btn-submit-vote" id="openModalBtn" disabled>
+            <i class="fa-solid fa-check-to-slot"></i> Submit My Vote
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div><!-- /candidate-form-section -->
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+      <div class="modal-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <h3>Confirm Your Vote</h3>
+      <p>You are about to cast your vote for:</p>
+      <span class="modal-candidate-name" id="modalCandidateName">—</span>
+      <div class="modal-warning">
+        <i class="fa-solid fa-lock"></i>
+        This action is <strong>&nbsp;irreversible</strong>. Your vote will be encrypted.
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="cancelModalBtn">
+          <i class="fa-solid fa-xmark"></i> Cancel
+        </button>
+        <button class="btn-modal-confirm" id="finalSubmitBtn">
+          <i class="fa-solid fa-check-to-slot"></i> Confirm Vote
         </button>
       </div>
-
-    </div>
-
-  </form>
-  <!-- /vote-form -->
-
-
-  <!-- ============================================================
-       CONFIRMATION MODAL OVERLAY
-       ============================================================ -->
-  <div
-    class="confirm-overlay"
-    id="confirmOverlay"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="confirmHeading"
-    aria-describedby="confirmDesc"
-  >
-    <div class="confirm-modal">
-
-      <div class="confirm-icon" aria-hidden="true">
-        <i class="fas fa-shield-halved"></i>
-      </div>
-
-      <h3 id="confirmHeading">Confirm Your Vote</h3>
-
-      <p id="confirmDesc">You are about to cast your vote for:</p>
-
-      <span class="confirm-candidate-name" id="confirmCandidateName" aria-live="polite">
-        —
-      </span>
-
-      <div class="confirm-warning" role="note">
-        <i class="fas fa-lock" aria-hidden="true"></i>
-        <span>This action is <strong>irreversible</strong>. Your vote will be encrypted.</span>
-      </div>
-
-      <div class="confirm-actions">
-        <button
-          type="button"
-          class="btn btn-ghost"
-          id="cancelConfirmBtn"
-          aria-label="Cancel and go back to candidate selection"
-        >
-          <i class="fas fa-xmark" aria-hidden="true"></i>
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="btn btn-solid"
-          id="finalSubmitBtn"
-          aria-label="Confirm and submit vote"
-        >
-          <i class="fas fa-check-to-slot" aria-hidden="true"></i>
-          Confirm Vote
-        </button>
-      </div>
-
     </div>
   </div>
-  <!-- /confirmation modal -->
 
-</div>
-<!-- /vote-page -->
+</div><!-- /vote-page -->
+
+<div id="castVoteConfig"
+     data-liveness-url="{% url 'voter_dashboard:vote_liveness_verify' election.id %}"
+     style="display:none;"
+     aria-hidden="true"></div>
 {% endblock %}
 
 
 {% block extra_js %}
-<script>
-  const voteForm       = document.getElementById('voteForm');
-  const openConfirmBtn = document.getElementById('openConfirmBtn');
-  const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
-  const finalSubmitBtn  = document.getElementById('finalSubmitBtn');
-  const confirmOverlay  = document.getElementById('confirmOverlay');
-  const confirmNameEl   = document.getElementById('confirmCandidateName');
-  const radioInputs     = document.querySelectorAll('.candidate-radio-input');
-
-  // ── Enable submit button only when a candidate is selected ─────
-  radioInputs.forEach((input) => {
-    input.addEventListener('change', () => {
-      const anyChecked = [...radioInputs].some(r => r.checked);
-      openConfirmBtn.disabled = !anyChecked;
-
-      // Scroll the checked card into view smoothly
-      if (input.checked) {
-        const label = input.nextElementSibling;
-        if (label) {
-          label.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }
-    });
-  });
-
-  // ── Open confirmation modal ─────────────────────────────────────
-  openConfirmBtn.addEventListener('click', () => {
-    const selected = document.querySelector('.candidate-radio-input:checked');
-    if (!selected) return;
-
-    // Get candidate name from the label
-    const label      = selected.nextElementSibling;
-    const nameEl     = label ? label.querySelector('.candidate-name') : null;
-    const candidateName = nameEl ? nameEl.textContent.trim() : 'Selected Candidate';
-
-    confirmNameEl.textContent = candidateName;
-    confirmOverlay.classList.add('active');
-
-    // Focus the cancel button for accessibility
-    setTimeout(() => cancelConfirmBtn.focus(), 100);
-  });
-
-  // ── Close confirmation modal ────────────────────────────────────
-  cancelConfirmBtn.addEventListener('click', closeConfirm);
-
-  confirmOverlay.addEventListener('click', (e) => {
-    if (e.target === confirmOverlay) closeConfirm();
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && confirmOverlay.classList.contains('active')) {
-      closeConfirm();
-    }
-  });
-
-  function closeConfirm() {
-    confirmOverlay.classList.remove('active');
-    openConfirmBtn.focus();
-  }
-
-  // ── Final submit ────────────────────────────────────────────────
-  finalSubmitBtn.addEventListener('click', () => {
-    finalSubmitBtn.disabled = true;
-    finalSubmitBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span>&nbsp; Encrypting…';
-
-    // Simulate brief encryption animation then submit
-    setTimeout(() => {
-      voteForm.submit();
-    }, 800);
-  });
-
-  // ── Keyboard support: Space/Enter on candidate cards ───────────
-  document.querySelectorAll('.candidate-card-label').forEach((label) => {
-    label.setAttribute('tabindex', '0');
-    label.setAttribute('role', 'radio');
-    label.addEventListener('keydown', (e) => {
-      if (e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        const forId = label.getAttribute('for');
-        const input = document.getElementById(forId);
-        if (input) {
-          input.checked = true;
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      }
-    });
-  });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
+        crossorigin="anonymous"></script>
 {% endblock %}

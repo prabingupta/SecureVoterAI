@@ -1,0 +1,785 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Analytics | SecureVoter AI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'admin_dashboard/css/analytics_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<!-- ══ PAGE HEADER ═══════════════════════════════════════════════════ -->
+<div class="analytics-header">
+  <div class="analytics-header-left">
+    <h1><i class="fas fa-chart-mixed" style="color:var(--c-primary-400);margin-right:.45rem;font-size:1.4rem;"></i>Analytics Dashboard</h1>
+    <p>Real-time voter statistics, participation insights, and security metrics.</p>
+  </div>
+  <div class="analytics-meta">
+    <span class="analytics-meta-badge live">Live Data</span>
+    <span class="analytics-meta-badge"><i class="fas fa-users"></i> {{ total_voters }} voters total</span>
+    <span class="analytics-meta-badge"><i class="fas fa-clock"></i> {% now "d M Y · H:i" %}</span>
+  </div>
+</div>
+
+
+<!-- ══ KPI ROW 1 — Voter Overview ════════════════════════════════════ -->
+<p class="analytics-section-label">Voter Overview</p>
+<div class="kpi-grid">
+
+  <!-- Total Registered -->
+  <div class="kpi-card">
+    <div class="kpi-top">
+      <div class="kpi-icon"><i class="fas fa-users"></i></div>
+      <span class="kpi-badge">All time</span>
+    </div>
+    <div class="kpi-value" data-count="{{ total_voters }}">0</div>
+    <div class="kpi-label">Total Registered</div>
+    <div class="kpi-sub"><i class="fas fa-circle-info"></i> Includes all approval statuses</div>
+  </div>
+
+  <!-- Approved -->
+  <div class="kpi-card accent-success">
+    <div class="kpi-top">
+      <div class="kpi-icon"><i class="fas fa-circle-check"></i></div>
+      <span class="kpi-badge up">{{ approval_rate }}%</span>
+    </div>
+    <div class="kpi-value" data-count="{{ approved_voters }}">0</div>
+    <div class="kpi-label">Approved Voters</div>
+    <div class="kpi-bar-wrap">
+      <div class="kpi-bar-meta"><span>Approval rate</span><span>{{ approval_rate }}%</span></div>
+      <div class="kpi-bar-track">
+        <div class="kpi-bar-fill" data-pct="{{ approval_rate }}"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending -->
+  <div class="kpi-card accent-warn">
+    <div class="kpi-top">
+      <div class="kpi-icon"><i class="fas fa-hourglass-half"></i></div>
+      <span class="kpi-badge">Awaiting review</span>
+    </div>
+    <div class="kpi-value" data-count="{{ pending_voters }}">0</div>
+    <div class="kpi-label">Pending Approval</div>
+    <div class="kpi-sub"><i class="fas fa-arrow-right"></i>
+      <a href="{% url 'admin_dashboard:manage_voters' %}" style="color:var(--c-warning);">Review now →</a>
+    </div>
+  </div>
+
+  <!-- Rejected -->
+  <div class="kpi-card accent-error">
+    <div class="kpi-top">
+      <div class="kpi-icon"><i class="fas fa-circle-xmark"></i></div>
+      <span class="kpi-badge down">Denied</span>
+    </div>
+    <div class="kpi-value" data-count="{{ rejected_voters }}">0</div>
+    <div class="kpi-label">Rejected</div>
+    <div class="kpi-sub"><i class="fas fa-circle-info"></i> Not permitted to vote</div>
+  </div>
+
+</div><!-- /kpi-grid -->
+
+
+<!-- ══ KPI ROW 2 — Biometrics & Votes ════════════════════════════════ -->
+<div class="kpi-grid" style="margin-bottom:var(--sp-7);">
+
+  <!-- With face -->
+  <div class="kpi-card accent-info">
+    <div class="kpi-top">
+      <div class="kpi-icon"><i class="fas fa-face-viewfinder"></i></div>
+      <span class="kpi-badge blue">{{ face_rate }}%</span>
+    </div>
+    <div class="kpi-value" data-count="{{ with_face }}">0</div>
+    <div class="kpi-label">Face Enrolled</div>
+    <div class="kpi-bar-wrap">
+      <div class="kpi-bar-meta"><span>Biometric coverage</span><span>{{ face_rate }}%</span></div>
+      <div class="kpi-bar-track">
+        <div class="kpi-bar-fill" data-pct="{{ face_rate }}"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Without face -->
+  <div class="kpi-card accent-ink">
+    <div class="kpi-top">
+      <div class="kpi-icon"><i class="fas fa-face-dotted"></i></div>
+      <span class="kpi-badge">No biometric</span>
+    </div>
+    <div class="kpi-value" data-count="{{ without_face }}">0</div>
+    <div class="kpi-label">No Face Data</div>
+    <div class="kpi-sub"><i class="fas fa-circle-info"></i> Cannot log in to vote</div>
+  </div>
+
+  <!-- Voted -->
+  <div class="kpi-card accent-gold">
+    <div class="kpi-top">
+      <div class="kpi-icon"><i class="fas fa-ballot-check"></i></div>
+      <span class="kpi-badge up">{{ turnout_rate }}%</span>
+    </div>
+    <div class="kpi-value" data-count="{{ voted_voters }}">0</div>
+    <div class="kpi-label">Have Voted</div>
+    <div class="kpi-bar-wrap">
+      <div class="kpi-bar-meta"><span>Turnout of approved</span><span>{{ turnout_rate }}%</span></div>
+      <div class="kpi-bar-track">
+        <div class="kpi-bar-fill" data-pct="{{ turnout_rate }}"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Not voted -->
+  <div class="kpi-card">
+    <div class="kpi-top">
+      <div class="kpi-icon"><i class="fas fa-circle-minus"></i></div>
+      <span class="kpi-badge">Abstained</span>
+    </div>
+    <div class="kpi-value" data-count="{{ not_voted }}">0</div>
+    <div class="kpi-label">Have Not Voted</div>
+    <div class="kpi-sub"><i class="fas fa-circle-info"></i>
+      {{ total_votes }} total votes cast
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══ TREND LINE ═════════════════════════════════════════════════════ -->
+<p class="analytics-section-label">Registration Trend</p>
+<div class="charts-row" style="margin-bottom:var(--sp-7);">
+  <div class="chart-card trend-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">New Registrations — Last 30 Days</div>
+        <div class="chart-card-sub">Daily count of students who registered</div>
+      </div>
+      <span class="chart-tag blue">30d trend</span>
+    </div>
+    <div class="chart-canvas-wrap" style="height:220px;">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ DEMOGRAPHICS ROW ══════════════════════════════════════════════ -->
+<p class="analytics-section-label">Voter Demographics</p>
+<div class="charts-row three" style="margin-bottom:var(--sp-7);">
+
+  <!-- Gender Donut -->
+  <div class="chart-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">Gender Distribution</div>
+        <div class="chart-card-sub">All registered voters</div>
+      </div>
+      <span class="chart-tag maroon">Gender</span>
+    </div>
+    <div class="chart-canvas-wrap" style="height:200px;position:relative;">
+      <canvas id="genderChart"></canvas>
+      <div class="donut-centre" id="genderCentre">
+        <div class="donut-centre-val">{{ total_voters }}</div>
+        <div class="donut-centre-label">Total</div>
+      </div>
+    </div>
+    <div class="chart-legend" id="genderLegend"></div>
+  </div>
+
+  <!-- Age Group Bar -->
+  <div class="chart-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">Age Group Breakdown</div>
+        <div class="chart-card-sub">18–35 eligible range</div>
+      </div>
+      <span class="chart-tag gold">Age</span>
+    </div>
+    <div class="chart-canvas-wrap" style="height:200px;">
+      <canvas id="ageChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Department Donut -->
+  <div class="chart-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">Department Split</div>
+        <div class="chart-card-sub">Registered per department</div>
+      </div>
+      <span class="chart-tag blue">Dept</span>
+    </div>
+    <div class="chart-canvas-wrap" style="height:200px;position:relative;">
+      <canvas id="deptChart"></canvas>
+      <div class="donut-centre" id="deptCentre">
+        <div class="donut-centre-val">{{ total_voters }}</div>
+        <div class="donut-centre-label">Total</div>
+      </div>
+    </div>
+    <div class="chart-legend" id="deptLegend"></div>
+  </div>
+
+</div>
+
+
+<!-- ══ APPROVAL + YEAR ROW ═══════════════════════════════════════════ -->
+<div class="charts-row two" style="margin-bottom:var(--sp-7);">
+
+  <!-- Approval Status Donut -->
+  <div class="chart-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">Approval Status</div>
+        <div class="chart-card-sub">Approved · Pending · Rejected</div>
+      </div>
+      <span class="chart-tag green">Status</span>
+    </div>
+    <div class="charts-row two" style="gap:var(--sp-5);margin:0;">
+      <div class="chart-canvas-wrap" style="height:200px;position:relative;">
+        <canvas id="approvalChart"></canvas>
+        <div class="donut-centre">
+          <div class="donut-centre-val">{{ total_voters }}</div>
+          <div class="donut-centre-label">Total</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;justify-content:center;gap:var(--sp-3);">
+        <div class="vote-split-item voted" style="text-align:left;padding:var(--sp-3) var(--sp-4);">
+          <div class="big-num" style="font-size:1.5rem;">{{ approved_voters }}</div>
+          <div class="big-label">Approved</div>
+        </div>
+        <div class="vote-split-item" style="text-align:left;padding:var(--sp-3) var(--sp-4);--c-success:#d97706;">
+          <div class="big-num" style="font-size:1.5rem;color:var(--c-warning);">{{ pending_voters }}</div>
+          <div class="big-label">Pending</div>
+        </div>
+        <div class="vote-split-item no-vote" style="text-align:left;padding:var(--sp-3) var(--sp-4);">
+          <div class="big-num" style="font-size:1.5rem;color:var(--c-error);">{{ rejected_voters }}</div>
+          <div class="big-label">Rejected</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Year of Study horizontal bars -->
+  <div class="chart-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">Year of Study</div>
+        <div class="chart-card-sub">Distribution across academic years</div>
+      </div>
+      <span class="chart-tag maroon">Year</span>
+    </div>
+    <div class="hbar-wrap" id="yearBars"></div>
+    <div style="margin-top:var(--sp-5);height:160px;">
+      <canvas id="yearChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══ VOTE PARTICIPATION + FRAUD ════════════════════════════════════ -->
+<p class="analytics-section-label">Participation &amp; Security</p>
+<div class="charts-row two" style="margin-bottom:var(--sp-7);">
+
+  <!-- Vote participation -->
+  <div class="chart-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">Vote Participation</div>
+        <div class="chart-card-sub">Of {{ approved_voters }} approved voters</div>
+      </div>
+      <span class="chart-tag gold">Turnout {{ turnout_rate }}%</span>
+    </div>
+    <div class="chart-canvas-wrap" style="height:200px;position:relative;">
+      <canvas id="participationChart"></canvas>
+      <div class="donut-centre">
+        <div class="donut-centre-val">{{ turnout_rate }}%</div>
+        <div class="donut-centre-label">Turnout</div>
+      </div>
+    </div>
+    <div class="vote-split">
+      <div class="vote-split-item voted">
+        <div class="big-num">{{ voted_voters }}</div>
+        <div class="big-label">Voted</div>
+      </div>
+      <div class="vote-split-item no-vote">
+        <div class="big-num">{{ not_voted }}</div>
+        <div class="big-label">Not Voted</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fraud alert breakdown -->
+  <div class="chart-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">Fraud Alert Breakdown</div>
+        <div class="chart-card-sub">{{ total_fraud }} total alerts recorded</div>
+      </div>
+      <a href="{% url 'admin_dashboard:view_fraud_alerts' %}"
+         style="font-size:.8rem;color:var(--c-primary-500);font-weight:600;">
+        View all →
+      </a>
+    </div>
+    {% if total_fraud %}
+      <div class="fraud-bar-list" id="fraudBars"></div>
+      <div style="margin-top:var(--sp-5);height:140px;">
+        <canvas id="fraudChart"></canvas>
+      </div>
+    {% else %}
+      <div class="chart-empty">
+        <i class="fas fa-shield-check"></i>
+        No fraud alerts recorded yet.
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+
+<!-- ══ PER-ELECTION TURNOUT BAR ═══════════════════════════════════════ -->
+<p class="analytics-section-label">Election Turnout</p>
+<div class="charts-row" style="margin-bottom:var(--sp-7);">
+  <div class="chart-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">Votes Cast per Election</div>
+        <div class="chart-card-sub">Last 8 elections — eligible vs actual cast</div>
+      </div>
+      <span class="chart-tag blue">Elections</span>
+    </div>
+    <div class="chart-canvas-wrap" style="height:260px;">
+      <canvas id="electionsChart"></canvas>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ GENDER × APPROVAL TABLE ═══════════════════════════════════════ -->
+<p class="analytics-section-label">Detailed Breakdown</p>
+<div class="charts-row two" style="margin-bottom:var(--sp-9);">
+
+  <!-- Summary table -->
+  <div class="chart-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">Voter Summary Table</div>
+        <div class="chart-card-sub">All key metrics at a glance</div>
+      </div>
+    </div>
+    <table class="stat-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th style="text-align:right;">Count</th>
+          <th style="text-align:right;">%</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span style="color:var(--c-success);font-weight:600;">✓</span> Approved</td>
+          <td class="num">{{ approved_voters }}</td>
+          <td class="num">{% if total_voters %}{{ approval_rate }}%{% else %}—{% endif %}</td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--c-warning);font-weight:600;">⏳</span> Pending</td>
+          <td class="num">{{ pending_voters }}</td>
+          <td class="num">{% if total_voters %}{% widthratio pending_voters total_voters 100 %}%{% else %}—{% endif %}</td>
+        </tr>
+        <tr>
+          <td><span style="color:var(--c-error);font-weight:600;">✗</span> Rejected</td>
+          <td class="num">{{ rejected_voters }}</td>
+          <td class="num">{% if total_voters %}{% widthratio rejected_voters total_voters 100 %}%{% else %}—{% endif %}</td>
+        </tr>
+        <tr>
+          <td><i class="fas fa-face-viewfinder" style="color:var(--c-info);"></i> Face Enrolled</td>
+          <td class="num">{{ with_face }}</td>
+          <td class="num">{{ face_rate }}%</td>
+        </tr>
+        <tr>
+          <td><i class="fas fa-face-dotted" style="color:var(--c-ink-300);"></i> No Face Data</td>
+          <td class="num">{{ without_face }}</td>
+          <td class="num">{% if total_voters %}{% widthratio without_face total_voters 100 %}%{% else %}—{% endif %}</td>
+        </tr>
+        <tr>
+          <td><i class="fas fa-ballot-check" style="color:var(--c-gold-500);"></i> Have Voted</td>
+          <td class="num">{{ voted_voters }}</td>
+          <td class="num">{{ turnout_rate }}%</td>
+        </tr>
+        <tr>
+          <td><i class="fas fa-circle-minus" style="color:var(--c-ink-300);"></i> Not Voted</td>
+          <td class="num">{{ not_voted }}</td>
+          <td class="num">{% if approved_voters %}{% widthratio not_voted approved_voters 100 %}%{% else %}—{% endif %}</td>
+        </tr>
+        <tr>
+          <td><i class="fas fa-triangle-exclamation" style="color:var(--c-error);"></i> Fraud Alerts</td>
+          <td class="num">{{ total_fraud }}</td>
+          <td class="num">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Age × gender stacked bar -->
+  <div class="chart-card">
+    <div class="chart-card-head">
+      <div>
+        <div class="chart-card-title">Age Group Distribution</div>
+        <div class="chart-card-sub">Horizontal breakdown with counts</div>
+      </div>
+      <span class="chart-tag gold">Age bands</span>
+    </div>
+    <div class="hbar-wrap" id="ageBars" style="margin-top:var(--sp-4);"></div>
+    <div style="height:160px;margin-top:var(--sp-5);">
+      <canvas id="agePieChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+
+<!-- ══ CHART.JS + INLINE SCRIPTS ═════════════════════════════════════ -->
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+/* ── Data from Django ─────────────────────────────────────────────── */
+const GENDER    = {{ gender_json|safe }};
+const AGE       = {{ age_json|safe }};
+const DEPT      = {{ dept_json|safe }};
+const YEAR      = {{ year_json|safe }};
+const ELECTIONS = {{ elections_json|safe }};
+const FRAUD     = {{ fraud_json|safe }};
+const TREND_L   = {{ trend_labels|safe }};
+const TREND_V   = {{ trend_values|safe }};
+
+const TOTAL   = {{ total_voters }};
+const APPROVED= {{ approved_voters }};
+const PENDING = {{ pending_voters }};
+const REJECTED= {{ rejected_voters }};
+const VOTED   = {{ voted_voters }};
+const NOT_VOTED={{ not_voted }};
+
+/* ── Palette ──────────────────────────────────────────────────────── */
+const P = {
+  maroon:  ['#9B1821','#BE3340','#D96470','#EDA5AB','#F8DEE1'],
+  gold:    ['#C49A00','#E8B800','#F5D040','#F9E07A','#FEFAE8'],
+  blue:    ['#1E40AF','#2563EB','#3B82F6','#93C5FD','#DBEAFE'],
+  green:   ['#166534','#16A34A','#22C55E','#86EFAC','#DCFCE7'],
+  warn:    ['#92400E','#D97706','#F59E0B','#FCD34D','#FEF3C7'],
+  neutral: ['#4A3829','#6B5240','#8F7060','#B59A8A','#D4C4BA'],
+};
+
+/* ── Chart.js global defaults ────────────────────────────────────── */
+Chart.defaults.font.family  = "'DM Sans', sans-serif";
+Chart.defaults.font.size    = 12;
+Chart.defaults.color        = '#6B5240';
+Chart.defaults.plugins.legend.display = false;
+Chart.defaults.plugins.tooltip.backgroundColor = '#1C160F';
+Chart.defaults.plugins.tooltip.titleColor       = '#F9F4EF';
+Chart.defaults.plugins.tooltip.bodyColor        = '#D4C4BA';
+Chart.defaults.plugins.tooltip.padding          = 10;
+Chart.defaults.plugins.tooltip.cornerRadius     = 8;
+Chart.defaults.plugins.tooltip.displayColors    = true;
+
+/* ── Helpers ──────────────────────────────────────────────────────── */
+function donut(id, labels, values, colors, opts = {}) {
+  const ctx = document.getElementById(id)?.getContext('2d');
+  if (!ctx) return null;
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderWidth: 2,
+                   borderColor: '#fff', hoverOffset: 6 }],
+    },
+    options: {
+      cutout: '68%',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+                 tooltip: { callbacks: {
+                   label: ctx => ` ${ctx.label}: ${ctx.raw}` } } },
+      animation: { animateRotate: true, duration: 900 },
+      ...opts,
+    },
+  });
+}
+
+function buildLegend(containerId, labels, values, colors) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const total = values.reduce((a,b) => a+b, 0) || 1;
+  el.innerHTML = labels.map((l, i) => `
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${colors[i]}"></span>
+      <span class="legend-name">${l}</span>
+      <span class="legend-val">${values[i]}</span>
+      <span class="legend-pct">${(values[i]/total*100).toFixed(1)}%</span>
+    </div>`).join('');
+}
+
+function hbars(containerId, labels, values, colors, max) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const m = max || Math.max(...values) || 1;
+  el.innerHTML = labels.map((l, i) => `
+    <div class="hbar-row">
+      <span class="hbar-label" title="${l}">${l}</span>
+      <div class="hbar-track">
+        <div class="hbar-fill" style="--hbar-color:${colors[i]};width:${values[i]/m*100}%"></div>
+      </div>
+      <span class="hbar-val">${values[i]}</span>
+    </div>`).join('');
+}
+
+/* ── 1. Registration trend (line) ────────────────────────────────── */
+(function() {
+  const ctx = document.getElementById('trendChart')?.getContext('2d');
+  if (!ctx) return;
+  const grad = ctx.createLinearGradient(0, 0, 0, 200);
+  grad.addColorStop(0, 'rgba(155,24,33,.25)');
+  grad.addColorStop(1, 'rgba(155,24,33,.02)');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: TREND_L,
+      datasets: [{
+        data: TREND_V,
+        borderColor: '#9B1821',
+        backgroundColor: grad,
+        borderWidth: 2.5,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#9B1821',
+        fill: true,
+        tension: 0.4,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          grid: { color: 'rgba(0,0,0,.04)' },
+          ticks: { maxTicksLimit: 8, font: { size: 11 } },
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0,0,0,.04)' },
+          ticks: { precision: 0 },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          title: t => t[0].label,
+          label: t => ` ${t.raw} registration${t.raw !== 1 ? 's' : ''}`,
+        }},
+      },
+    },
+  });
+})();
+
+/* ── 2. Gender donut ─────────────────────────────────────────────── */
+donut('genderChart', GENDER.labels, GENDER.values,
+  [P.maroon[0], P.blue[1], P.neutral[3]]);
+buildLegend('genderLegend', GENDER.labels, GENDER.values,
+  [P.maroon[0], P.blue[1], P.neutral[3]]);
+
+/* ── 3. Age group bar chart ──────────────────────────────────────── */
+(function() {
+  const ctx = document.getElementById('ageChart')?.getContext('2d');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: AGE.labels,
+      datasets: [{
+        data: AGE.values,
+        backgroundColor: [P.gold[0], P.gold[1], P.gold[2], P.neutral[3]],
+        borderRadius: 6,
+        borderSkipped: false,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' }, ticks: { precision: 0 } },
+      },
+    },
+  });
+})();
+
+/* ── 4. Department donut ─────────────────────────────────────────── */
+donut('deptChart', DEPT.labels, DEPT.values,
+  [P.maroon[0], P.blue[1], P.gold[0]]);
+buildLegend('deptLegend', DEPT.labels, DEPT.values,
+  [P.maroon[0], P.blue[1], P.gold[0]]);
+
+/* ── 5. Approval status donut ────────────────────────────────────── */
+donut('approvalChart',
+  ['Approved', 'Pending', 'Rejected'],
+  [APPROVED, PENDING, REJECTED],
+  [P.green[1], P.warn[1], P.maroon[0]]);
+
+/* ── 6. Year of study bars ───────────────────────────────────────── */
+hbars('yearBars', YEAR.labels, YEAR.values,
+  [P.maroon[0], P.maroon[2], P.maroon[4]],
+  Math.max(...YEAR.values, 1));
+
+(function() {
+  const ctx = document.getElementById('yearChart')?.getContext('2d');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: YEAR.labels,
+      datasets: [{
+        data: YEAR.values,
+        backgroundColor: [P.maroon[0], P.maroon[2], P.maroon[4]],
+        borderRadius: 5,
+        borderSkipped: false,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' }, ticks: { precision: 0 } },
+        y: { grid: { display: false } },
+      },
+    },
+  });
+})();
+
+/* ── 7. Participation donut ──────────────────────────────────────── */
+donut('participationChart',
+  ['Voted', 'Not Voted'],
+  [VOTED, NOT_VOTED],
+  [P.gold[0], P.neutral[4]]);
+
+/* ── 8. Fraud bars + chart ───────────────────────────────────────── */
+if (FRAUD.values.length) {
+  const maxFraud = Math.max(...FRAUD.values, 1);
+  const fbEl = document.getElementById('fraudBars');
+  if (fbEl) {
+    fbEl.innerHTML = FRAUD.labels.map((l, i) => `
+      <div class="fraud-bar-row">
+        <div class="fraud-bar-meta">
+          <span class="fraud-bar-name">${l}</span>
+          <span class="fraud-bar-count">${FRAUD.values[i]}</span>
+        </div>
+        <div class="fraud-bar-track">
+          <div class="fraud-bar-fill" style="background:${FRAUD.colors[i]};width:${FRAUD.values[i]/maxFraud*100}%"></div>
+        </div>
+      </div>`).join('');
+  }
+
+  (function() {
+    const ctx = document.getElementById('fraudChart')?.getContext('2d');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: FRAUD.labels,
+        datasets: [{
+          data: FRAUD.values,
+          backgroundColor: FRAUD.colors,
+          borderRadius: 5,
+          borderSkipped: false,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' }, ticks: { precision: 0 } },
+        },
+      },
+    });
+  })();
+}
+
+/* ── 9. Elections grouped bar ────────────────────────────────────── */
+(function() {
+  const ctx = document.getElementById('electionsChart')?.getContext('2d');
+  if (!ctx || !ELECTIONS.labels.length) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ELECTIONS.labels,
+      datasets: [
+        {
+          label: 'Eligible Voters',
+          data: ELECTIONS.eligible,
+          backgroundColor: 'rgba(155,24,33,.15)',
+          borderColor: P.maroon[0],
+          borderWidth: 1.5,
+          borderRadius: 5,
+        },
+        {
+          label: 'Votes Cast',
+          data: ELECTIONS.cast,
+          backgroundColor: P.gold[0],
+          borderRadius: 5,
+          borderSkipped: false,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { boxWidth: 12, font: { size: 12 } },
+        },
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' }, ticks: { precision: 0 } },
+      },
+    },
+  });
+})();
+
+/* ── 10. Age hbars + pie ─────────────────────────────────────────── */
+hbars('ageBars', AGE.labels, AGE.values,
+  [P.gold[0], P.gold[1], P.gold[2], P.neutral[3]],
+  Math.max(...AGE.values, 1));
+
+donut('agePieChart', AGE.labels, AGE.values,
+  [P.gold[0], P.gold[1], P.gold[2], P.neutral[3]]);
+
+/* ── Animated KPI counters ───────────────────────────────────────── */
+function countUp(el, target, duration = 900) {
+  const start = performance.now();
+  const update = (now) => {
+    const pct = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - pct, 3);
+    el.textContent = Math.round(target * ease);
+    if (pct < 1) requestAnimationFrame(update);
+    else el.textContent = target;
+  };
+  requestAnimationFrame(update);
+}
+
+document.querySelectorAll('[data-count]').forEach(el => {
+  countUp(el, parseInt(el.dataset.count, 10));
+});
+
+/* Animate KPI progress bars */
+document.querySelectorAll('.kpi-bar-fill[data-pct]').forEach(el => {
+  setTimeout(() => {
+    el.style.width = Math.min(parseFloat(el.dataset.pct), 100) + '%';
+  }, 300);
+});
+</script>
+{% endblock %}

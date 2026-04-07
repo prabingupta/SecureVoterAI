@@ -1,54 +1,807 @@
-/* ═══════════════════════════════════════════════════════════════
-   SecureVoter AI — Elections CSS
-   Manage-elections table · Add/Edit election form card
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   SecureVoter AI — Admin Dashboard / elections.css
+   Requires: base.css
+   Covers: elections table, open/close toggle buttons,
+           election form card (add/edit), form inputs,
+           candidate photo preview
+═══════════════════════════════════════════════════════════════════ */
+
+
+/* ─────────────────────────────────────────────────────────────────
+   PAGE WRAPPERS
+───────────────────────────────────────────────────────────────── */
 
 .elections-page,
-.election-form-page { max-width: 1100px; }
+.election-form-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            1.5rem;
+}
 
-/* ── Form Card ────────────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────────────────────────
+   PAGE HEADER
+───────────────────────────────────────────────────────────────── */
+
+.page-header {
+  padding:       1.5rem 0 0.5rem;
+  border-left:   4px solid #5b0e14;
+  padding-left:  1.25rem;
+}
+
+.page-eyebrow {
+  font-family:    'JetBrains Mono', monospace;
+  font-size:      0.72rem;
+  font-weight:    600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color:          #a37000;
+  margin-bottom:  0.5rem;
+  display:        flex;
+  align-items:    center;
+  gap:            0.4rem;
+}
+
+.page-header h1 {
+  font-size:      2rem;
+  font-weight:    800;
+  color:          #1c0a0b;
+  letter-spacing: -0.025em;
+  line-height:    1.15;
+  margin-bottom:  0.4rem;
+}
+
+.page-header > p:not(.page-eyebrow) {
+  font-size:   0.9375rem;
+  color:       #4a1e22;
+  line-height: 1.65;
+  margin:      0;
+  max-width:   none;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   ACTION BAR
+───────────────────────────────────────────────────────────────── */
+
+.page-actions {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             1rem;
+  flex-wrap:       wrap;
+}
+
+.page-actions-left {
+  display:     flex;
+  align-items: center;
+  gap:         0.75rem;
+  flex-wrap:   wrap;
+}
+
+/* Search bar */
+.search-bar {
+  display:       flex;
+  align-items:   center;
+  gap:           0.55rem;
+  background:    #ffffff;
+  border:        1.5px solid #ece4e4;
+  border-radius: 999px;
+  padding:       0.52rem 1.1rem;
+  transition:    border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.search-bar:focus-within {
+  border-color: #5b0e14;
+  box-shadow:   0 0 0 3px rgba(91,14,20,0.10);
+}
+
+.search-bar i {
+  font-size: 0.78rem;
+  color:     #9a6065;
+  flex-shrink: 0;
+}
+
+.search-bar input {
+  border:      none;
+  outline:     none;
+  background:  transparent;
+  font-family: 'Inter', sans-serif;
+  font-size:   0.875rem;
+  font-weight: 400;
+  color:       #2d1114;
+  width:       220px;
+}
+
+.search-bar input::placeholder { color: #c4a8aa; }
+
+/* Filter pills */
+.filter-pills {
+  display:     flex;
+  align-items: center;
+  gap:         0.35rem;
+}
+
+.filter-pill {
+  padding:        0.38rem 1rem;
+  border-radius:  999px;
+  font-family:    'Inter', sans-serif;
+  font-size:      0.8125rem;
+  font-weight:    500;
+  border:         1.5px solid #e8d8d9;
+  background:     #ffffff;
+  color:          #6b3338;
+  cursor:         pointer;
+  transition:     all 180ms ease;
+  white-space:    nowrap;
+}
+
+.filter-pill:hover {
+  border-color: #5b0e14;
+  color:        #5b0e14;
+  background:   #fdf2f2;
+}
+
+.filter-pill.active {
+  background:   #5b0e14;
+  border-color: #5b0e14;
+  color:        #f1e194;
+  font-weight:  600;
+}
+
+/* New Election button */
+.btn.btn-gold {
+  display:         inline-flex;
+  align-items:     center;
+  gap:             0.45rem;
+  padding:         0.6rem 1.4rem;
+  border-radius:   10px;
+  background:      linear-gradient(135deg, #a37000 0%, #c98b00 60%, #e8a800 100%);
+  color:           #1c0a0b;
+  font-family:     'Inter', sans-serif;
+  font-size:       0.9rem;
+  font-weight:     700;
+  letter-spacing:  0.01em;
+  border:          none;
+  cursor:          pointer;
+  text-decoration: none;
+  white-space:     nowrap;
+  box-shadow:      0 2px 12px rgba(163,112,0,0.28);
+  transition:      all 200ms ease;
+}
+
+.btn.btn-gold:hover {
+  background: linear-gradient(135deg, #7d5500 0%, #a37000 60%, #c98b00 100%);
+  box-shadow: 0 6px 20px rgba(163,112,0,0.40);
+  transform:  translateY(-1px);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   ELECTIONS TABLE
+───────────────────────────────────────────────────────────────── */
+
+.table-wrapper {
+  background:    #ffffff;
+  border:        1px solid #e8d8d9;
+  border-radius: 14px;
+  overflow:      hidden;
+  box-shadow:    0 1px 3px rgba(91,14,20,0.06), 0 4px 14px rgba(91,14,20,0.04);
+}
+
+#electionsTable {
+  width:           100%;
+  border-collapse: collapse;
+  font-size:       0.875rem;
+}
+
+/* Head */
+#electionsTable thead {
+  background: #fdf9f4;
+  border-bottom: 2px solid #ece4e4;
+}
+
+#electionsTable thead th {
+  padding:        0.85rem 1.1rem;
+  text-align:     left;
+  font-family:    'JetBrains Mono', monospace;
+  font-size:      0.68rem;
+  font-weight:    600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color:          #6b3338;
+  white-space:    nowrap;
+}
+
+/* Body rows */
+#electionsTable tbody tr {
+  border-bottom: 1px solid #f0e8e8;
+  transition:    background 150ms ease;
+}
+
+#electionsTable tbody tr:last-child { border-bottom: none; }
+
+#electionsTable tbody tr:hover { background: #fdf9f4; }
+
+#electionsTable tbody td {
+  padding:     0.9rem 1.1rem;
+  vertical-align: middle;
+  line-height: 1.5;
+}
+
+/* ── Title cell — THE FIX ── */
+/* The template has color:var(--clr-white) which makes text invisible
+   on light backgrounds. We override it here. */
+#electionsTable tbody td .election-title,
+#electionsTable tbody td div[style*="font-weight:600"],
+#electionsTable tbody td div[style*="font-weight: 600"] {
+  font-weight:    600 !important;
+  color:          #1c0a0b !important;   /* dark ink — always visible */
+  font-size:      0.9375rem;
+  line-height:    1.4;
+  letter-spacing: -0.01em;
+}
+
+/* Force override the inline style on the title div */
+#electionsTable .election-title-wrap > div:first-child {
+  color: #1c0a0b !important;
+  font-weight: 600 !important;
+}
+
+/* General: any inline white text inside the table body is overridden */
+#electionsTable tbody [style*="color:var(--clr-white)"],
+#electionsTable tbody [style*="color: var(--clr-white)"] {
+  color: #1c0a0b !important;
+}
+
+/* Row number */
+#electionsTable .font-mono {
+  font-family:    'JetBrains Mono', monospace;
+  font-size:      0.72rem;
+  color:          #9a6065;
+  font-weight:    500;
+}
+
+/* Description text */
+#electionsTable tbody td span[style*="font-size:.82rem"],
+#electionsTable tbody td span[style*="color:var(--clr-muted)"] {
+  font-size:   0.82rem !important;
+  color:       #6b3338 !important;
+  line-height: 1.55;
+}
+
+/* Date cells */
+#electionsTable .date-cell,
+#electionsTable td span.font-mono {
+  font-family:    'JetBrains Mono', monospace;
+  font-size:      0.78rem;
+  color:          #2d1114;
+  line-height:    1.55;
+}
+
+#electionsTable td span.font-mono span[style*="opacity:.6"],
+#electionsTable td span.font-mono span[style*="opacity: .6"] {
+  color:   #9a6065;
+  opacity: 1 !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   BADGES
+───────────────────────────────────────────────────────────────── */
+
+.badge {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            0.3rem;
+  padding:        0.28rem 0.75rem;
+  border-radius:  999px;
+  font-family:    'JetBrains Mono', monospace;
+  font-size:      0.7rem;
+  font-weight:    600;
+  letter-spacing: 0.04em;
+  white-space:    nowrap;
+}
+
+/* Active badge */
+.badge-active {
+  background:   rgba(22,128,61,0.10);
+  border:       1px solid rgba(22,128,61,0.25);
+  color:        #14532d;
+}
+
+.badge-active .dot {
+  width:         7px;
+  height:        7px;
+  border-radius: 50%;
+  background:    #22c55e;
+  box-shadow:    0 0 6px rgba(34,197,94,0.55);
+  animation:     dot-pulse 1.8s ease-in-out infinite;
+  flex-shrink:   0;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(34,197,94,0.55); }
+  50%       { opacity: 0.5; box-shadow: 0 0 12px rgba(34,197,94,0.55); }
+}
+
+/* Inactive badge */
+.badge-inactive {
+  background: rgba(91,14,20,0.07);
+  border:     1px solid rgba(91,14,20,0.15);
+  color:      #6b3338;
+}
+
+/* Blue badge (candidates count) */
+.badge-blue {
+  background: rgba(37,99,235,0.08);
+  border:     1px solid rgba(37,99,235,0.18);
+  color:      #1d4ed8;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   ACTION BUTTONS IN TABLE
+───────────────────────────────────────────────────────────────── */
+
+.td-actions {
+  display:     flex;
+  align-items: center;
+  gap:         0.45rem;
+  flex-wrap:   nowrap;
+}
+
+/* Ghost edit button */
+.btn.btn-ghost.btn-sm {
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  width:           32px;
+  height:          32px;
+  padding:         0;
+  border-radius:   8px;
+  background:      transparent;
+  border:          1.5px solid #e8d8d9;
+  color:           #6b3338;
+  font-size:       0.78rem;
+  cursor:          pointer;
+  text-decoration: none;
+  transition:      all 160ms ease;
+}
+
+.btn.btn-ghost.btn-sm:hover {
+  background:   #fdf2f2;
+  border-color: #5b0e14;
+  color:        #5b0e14;
+}
+
+/* Danger delete button */
+.btn.btn-danger.btn-sm {
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  width:           32px;
+  height:          32px;
+  padding:         0;
+  border-radius:   8px;
+  background:      rgba(220,38,38,0.09);
+  border:          1.5px solid rgba(220,38,38,0.22);
+  color:           #dc2626;
+  font-size:       0.78rem;
+  cursor:          pointer;
+  transition:      all 160ms ease;
+}
+
+.btn.btn-danger.btn-sm:hover {
+  background:   #dc2626;
+  border-color: #dc2626;
+  color:        #ffffff;
+}
+
+/* Open / Close toggle buttons */
+.btn-toggle-active {
+  display:         inline-flex;
+  align-items:     center;
+  gap:             0.35rem;
+  padding:         0.32rem 0.85rem;
+  border-radius:   999px;
+  font-family:     'Inter', sans-serif;
+  font-size:       0.75rem;
+  font-weight:     600;
+  letter-spacing:  0.01em;
+  cursor:          pointer;
+  border:          1.5px solid transparent;
+  text-decoration: none;
+  white-space:     nowrap;
+  transition:      all 160ms ease;
+}
+
+.btn-toggle-active:active { transform: scale(0.96); }
+
+.btn-toggle-active i { font-size: 0.65rem; }
+
+.btn-toggle-active.open {
+  background:   rgba(22,128,61,0.10);
+  border-color: rgba(22,128,61,0.28);
+  color:        #14532d;
+}
+
+.btn-toggle-active.open:hover {
+  background:   #16803d;
+  border-color: #16803d;
+  color:        #ffffff;
+}
+
+.btn-toggle-active.close {
+  background:   rgba(220,38,38,0.09);
+  border-color: rgba(220,38,38,0.25);
+  color:        #b91c1c;
+}
+
+.btn-toggle-active.close:hover {
+  background:   #dc2626;
+  border-color: #dc2626;
+  color:        #ffffff;
+}
+
+/* Status cell */
+.status-cell {
+  display:     flex;
+  align-items: center;
+  gap:         0.4rem;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   EMPTY STATE
+───────────────────────────────────────────────────────────────── */
+
+.candidates-empty {
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  padding:         4rem 2rem;
+  background:      #ffffff;
+  border:          1px dashed #e8d8d9;
+  border-radius:   14px;
+  text-align:      center;
+  gap:             0.75rem;
+}
+
+.candidates-empty i {
+  font-size:   2.5rem;
+  color:       #c4a8aa;
+  margin-bottom: 0.5rem;
+}
+
+.candidates-empty h3 {
+  font-size:      1.15rem;
+  font-weight:    700;
+  color:          #2d1114;
+  letter-spacing: -0.01em;
+}
+
+.candidates-empty p {
+  font-size:  0.9rem;
+  color:      #6b3338;
+  max-width:  36ch;
+  line-height: 1.65;
+  margin:     0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   DELETE MODAL
+───────────────────────────────────────────────────────────────── */
+
+.modal-overlay {
+  position:        fixed;
+  inset:           0;
+  background:      rgba(10,4,5,0.55);
+  backdrop-filter: blur(4px);
+  z-index:         1000;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  opacity:         0;
+  pointer-events:  none;
+  transition:      opacity 250ms ease;
+}
+
+.modal-overlay.active {
+  opacity:        1;
+  pointer-events: auto;
+}
+
+.modal {
+  background:    #ffffff;
+  border:        1px solid #e8d8d9;
+  border-radius: 18px;
+  padding:       2rem 2.25rem;
+  width:         100%;
+  max-width:     420px;
+  position:      relative;
+  box-shadow:    0 20px 60px rgba(0,0,0,0.18);
+  animation:     modal-in 280ms cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-close {
+  position:   absolute;
+  top:        1rem;
+  right:      1rem;
+  background: transparent;
+  border:     none;
+  color:      #9a6065;
+  cursor:     pointer;
+  font-size:  0.9rem;
+  padding:    0.3rem;
+  transition: color 150ms ease;
+}
+
+.modal-close:hover { color: #2d1114; }
+
+.modal h3 {
+  font-size:      1.25rem;
+  font-weight:    800;
+  color:          #1c0a0b;
+  letter-spacing: -0.02em;
+  margin-bottom:  0.5rem;
+}
+
+.modal p {
+  font-size:   0.9375rem;
+  color:       #4a1e22;
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+  max-width:   none;
+}
+
+.modal-actions {
+  display:         flex;
+  align-items:     center;
+  justify-content: flex-end;
+  gap:             0.65rem;
+}
+
+/* Modal buttons */
+.modal .btn-ghost {
+  padding:       0.6rem 1.3rem;
+  border-radius: 9px;
+  background:    transparent;
+  border:        1.5px solid #e8d8d9;
+  color:         #6b3338;
+  font-family:   'Inter', sans-serif;
+  font-size:     0.9rem;
+  font-weight:   600;
+  cursor:        pointer;
+  transition:    all 160ms ease;
+}
+
+.modal .btn-ghost:hover {
+  background:   #fdf9f4;
+  border-color: #9a6065;
+}
+
+.modal .btn-danger {
+  display:         inline-flex;
+  align-items:     center;
+  gap:             0.4rem;
+  padding:         0.6rem 1.3rem;
+  border-radius:   9px;
+  background:      #dc2626;
+  border:          1.5px solid #dc2626;
+  color:           #ffffff;
+  font-family:     'Inter', sans-serif;
+  font-size:       0.9rem;
+  font-weight:     600;
+  text-decoration: none;
+  cursor:          pointer;
+  transition:      all 160ms ease;
+}
+
+.modal .btn-danger:hover {
+  background:   #b91c1c;
+  border-color: #b91c1c;
+  box-shadow:   0 4px 14px rgba(220,38,38,0.30);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   ELECTION FORM CARD
+───────────────────────────────────────────────────────────────── */
+
 .form-card {
-  background: var(--c-surface-0); border: 1px solid var(--c-surface-300);
-  border-radius: var(--r-lg); box-shadow: var(--shadow-sm);
-  overflow: hidden; border-top: 4px solid var(--c-primary-700); max-width: 780px;
+  background:    #ffffff;
+  border:        1px solid #e8d8d9;
+  border-radius: 16px;
+  overflow:      hidden;
+  box-shadow:    0 1px 3px rgba(91,14,20,0.06), 0 4px 14px rgba(91,14,20,0.04);
+  max-width:     720px;
 }
+
 .form-card-header {
-  display: flex; align-items: flex-start; gap: var(--sp-4);
-  padding: var(--sp-6) var(--sp-7); border-bottom: 1px solid var(--c-surface-200);
-  background: var(--c-surface-50);
+  display:       flex;
+  align-items:   center;
+  gap:           1rem;
+  padding:       1.35rem 1.75rem;
+  border-bottom: 1px solid #ece4e4;
+  background:    #fdf9f4;
 }
+
 .form-card-icon {
-  width: 42px; height: 42px; border-radius: var(--r-md);
-  background: var(--c-primary-50); border: 1px solid var(--c-primary-100);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1rem; color: var(--c-primary-700); flex-shrink: 0;
+  width:           44px;
+  height:          44px;
+  border-radius:   10px;
+  background:      linear-gradient(135deg,#420a0f 0%,#5b0e14 55%,#7a1219 100%);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-size:       1.05rem;
+  color:           #f1e194;
+  flex-shrink:     0;
+  box-shadow:      0 2px 10px rgba(91,14,20,0.22);
 }
-.form-card-header h3 { font-size: 1rem; font-weight: 700; color: var(--c-ink-900); margin-bottom: 3px; }
-.form-card-header p  { font-size: .8125rem; color: var(--c-ink-400); }
-.form-card-body   { padding: var(--sp-7); }
+
+.form-card-header h3 {
+  font-size:      1.0625rem;
+  font-weight:    700;
+  color:          #1c0a0b;
+  letter-spacing: -0.015em;
+  margin-bottom:  0.2rem;
+}
+
+.form-card-header p {
+  font-size:   0.8125rem;
+  color:       #6b3338;
+  line-height: 1.5;
+  margin:      0;
+}
+
+.form-card-body {
+  padding:        1.75rem;
+  display:        flex;
+  flex-direction: column;
+  gap:            0;
+}
+
 .form-card-footer {
-  display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-3);
-  padding: var(--sp-5) var(--sp-7); border-top: 1px solid var(--c-surface-200); background: var(--c-surface-50);
+  display:         flex;
+  align-items:     center;
+  justify-content: flex-end;
+  gap:             0.65rem;
+  padding:         1.1rem 1.75rem;
+  border-top:      1px solid #ece4e4;
+  background:      #fdf9f4;
 }
 
-/* ── Elections table row animation ───────────────────────────── */
-#electionsTable tbody tr { animation: row-in var(--t-slow) var(--ease-out) both; }
-#electionsTable tbody tr:nth-child(1)  { animation-delay: 30ms; }
-#electionsTable tbody tr:nth-child(2)  { animation-delay: 60ms; }
-#electionsTable tbody tr:nth-child(3)  { animation-delay: 90ms; }
-#electionsTable tbody tr:nth-child(4)  { animation-delay: 120ms; }
-#electionsTable tbody tr:nth-child(n+5){ animation-delay: 150ms; }
-@keyframes row-in { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
-.status-cell { display: flex; align-items: center; }
+/* ─────────────────────────────────────────────────────────────────
+   FORM ELEMENTS
+───────────────────────────────────────────────────────────────── */
 
-/* ── Responsive ───────────────────────────────────────────────── */
+.form-control {
+  width:          100%;
+  padding:        0.72rem 1rem;
+  border:         1.5px solid #ece4e4;
+  border-radius:  10px;
+  font-family:    'Inter', sans-serif;
+  font-size:      0.9375rem;
+  color:          #2d1114;
+  background:     #ffffff;
+  outline:        none;
+  transition:     border-color 180ms ease, box-shadow 180ms ease;
+  appearance:     none;
+}
+
+.form-control:focus {
+  border-color: #5b0e14;
+  box-shadow:   0 0 0 3px rgba(91,14,20,0.11);
+  background:   #fdf2f2;
+}
+
+select.form-control {
+  cursor:              pointer;
+  background-image:    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239a6065' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:   no-repeat;
+  background-position: right 0.9rem center;
+  padding-right:       2.2rem;
+}
+
+input[type="datetime-local"].form-control {
+  font-family: 'JetBrains Mono', monospace;
+  font-size:   0.85rem;
+}
+
+.form-label {
+  display:        block;
+  font-family:    'Inter', sans-serif;
+  font-size:      0.875rem;
+  font-weight:    600;
+  color:          #2d1114;
+  margin-bottom:  0.42rem;
+  letter-spacing: 0.005em;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+/* Alert */
+.alert {
+  display:       flex;
+  align-items:   center;
+  gap:           0.5rem;
+  padding:       0.75rem 1rem;
+  border-radius: 10px;
+  font-size:     0.875rem;
+  font-weight:   500;
+  border:        1px solid transparent;
+  margin-bottom: 1rem;
+}
+
+.alert i { flex-shrink: 0; }
+.alert-success { background: rgba(22,128,61,0.08);  border-color: rgba(22,128,61,0.22); color: #14532d; }
+.alert-error   { background: rgba(220,38,38,0.07);  border-color: rgba(220,38,38,0.22); color: #991b1b; }
+.alert-info    { background: rgba(37,99,235,0.07);  border-color: rgba(37,99,235,0.18); color: #1d4ed8; }
+.alert-warning { background: rgba(217,119,6,0.07);  border-color: rgba(217,119,6,0.18); color: #92400e; }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   CANDIDATE PHOTO PREVIEW
+───────────────────────────────────────────────────────────────── */
+
+#photoPreviewWrap { animation: fade-in 200ms ease; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+#photoPreview {
+  border-radius: 10px;
+  object-fit:    cover;
+  border:        2px solid #c98b00;
+  box-shadow:    0 4px 12px rgba(201,139,0,0.20);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  #electionsTable thead th:nth-child(3),
+  #electionsTable tbody td:nth-child(3) { display: none; }
+}
+
 @media (max-width: 768px) {
-  .form-card-body, .form-card-header { padding: var(--sp-5); }
-  .form-card-footer { padding: var(--sp-4) var(--sp-5); }
-  .form-card { max-width: 100%; }
+  .page-actions         { flex-direction: column; align-items: flex-start; }
+  .page-actions-left    { width: 100%; }
+  .search-bar           { flex: 1; }
+  .search-bar input     { width: 100%; }
+
+  #electionsTable thead th:nth-child(4),
+  #electionsTable tbody td:nth-child(4),
+  #electionsTable thead th:nth-child(5),
+  #electionsTable tbody td:nth-child(5) { display: none; }
 }
-@media (max-width: 480px) {
-  .form-card-footer { flex-direction: column-reverse; }
-  .form-card-footer .btn { width: 100%; justify-content: center; }
+
+@media (max-width: 640px) {
+  .form-card-body   { padding: 1.25rem; }
+  .form-card-header { padding: 1.1rem 1.25rem; }
+  .form-card-footer { padding: 0.9rem 1.25rem; flex-direction: column; align-items: stretch; }
+  .form-card-footer .btn { justify-content: center; }
+
+  .td-actions { gap: 0.3rem; }
+
+  div[style*="grid-template-columns:1fr 1fr"] {
+    display:        flex !important;
+    flex-direction: column !important;
+  }
 }

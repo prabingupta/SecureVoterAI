@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.http import JsonResponse
 
 from core.models import Student
@@ -11,7 +12,8 @@ from voter_dashboard.models import Election, Candidate, Vote
 from .models import ElectionLog, FraudAlert
 
 
-# ── Guard decorator ────────────────────────────────────────────────────────────
+# Guard decorator 
+
 def admin_required(view_func):
     decorated = user_passes_test(
         lambda u: u.is_active and (u.is_staff or u.is_superuser),
@@ -20,49 +22,59 @@ def admin_required(view_func):
     return login_required(login_url='core:login')(decorated)
 
 
-# ── Shared context helper ──────────────────────────────────────────────────────
+# Shared context 
+
 def _base_ctx():
-    """
-    Sidebar badge counts + bell dropdown data injected into every admin page.
-    """
-    unresolved_qs = FraudAlert.objects.filter(reviewed=False)
+    unresolved = FraudAlert.objects.filter(reviewed=False)
     return {
-        'pending_count':          Student.objects.filter(approval_status='pending', is_staff=False).count(),
-        'unresolved_fraud_count': unresolved_qs.count(),
-        'recent_fraud_alerts':    unresolved_qs.order_by('-timestamp')[:5],
+        'pending_count':          Student.objects.filter(
+                                      approval_status='pending',
+                                      is_staff=False
+                                  ).count(),
+        'unresolved_fraud_count': unresolved.count(),
+        'recent_fraud_alerts':    unresolved.select_related('voter')
+                                            .order_by('-timestamp')[:5],
     }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# DASHBOARD
-# ─────────────────────────────────────────────────────────────────────────────
+#  DATETIME HELPER 
+
+def _parse_dt(value: str):
+    if not value:
+        return None
+    dt = parse_datetime(value)           
+    if dt is None:
+        return None
+    return timezone.make_aware(dt, timezone.get_current_timezone())
+
+
+#  DASHBOARD 
+
 @admin_required
 def dashboard(request):
+    all_alerts       = FraudAlert.objects.select_related('voter', 'election').order_by('-timestamp')
     active_elections = Election.objects.filter(is_active=True)
     pending_voters   = Student.objects.filter(approval_status='pending', is_staff=False)
     total_votes      = Vote.objects.count()
     total_approved   = Student.objects.filter(approval_status='approved', is_staff=False).count()
-
-    all_fraud        = FraudAlert.objects.select_related('voter', 'election').order_by('-timestamp')
-    unresolved       = all_fraud.filter(reviewed=False)
-    resolved         = all_fraud.filter(reviewed=True)
+    unresolved_count = all_alerts.filter(reviewed=False).count()
+    resolved_count   = all_alerts.filter(reviewed=True).count()
 
     ctx = _base_ctx()
     ctx.update({
         'active_elections':      active_elections,
         'pending_voters':        pending_voters,
         'total_votes':           total_votes,
+        'fraud_alerts':          all_alerts,
         'total_approved_voters': total_approved,
-        'fraud_alerts':          all_fraud,
-        'unresolved_count':      unresolved.count(),
-        'resolved_count':        resolved.count(),
+        'unresolved_count':      unresolved_count,
+        'resolved_count':        resolved_count,
     })
     return render(request, 'admin_dashboard/dashboard.html', ctx)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# VOTER MANAGEMENT
-# ─────────────────────────────────────────────────────────────────────────────
+# VOTER MANAGEMENT 
+
 @admin_required
 def manage_voters(request):
     voters = Student.objects.filter(is_staff=False).order_by('-id')
@@ -92,9 +104,8 @@ def reject_voter(request, student_id):
     return redirect('admin_dashboard:manage_voters')
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# ELECTION MANAGEMENT
-# ─────────────────────────────────────────────────────────────────────────────
+#  ELECTION MANAGEMENT 
+
 @admin_required
 def manage_elections(request):
     elections = Election.objects.all().order_by('-id')
@@ -107,25 +118,39 @@ def manage_elections(request):
 def add_election(request):
     form_data = {}
     if request.method == 'POST':
-        title       = request.POST.get('title', '').strip()
-        description = request.POST.get('description', '').strip()
-        start_time  = request.POST.get('start_time', '')
-        end_time    = request.POST.get('end_time', '')
-        is_active   = request.POST.get('is_active') == 'on'
+        title            = request.POST.get('title', '').strip()
+        description      = request.POST.get('description', '').strip()
+        start_time_raw   = request.POST.get('start_time', '')
+        end_time_raw     = request.POST.get('end_time', '')
+        is_active        = request.POST.get('is_active') == 'on'
 
+        # Keep raw strings for re-rendering the form on validation failure
         form_data = {
-            'title': title, 'description': description,
-            'start_time': start_time, 'end_time': end_time, 'is_active': is_active,
+            'title':       title,
+            'description': description,
+            'start_time':  start_time_raw,
+            'end_time':    end_time_raw,
+            'is_active':   is_active,
         }
 
-        if not title or not start_time or not end_time:
+        start_time = _parse_dt(start_time_raw)
+        end_time   = _parse_dt(end_time_raw)
+
+        if not title or not start_time_raw or not end_time_raw:
             messages.error(request, 'Title, start time, and end time are required.')
+        elif start_time is None:
+            messages.error(request, 'Start time is not a valid date/time.')
+        elif end_time is None:
+            messages.error(request, 'End time is not a valid date/time.')
         elif end_time <= start_time:
             messages.error(request, 'End time must be after start time.')
         else:
             election = Election.objects.create(
-                title=title, description=description,
-                start_time=start_time, end_time=end_time, is_active=is_active,
+                title=title,
+                description=description,
+                start_time=start_time,   
+                end_time=end_time,       
+                is_active=is_active,
             )
             ElectionLog.objects.create(election=election, action='created')
             messages.success(request, f'Election "{title}" created successfully.')
@@ -140,19 +165,28 @@ def add_election(request):
 def edit_election(request, election_id):
     election = get_object_or_404(Election, pk=election_id)
     if request.method == 'POST':
-        title       = request.POST.get('title', '').strip()
-        description = request.POST.get('description', '').strip()
-        start_time  = request.POST.get('start_time', '')
-        end_time    = request.POST.get('end_time', '')
-        is_active   = request.POST.get('is_active') == 'on'
+        title          = request.POST.get('title', '').strip()
+        description    = request.POST.get('description', '').strip()
+        start_time_raw = request.POST.get('start_time', '')
+        end_time_raw   = request.POST.get('end_time', '')
+        is_active      = request.POST.get('is_active') == 'on'
 
-        if not title or not start_time or not end_time:
+        start_time = _parse_dt(start_time_raw)
+        end_time   = _parse_dt(end_time_raw)
+
+        if not title or not start_time_raw or not end_time_raw:
             messages.error(request, 'Title, start time, and end time are required.')
+        elif start_time is None:
+            messages.error(request, 'Start time is not a valid date/time.')
+        elif end_time is None:
+            messages.error(request, 'End time is not a valid date/time.')
+        elif end_time <= start_time:
+            messages.error(request, 'End time must be after start time.')
         else:
             election.title       = title
             election.description = description
-            election.start_time  = start_time
-            election.end_time    = end_time
+            election.start_time  = start_time   # ← datetime object
+            election.end_time    = end_time     # ← datetime object
             election.is_active   = is_active
             election.save()
             messages.success(request, f'Election "{title}" updated.')
@@ -192,9 +226,7 @@ def close_election(request, election_id):
     return redirect('admin_dashboard:manage_elections')
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CANDIDATE MANAGEMENT
-# ─────────────────────────────────────────────────────────────────────────────
+#  CANDIDATE MANAGEMENT
 @admin_required
 def manage_candidates(request):
     candidates = Candidate.objects.select_related('election').all().order_by('election', 'name')
@@ -282,9 +314,8 @@ def delete_candidate(request, candidate_id):
     return redirect('admin_dashboard:manage_candidates')
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FRAUD ALERTS
-# ─────────────────────────────────────────────────────────────────────────────
+#  FRAUD ALERTS 
+
 @admin_required
 def view_fraud_alerts(request):
     fraud_alerts     = FraudAlert.objects.select_related('voter', 'election').order_by('-timestamp')
@@ -306,59 +337,35 @@ def mark_reviewed(request, alert_id):
     alert.reviewed = True
     alert.save(update_fields=['reviewed'])
     messages.success(request, 'Fraud alert marked as reviewed.')
-    # Redirect back to the referring page if possible
     referer = request.META.get('HTTP_REFERER', '')
-    if referer:
-        return redirect(referer)
+    if 'fraud-log' in referer:
+        return redirect('admin_dashboard:fraud_log_report')
     return redirect('admin_dashboard:view_fraud_alerts')
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# NOTIFICATIONS (new)
-# ─────────────────────────────────────────────────────────────────────────────
+#  NOTIFICATIONS 
+
 @admin_required
 def notifications(request):
-    """Full notifications page — lists all FraudAlerts newest-first."""
-    all_alerts = FraudAlert.objects.select_related('voter', 'election').order_by('-timestamp')
-    unresolved = all_alerts.filter(reviewed=False)
-    resolved   = all_alerts.filter(reviewed=True)
+    fraud_alerts = FraudAlert.objects.select_related('voter', 'election').order_by('-timestamp')
+
+    unresolved_count = fraud_alerts.filter(reviewed=False).count()
+    resolved_count   = fraud_alerts.filter(reviewed=True).count()
+    spoof_count      = fraud_alerts.filter(alert_type='spoof_attempt').count()
+    locked_count     = fraud_alerts.filter(alert_type='too_many_attempts').count()
 
     ctx = _base_ctx()
     ctx.update({
-        'fraud_alerts':     all_alerts,
-        'unresolved_count': unresolved.count(),
-        'resolved_count':   resolved.count(),
-        'spoof_count':      all_alerts.filter(alert_type='spoof_attempt').count(),
-        'locked_count':     all_alerts.filter(alert_type='too_many_attempts').count(),
+        'fraud_alerts':     fraud_alerts,
+        'unresolved_count': unresolved_count,
+        'resolved_count':   resolved_count,
+        'spoof_count':      spoof_count,
+        'locked_count':     locked_count,
     })
     return render(request, 'admin_dashboard/notifications.html', ctx)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FRAUD LOG REPORT (new)
-# ─────────────────────────────────────────────────────────────────────────────
-@admin_required
-def fraud_log_report(request):
-    """Printable / exportable fraud log report."""
-    all_alerts = FraudAlert.objects.select_related('voter', 'election').order_by('-timestamp')
-    unresolved = all_alerts.filter(reviewed=False)
-    resolved   = all_alerts.filter(reviewed=True)
-
-    ctx = _base_ctx()
-    ctx.update({
-        'fraud_alerts':     all_alerts,
-        'unresolved_count': unresolved.count(),
-        'resolved_count':   resolved.count(),
-        'spoof_count':      all_alerts.filter(alert_type='spoof_attempt').count(),
-        'locked_count':     all_alerts.filter(alert_type='too_many_attempts').count(),
-    })
-    return render(request, 'admin_dashboard/fraud_log_report.html', ctx)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# LIVE RESULTS + REPORTS
-# ─────────────────────────────────────────────────────────────────────────────
-@admin_required
+#  LIVE RESULTS + REPORTS 
 def live_results(request, election_id):
     election   = get_object_or_404(Election, pk=election_id)
     candidates = Candidate.objects.filter(election=election)
@@ -392,3 +399,25 @@ def generate_reports(request):
     ctx = _base_ctx()
     ctx['report'] = report
     return render(request, 'admin_dashboard/reports.html', ctx)
+
+
+#  FRAUD LOG REPORT 
+
+@admin_required
+def fraud_log_report(request):
+    fraud_alerts = FraudAlert.objects.select_related('voter', 'election').order_by('-timestamp')
+
+    unresolved_count = fraud_alerts.filter(reviewed=False).count()
+    resolved_count   = fraud_alerts.filter(reviewed=True).count()
+    spoof_count      = fraud_alerts.filter(alert_type='spoof_attempt').count()
+    locked_count     = fraud_alerts.filter(alert_type='too_many_attempts').count()
+
+    ctx = _base_ctx()
+    ctx.update({
+        'fraud_alerts':     fraud_alerts,
+        'unresolved_count': unresolved_count,
+        'resolved_count':   resolved_count,
+        'spoof_count':      spoof_count,
+        'locked_count':     locked_count,
+    })
+    return render(request, 'admin_dashboard/fraud_log_report.html', ctx)

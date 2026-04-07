@@ -1,3 +1,5 @@
+# core/models.py
+
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
@@ -37,14 +39,32 @@ class Student(AbstractBaseUser, PermissionsMixin):
         ('rejected', 'Rejected'),
     ]
 
-    #  Core identity fields 
+    GENDER_CHOICES = [
+        ('male',   'Male'),
+        ('female', 'Female'),
+    ]
+
+    #  Core identity fields
     student_id    = models.CharField(max_length=20,  unique=True)
     full_name     = models.CharField(max_length=100)
     department    = models.CharField(max_length=20,  choices=DEPARTMENTS)
     year_of_study = models.CharField(max_length=1,   choices=YEARS)
     phone         = models.CharField(max_length=20,  blank=True, null=True)
 
-    #  Face embedding storage (128-d dlib ResNet-34 vector, binary) 
+    #  Profile photo 
+    profile_photo = models.ImageField(
+        upload_to='profile_photos/', blank=True, null=True
+    )
+
+    #  Demographics (for analytics dashboard)
+    age = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    # gender: Male or Female
+    gender = models.CharField(
+        max_length=10, choices=GENDER_CHOICES, null=True, blank=True
+    )
+
+    #  Face embedding storage (MediaPipe 1404-d vector, binary) 
     face_embedding = models.BinaryField(blank=True, null=True)
 
     #  Admin approval 
@@ -53,7 +73,7 @@ class Student(AbstractBaseUser, PermissionsMixin):
     )
     approval_note = models.TextField(blank=True, null=True)
 
-    # Security / lockout 
+    #  Security / lockout 
     failed_login_attempts = models.PositiveSmallIntegerField(default=0)
     locked_until          = models.DateTimeField(null=True, blank=True)
 
@@ -61,11 +81,15 @@ class Student(AbstractBaseUser, PermissionsMixin):
     registered_device = models.CharField(max_length=500, blank=True, null=True)
 
     # Audit trail 
-    # IP address of the most recent successful login.
-    # Written by face_verify_api on MATCH so admins can correlate fraud alerts.
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
 
-    #  Django internals 
+    # Notification preferences 
+    
+    notify_election_open    = models.BooleanField(default=True)
+    notify_election_close   = models.BooleanField(default=True)
+    notify_election_results = models.BooleanField(default=True)
+
+    
     is_active = models.BooleanField(default=True)
     is_staff  = models.BooleanField(default=False)
 
@@ -77,12 +101,12 @@ class Student(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.student_id
 
-    #  Make username compatible with templates using {{ user.username }} 
+    
     @property
     def username(self):
         return self.student_id
 
-    #  Convenience properties 
+    
     @property
     def has_face(self):
         """True if a face embedding has been stored for this student."""
@@ -90,12 +114,22 @@ class Student(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_approved(self):
-        """True if admin has approved the account."""
         return self.approval_status == 'approved'
 
-    #  Security helpers 
+    @property
+    def age_group(self):
+        
+        if self.age is None:
+            return 'Unknown'
+        if self.age <= 22:
+            return '18-22'
+        if self.age <= 27:
+            return '23-27'
+        return '28-35'
+
+    # Security helpers 
     def is_locked(self):
-        """Return True if account is currently in a lockout window."""
+        
         return self.locked_until is not None and self.locked_until > timezone.now()
 
     def increment_failed_attempts(self, max_attempts=3, lockout_minutes=15):

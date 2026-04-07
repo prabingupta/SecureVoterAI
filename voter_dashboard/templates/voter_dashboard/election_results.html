@@ -1,0 +1,284 @@
+{% extends 'voter_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Results — {{ election.title }} | SecureVoter AI{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'voter_dashboard/css/election_results.css' %}">
+{% endblock %}
+
+
+{% block content %}
+<div class="results-page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header-meta">
+      <a href="{% url 'voter_dashboard:dashboard' %}"
+         class="badge badge-muted"
+         style="text-decoration:none;"
+         aria-label="Back to dashboard">
+        <i class="fas fa-arrow-left" aria-hidden="true"></i> Dashboard
+      </a>
+      <span style="color:var(--c-border-blush);" aria-hidden="true">/</span>
+      <span class="page-eyebrow">Election Results</span>
+    </div>
+    <h1>{{ election.title }}</h1>
+    <p>
+      Closed {{ election.end_time|date:"F j, Y" }} at {{ election.end_time|date:"H:i" }} —
+      final results are shown below.
+    </p>
+  </div>
+
+
+  <!-- Voted note -->
+  {% if voter_voted %}
+  <div class="results-voted-note" role="status">
+    <i class="fas fa-lock" aria-hidden="true"></i>
+    Your vote was counted in this election. Results are shown as aggregate totals —
+    your individual vote remains anonymous and encrypted.
+  </div>
+  {% endif %}
+
+
+  <!-- ============================================================
+       TIE CARD — shown when two or more candidates share top votes
+       ============================================================ -->
+  {% if is_tie %}
+  <div class="tie-card" aria-label="Election result: Tie">
+
+    <div class="tie-icon" aria-hidden="true">
+      <i class="fas fa-scale-balanced"></i>
+    </div>
+
+    <div class="tie-info">
+      <div class="tie-label">
+        <i class="fas fa-equals" aria-hidden="true"></i>
+        Tie Result
+      </div>
+      <div class="tie-heading">It's a Tie!</div>
+      <p class="tie-desc">
+        The following candidates each received
+        <strong>{{ tied_candidates.0.votes }}
+        vote{{ tied_candidates.0.votes|pluralize }}</strong>
+        ({{ tied_candidates.0.pct }}% each):
+      </p>
+      <div class="tie-candidates">
+        {% for r in tied_candidates %}
+        <div class="tie-candidate-chip">
+          {% if r.candidate.photo %}
+            <img src="{{ r.candidate.photo.url }}"
+                 alt="{{ r.candidate.name }}"
+                 class="tie-chip-photo">
+          {% else %}
+            <div class="tie-chip-placeholder" aria-hidden="true">
+              {{ r.candidate.name|slice:":2"|upper }}
+            </div>
+          {% endif %}
+          <span class="tie-chip-name">{{ r.candidate.name }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="tie-note">
+        A runoff election or tiebreaker process may be required.
+        Contact the Student Affairs Office for further guidance.
+      </p>
+    </div>
+
+    <div class="tie-pct-badge" aria-label="{{ tied_candidates.0.pct }}% each">
+      <div class="tie-pct-value">{{ tied_candidates.0.pct }}%</div>
+      <div class="tie-pct-label">each</div>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       WINNER CARD — shown only when there is a clear single winner
+       ============================================================ -->
+  {% elif winner %}
+  <div class="winner-card" aria-label="Election winner">
+
+    <div class="winner-photo-wrap">
+      <span class="winner-crown" aria-hidden="true">🏆</span>
+      {% if winner.candidate.photo %}
+        <img src="{{ winner.candidate.photo.url }}"
+             alt="{{ winner.candidate.name }}"
+             class="winner-photo">
+      {% else %}
+        <div class="winner-photo-placeholder" aria-hidden="true">
+          {{ winner.candidate.name|slice:":2"|upper }}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="winner-info">
+      <div class="winner-label">
+        <i class="fas fa-trophy" aria-hidden="true"></i>
+        Winner
+      </div>
+      <div class="winner-name">{{ winner.candidate.name }}</div>
+      <div class="winner-votes">
+        <strong>{{ winner.votes }}</strong>
+        vote{{ winner.votes|pluralize }} out of {{ total_votes }} total
+      </div>
+      {% if winner.candidate.description %}
+        <p class="winner-desc">{{ winner.candidate.description|truncatechars:120 }}</p>
+      {% endif %}
+    </div>
+
+    <div class="winner-pct-badge" aria-label="{{ winner.pct }}% of votes">
+      <div class="winner-pct-value">{{ winner.pct }}%</div>
+      <div class="winner-pct-label">of votes</div>
+    </div>
+
+  </div>
+  {% endif %}
+
+
+  <!-- Summary stats -->
+  <div class="results-summary" role="list" aria-label="Result statistics">
+    <div class="summary-stat" role="listitem">
+      <div class="summary-stat-val">{{ total_votes }}</div>
+      <div class="summary-stat-label">Total Votes Cast</div>
+    </div>
+    <div class="summary-stat" role="listitem">
+      <div class="summary-stat-val">{{ results|length }}</div>
+      <div class="summary-stat-label">Candidates</div>
+    </div>
+    <div class="summary-stat" role="listitem">
+      <div class="summary-stat-val">
+        {% if is_tie %}Tie{% elif winner %}{{ winner.pct }}%{% else %}—{% endif %}
+      </div>
+      <div class="summary-stat-label">
+        {% if is_tie %}Result{% else %}Winner's Share{% endif %}
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Chart card -->
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div>
+        <div class="chart-card-title">Vote Distribution</div>
+        <p class="chart-card-sub">Votes received per candidate</p>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="resultsChart"
+              aria-label="Bar chart showing votes per candidate"
+              role="img"></canvas>
+    </div>
+  </div>
+
+
+  <!-- Full breakdown table -->
+  <div class="results-table-card">
+    <div class="results-table-head">
+      <h3>Full Breakdown</h3>
+      <span>{{ total_votes }} vote{{ total_votes|pluralize }} counted</span>
+    </div>
+    <div class="results-table-wrap">
+      <table class="results-table" aria-label="Candidate vote breakdown">
+        <thead>
+          <tr>
+            <th scope="col">Rank</th>
+            <th scope="col">Candidate</th>
+            <th scope="col">Votes</th>
+            <th scope="col" style="min-width:120px;">Share</th>
+            <th scope="col">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in results %}
+          {% with is_top=forloop.first tied_row=False %}
+          <tr class="{% if not is_tie and forloop.first %}winner-row{% endif %}{% if is_tie and r.votes == tied_candidates.0.votes %} tie-row{% endif %}">
+
+            <td>
+              <span class="rank-chip
+                {%  if not is_tie and forloop.first %}rank-gold
+                {% elif is_tie and r.votes == tied_candidates.0.votes %}rank-tie
+                {% endif %}"
+                    aria-label="Rank {{ forloop.counter }}">
+                {% if is_tie and r.votes == tied_candidates.0.votes %}
+                  ⚖️
+                {% elif forloop.first %}
+                  🥇
+                {% else %}
+                  {{ forloop.counter }}
+                {% endif %}
+              </span>
+            </td>
+
+            <td>
+              <div class="cand-cell">
+                {% if r.candidate.photo %}
+                  <img src="{{ r.candidate.photo.url }}"
+                       alt="{{ r.candidate.name }}"
+                       class="cand-thumb">
+                {% else %}
+                  <div class="cand-thumb-ph" aria-hidden="true">
+                    {{ r.candidate.name|slice:":2"|upper }}
+                  </div>
+                {% endif %}
+                <span class="cand-name">{{ r.candidate.name }}</span>
+              </div>
+            </td>
+
+            <td><span class="vote-count">{{ r.votes }}</span></td>
+
+            <td>
+              <div class="bar-wrap">
+                <div class="bar-track">
+                  <div class="bar-fill
+                    {% if not is_tie and forloop.first %}bar-winner
+                    {% elif is_tie and r.votes == tied_candidates.0.votes %}bar-tie
+                    {% endif %}"
+                       style="width:{{ r.pct }}%"
+                       role="progressbar"
+                       aria-valuenow="{{ r.pct }}"
+                       aria-valuemin="0"
+                       aria-valuemax="100"></div>
+                </div>
+              </div>
+            </td>
+
+            <td class="pct-cell">{{ r.pct }}%</td>
+
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- PDF download -->
+  <div class="download-row">
+    <a href="{% url 'voter_dashboard:results_pdf' election.id %}"
+       class="btn-download"
+       aria-label="Download PDF report for {{ election.title }}">
+      <i class="fas fa-file-arrow-down" aria-hidden="true"></i>
+      Download PDF Report
+    </a>
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  var CHART_LABELS = {{ chart_labels|safe }};
+  var CHART_VOTES  = {{ chart_votes|safe }};
+  var CHART_TOTAL  = {{ total_votes }};
+  var IS_TIE       = {{ is_tie|yesno:"true,false" }};
+</script>
+<script
+  src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
+  onload="initResultsChart()"
+  defer>
+</script>
+{% endblock %}

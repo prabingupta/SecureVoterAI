@@ -23,7 +23,7 @@
     <div class="notif-sum-card">
       <div class="nsc-icon red"><i class="fas fa-triangle-exclamation"></i></div>
       <div>
-        <div class="nsc-val" style="color:var(--c-error);">{{ unresolved_count|default:"0" }}</div>
+        <div class="nsc-val" style="color:var(--clr-red);">{{ unresolved_count|default:"0" }}</div>
         <div class="nsc-lbl">Unread Alerts</div>
       </div>
     </div>
@@ -37,7 +37,7 @@
     <div class="notif-sum-card">
       <div class="nsc-icon green"><i class="fas fa-circle-check"></i></div>
       <div>
-        <div class="nsc-val" style="color:var(--c-success);">{{ resolved_count|default:"0" }}</div>
+        <div class="nsc-val" style="color:#22c55e;">{{ resolved_count|default:"0" }}</div>
         <div class="nsc-lbl">Resolved</div>
       </div>
     </div>
@@ -51,7 +51,7 @@
     <div class="notif-sum-card">
       <div class="nsc-icon blue"><i class="fas fa-lock"></i></div>
       <div>
-        <div class="nsc-val" style="color:var(--c-info);">{{ locked_count|default:"0" }}</div>
+        <div class="nsc-val" style="color:#3b82f6;">{{ locked_count|default:"0" }}</div>
         <div class="nsc-lbl">Accounts Locked</div>
       </div>
     </div>
@@ -86,7 +86,8 @@
       {% for alert in fraud_alerts %}
         <div class="notif-card {% if not alert.reviewed %}unread{% endif %}"
              data-type="{{ alert.alert_type }}"
-             data-reviewed="{{ alert.reviewed|yesno:'true,false' }}">
+             data-reviewed="{{ alert.reviewed|yesno:'true,false' }}"
+             data-text="{{ alert.description|lower }} {{ alert.voter.full_name|default:''|lower }} {{ alert.voter.student_id|default:''|lower }}">
 
           <!-- Icon -->
           <div class="nc-icon
@@ -95,11 +96,17 @@
             {% elif alert.alert_type == 'unknown_device' %}blue
             {% elif alert.alert_type == 'multiple_faces' %}purple
             {% else %}amber{% endif %}">
-            {% if alert.alert_type == 'spoof_attempt' %}<i class="fas fa-skull"></i>
-            {% elif alert.alert_type == 'too_many_attempts' %}<i class="fas fa-lock"></i>
-            {% elif alert.alert_type == 'unknown_device' %}<i class="fas fa-laptop"></i>
-            {% elif alert.alert_type == 'multiple_faces' %}<i class="fas fa-users"></i>
-            {% else %}<i class="fas fa-face-frown"></i>{% endif %}
+            {% if alert.alert_type == 'spoof_attempt' %}
+              <i class="fas fa-skull"></i>
+            {% elif alert.alert_type == 'too_many_attempts' %}
+              <i class="fas fa-lock"></i>
+            {% elif alert.alert_type == 'unknown_device' %}
+              <i class="fas fa-laptop"></i>
+            {% elif alert.alert_type == 'multiple_faces' %}
+              <i class="fas fa-users"></i>
+            {% else %}
+              <i class="fas fa-face-frown"></i>
+            {% endif %}
           </div>
 
           <!-- Body -->
@@ -122,33 +129,48 @@
                 <span class="nc-title-text">Face Verification Failed</span>
               {% endif %}
             </div>
+
             <div class="nc-desc">
-              {% if alert.voter %}<strong>{{ alert.voter.full_name }}</strong> ({{ alert.voter.student_id }}) — {% endif %}
+              {% if alert.voter %}
+                <strong>{{ alert.voter.full_name }}</strong>
+                ({{ alert.voter.student_id }}) —
+              {% endif %}
               {{ alert.description|truncatechars:130 }}
             </div>
+
             <div class="nc-meta">
-              <span class="nc-meta-item"><i class="fas fa-clock"></i> {{ alert.timestamp|date:"M d, Y · H:i" }}</span>
+              <span class="nc-meta-item">
+                <i class="fas fa-clock"></i> {{ alert.timestamp|date:"M d, Y · H:i" }}
+              </span>
               {% if alert.ip_address %}
-                <span class="nc-meta-item font-mono"><i class="fas fa-globe"></i> {{ alert.ip_address }}</span>
+                <span class="nc-meta-item font-mono">
+                  <i class="fas fa-globe"></i> {{ alert.ip_address }}
+                </span>
               {% endif %}
               {% if alert.election %}
-                <span class="nc-meta-item"><i class="fas fa-ballot-check"></i> {{ alert.election.title|truncatechars:28 }}</span>
+                <span class="nc-meta-item">
+                  <i class="fas fa-ballot-check"></i> {{ alert.election.title|truncatechars:28 }}
+                </span>
               {% endif %}
             </div>
           </div>
 
-          <!-- Right: unread dot + action -->
+          <!-- Right: unread dot + review action -->
           <div class="nc-right">
             {% if not alert.reviewed %}
               <span class="nc-unread-dot"></span>
               <form method="post" action="{% url 'admin_dashboard:mark_reviewed' alert.id %}">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-success btn-sm" style="font-size:.68rem;padding:.28rem .6rem;">
+                <button type="submit" class="btn btn-success btn-sm"
+                        style="font-size:.68rem; padding:.28rem .6rem;"
+                        title="Mark as reviewed">
                   <i class="fas fa-check"></i>
                 </button>
               </form>
             {% else %}
-              <span class="badge badge-approved" style="font-size:.62rem;"><i class="fas fa-check"></i> Done</span>
+              <span class="badge badge-approved" style="font-size:.62rem;">
+                <i class="fas fa-check"></i> Done
+              </span>
             {% endif %}
           </div>
 
@@ -159,10 +181,62 @@
   {% else %}
     <div class="notif-empty">
       <i class="fas fa-bell-slash"></i>
-      <h3 style="font-size:1rem;margin-bottom:.35rem;color:var(--c-ink-700);">No Notifications</h3>
-      <p style="font-size:.82rem;">No fraud alerts detected. Election integrity is maintained.</p>
+      <h3 style="font-size:1rem; margin-bottom:.35rem; color:var(--clr-muted);">
+        No Notifications
+      </h3>
+      <p style="font-size:.82rem;">
+        No fraud alerts detected. Election integrity is maintained.
+      </p>
     </div>
   {% endif %}
 
 </div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  // ── Tab filters ────────────────────────────────────────────────────────────
+  const cards      = document.querySelectorAll('.notif-card');
+  const tabs       = document.querySelectorAll('.ntab');
+  const searchInput = document.getElementById('notifSearch');
+
+  function applyFilters() {
+    const activeTab = document.querySelector('.ntab.active')?.dataset.filter || 'all';
+    const query     = (searchInput?.value || '').toLowerCase().trim();
+
+    cards.forEach(card => {
+      const type     = card.dataset.type     || '';
+      const reviewed = card.dataset.reviewed || 'false';
+      const text     = card.dataset.text     || '';
+
+      let visible = true;
+
+      // Tab filter
+      if (activeTab === 'unread') {
+        visible = reviewed === 'false';
+      } else if (activeTab !== 'all') {
+        visible = type === activeTab;
+      }
+
+      // Search filter (applied on top of tab filter)
+      if (visible && query) {
+        visible = text.includes(query) ||
+                  card.textContent.toLowerCase().includes(query);
+      }
+
+      card.style.display = visible ? '' : 'none';
+    });
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      applyFilters();
+    });
+  });
+
+  searchInput?.addEventListener('input', applyFilters);
+</script>
 {% endblock %}

@@ -1,336 +1,156 @@
 {% extends 'voter_dashboard/base.html' %}
 {% load static %}
 
-{% block title %}Dashboard | SecureVoter AI — Islington College{% endblock %}
+{% block title %}Dashboard{% endblock %}
+{% block navbar_title %}Dashboard{% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'voter_dashboard/css/dashboard.css' %}" />
+<link rel="stylesheet" href="{% static 'voter_dashboard/css/dashboard.css' %}">
 {% endblock %}
-
 
 {% block content %}
 <div class="dashboard-page">
 
-  <!-- ============================================================
-       WELCOME BANNER
-       ============================================================ -->
-  <section class="welcome-banner" aria-label="Welcome banner">
+  <!-- ── Welcome banner ──────────────────────────────────────────── -->
+  <div class="welcome-banner">
     <div class="welcome-text">
-      <h2>
-        Welcome back,
-        <span style="background: linear-gradient(135deg, var(--clr-gold), var(--clr-gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-          {{ request.user.full_name|default:request.user.username }}
-        </span>
-      </h2>
+      <h2>Welcome back, <span>{{ user.full_name }}</span></h2>
       <p>
-        You are logged into the <strong style="color:var(--clr-white);">Islington College</strong>
-        secure election portal. Your identity has been verified via AI face recognition.
+        You are logged into the <strong>Islington College</strong> secure election
+        portal. Your identity has been verified via AI face recognition.
         Cast your vote below — each vote is encrypted and anonymous.
       </p>
     </div>
-    <div class="welcome-badge-group">
-      <div class="verified-chip" role="status" aria-label="Identity verified">
-        <i class="fas fa-user-check" aria-hidden="true"></i>
-        Identity Verified
-      </div>
-      <div class="face-verified-chip" role="status" aria-label="AI face scan passed">
-        <i class="fas fa-eye" aria-hidden="true"></i>
-        AI Face Scan Passed
-      </div>
+    <div class="welcome-badges">
+      <span class="badge badge-green">
+        <i class="fa-solid fa-circle-check"></i> Identity Verified
+      </span>
+      <span class="badge badge-gold">
+        <i class="fa-solid fa-eye"></i> AI Face Scan Passed
+      </span>
     </div>
-  </section>
-  <!-- /welcome-banner -->
+  </div>
 
-
-  <!-- ============================================================
-       STATS ROW
-       ============================================================ -->
-  <section class="stats-row" aria-label="Voting statistics">
-
-    <div class="stat-card" role="region" aria-label="Active elections">
-      <div class="stat-icon blue" aria-hidden="true">
-        <i class="fas fa-ballot-check"></i>
+  <!-- ── Stat cards ──────────────────────────────────────────────── -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-icon red">
+        <i class="fa-solid fa-check-to-slot"></i>
       </div>
       <div class="stat-info">
-        <div class="stat-value">{{ active_elections|length }}</div>
+        <div class="stat-value">{{ active_count }}</div>
         <div class="stat-label">Active Elections</div>
       </div>
     </div>
-
-    <div class="stat-card" role="region" aria-label="Votes cast">
-      <div class="stat-icon green" aria-hidden="true">
-        <i class="fas fa-check-to-slot"></i>
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="fa-solid fa-envelope-open-text"></i>
       </div>
       <div class="stat-info">
-        <div class="stat-value">{{ voted_election_ids|length }}</div>
+        <div class="stat-value">{{ votes_cast }}</div>
         <div class="stat-label">Votes Cast</div>
       </div>
     </div>
-
-    <div class="stat-card" role="region" aria-label="Remaining votes">
-      <div class="stat-icon gold" aria-hidden="true">
-        <i class="fas fa-hourglass-half"></i>
+    <div class="stat-card">
+      <div class="stat-icon gold">
+        <i class="fa-solid fa-hourglass-half"></i>
       </div>
       <div class="stat-info">
-        <div class="stat-value">
-          {% with remaining=active_elections|length|add:"-"|add:voted_election_ids|length %}
-            {{ active_elections|length|add:0 }}
-          {% endwith %}
-          <!-- Calculated dynamically via JS below -->
-          <span id="remainingCount">—</span>
-        </div>
+        <div class="stat-value">{{ remaining }}</div>
         <div class="stat-label">Remaining</div>
       </div>
     </div>
+  </div>
 
-  </section>
-  <!-- /stats-row -->
-
-
-  <!-- ============================================================
-       ACTIVE ELECTIONS
-       ============================================================ -->
-  <section aria-labelledby="activeElectionsHeading">
-
-    <div class="section-header">
-      <div class="section-title-group">
-        <span class="section-eyebrow">Live Now</span>
-        <h2 class="section-title" id="activeElectionsHeading">Active Elections</h2>
-      </div>
-      <div class="badge badge-live" role="status" aria-label="{{ active_elections|length }} active elections">
-        <span class="dot" aria-hidden="true"></span>
-        {{ active_elections|length }} Live
-      </div>
+  <!-- ── Active elections ────────────────────────────────────────── -->
+  <div class="section-header">
+    <div>
+      <span class="section-tag">Live Now</span>
+      <h3>Active Elections</h3>
     </div>
+    <span class="live-dot">{{ active_count }} Live</span>
+  </div>
 
-    {% if active_elections %}
-      <div class="elections-grid" role="list">
-
-        {% for election in active_elections %}
-          <article class="election-card" role="listitem" aria-label="{{ election.title }}">
-
-            <!-- Animated top bar -->
-            <div class="election-card-bar" aria-hidden="true"></div>
-
-            <div class="election-card-body">
-
-              <!-- Top row: title + status badge -->
-              <div class="election-card-top">
-                <h3 class="election-card-title">{{ election.title }}</h3>
-                {% if election.id in voted_election_ids %}
-                  <span class="badge badge-voted" role="status" aria-label="You have voted">
-                    <i class="fas fa-check" aria-hidden="true"></i> Voted
-                  </span>
-                {% else %}
-                  <span class="badge badge-live" role="status" aria-label="Voting is open">
-                    <span class="dot" aria-hidden="true"></span> Open
-                  </span>
-                {% endif %}
-              </div>
-
-              <!-- Description -->
-              <p class="election-card-desc">
-                {{ election.description|default:"No additional description provided for this election." }}
-              </p>
-
-              <!-- Metadata -->
-              <div class="election-meta" aria-label="Election timing information">
-                <div class="election-meta-row">
-                  <span class="meta-label">
-                    <i class="fas fa-play" aria-hidden="true"></i> Opens
-                  </span>
-                  <span class="meta-value">{{ election.start_time|date:"M d, Y · H:i" }}</span>
-                </div>
-                <div class="election-meta-row">
-                  <span class="meta-label">
-                    <i class="fas fa-stop" aria-hidden="true"></i> Closes
-                  </span>
-                  <span class="meta-value">{{ election.end_time|date:"M d, Y · H:i" }}</span>
-                </div>
-              </div>
-
-              <!-- Countdown -->
-              <div
-                class="countdown-timer"
-                aria-label="Time remaining for election"
-                data-end="{{ election.end_time|date:'c' }}"
-              >
-                <span class="countdown-label">
-                  <i class="fas fa-clock" aria-hidden="true"></i>&nbsp; Closes in
-                </span>
-                <span class="countdown-value" aria-live="polite">Calculating…</span>
-              </div>
-
-              <!-- Action -->
-              <div class="election-card-action">
-                {% if election.id in voted_election_ids %}
-                  <button class="btn-voted" disabled aria-label="You have already voted in this election">
-                    <i class="fas fa-circle-check" aria-hidden="true"></i>
-                    Vote Recorded
-                  </button>
-                {% else %}
-                  <a
-                    href="{% url 'voter_dashboard:cast_vote' election.id %}"
-                    class="btn-vote"
-                    role="button"
-                    aria-label="Vote now in {{ election.title }}"
-                  >
-                    <i class="fas fa-check-to-slot" aria-hidden="true"></i>
-                    Cast My Vote
-                  </a>
-                {% endif %}
-              </div>
-
-            </div>
-          </article>
-        {% endfor %}
-
-      </div>
-      <!-- /elections-grid -->
-
-    {% else %}
-
-      <!-- Empty state -->
-      <div class="empty-state" role="region" aria-label="No active elections">
-        <div class="empty-icon" aria-hidden="true">
-          <i class="fas fa-ballot"></i>
-        </div>
-        <h3>No Active Elections</h3>
-        <p>
-          There are no open elections at the moment. Check back later or contact the
-          Student Council for upcoming election announcements.
-        </p>
-      </div>
-
-    {% endif %}
-
-  </section>
-  <!-- /active elections -->
-
-
-  <!-- ============================================================
-       RECENT ACTIVITY SECTION
-       ============================================================ -->
-  {% if voted_election_ids %}
-  <section aria-labelledby="recentActivityHeading" style="margin-top: 3rem;">
-
-    <div class="section-header">
-      <div class="section-title-group">
-        <span class="section-eyebrow">Your Activity</span>
-        <h2 class="section-title" id="recentActivityHeading">Voting History</h2>
-      </div>
-      <a href="{% url 'voter_dashboard:profile' %}" class="btn btn-ghost btn-sm" aria-label="View full voting history on profile page">
-        <i class="fas fa-arrow-right" aria-hidden="true"></i>
-        View Full History
-      </a>
-    </div>
-
-    <div class="activity-list" role="list" aria-label="Recent voting activity">
+  {% if active_elections %}
+    <div class="election-grid">
       {% for election in active_elections %}
-        {% if election.id in voted_election_ids %}
-          <div class="activity-item" role="listitem">
-            <div class="activity-dot green" aria-hidden="true"></div>
-            <div class="activity-text">
-              You voted in <strong>{{ election.title }}</strong>
-            </div>
-            <div class="badge badge-voted">
-              <i class="fas fa-lock" aria-hidden="true"></i> Encrypted
-            </div>
+        <div class="election-card">
+          <div class="election-card-header">
+            <div class="election-card-title">{{ election.title }}</div>
+            {% if election.id in voted_ids %}
+              <span class="status-pill voted">Voted</span>
+            {% else %}
+              <span class="status-pill open">Open</span>
+            {% endif %}
           </div>
-        {% endif %}
+
+          {% if election.description %}
+            <p class="election-card-desc">{{ election.description|truncatechars:120 }}</p>
+          {% endif %}
+
+          <div class="election-meta">
+            <i class="fa-regular fa-clock"></i>
+            Closes {{ election.end_time|date:"d M Y, H:i" }}
+          </div>
+
+          {% if election.id in voted_ids %}
+            <a href="{% url 'voter_dashboard:election_results' election.id %}"
+               class="btn btn-outline">
+              <i class="fa-solid fa-chart-bar"></i> View Results
+            </a>
+          {% else %}
+            <a href="{% url 'voter_dashboard:cast_vote' election.id %}"
+               class="btn btn-primary">
+              <i class="fa-solid fa-ballot-check"></i> Cast Vote
+            </a>
+          {% endif %}
+        </div>
       {% endfor %}
     </div>
-
-  </section>
-  {% endif %}
-  <!-- /recent activity -->
-
-
-  <!-- ============================================================
-       ISLINGTON COLLEGE NOTICE
-       ============================================================ -->
-  <aside
-    class="alert alert-info"
-    style="margin-top: 3rem;"
-    role="note"
-    aria-label="Islington College election notice"
-  >
-    <i class="fas fa-circle-info" aria-hidden="true"></i>
-    <div>
-      <strong>Islington College Student Election</strong> — All votes are encrypted using
-      AES-256 encryption and your identity is verified via AI face recognition before
-      registration. Results remain anonymous and tamper-proof. For queries, contact the
-      Student Affairs Office.
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon"><i class="fa-solid fa-box-open"></i></div>
+      <h4>No Active Elections</h4>
+      <p>There are no open elections at the moment. Check back soon.</p>
     </div>
-  </aside>
+  {% endif %}
+
+  <!-- ── Past elections ──────────────────────────────────────────── -->
+  {% if past_elections %}
+    <div class="section-header">
+      <div>
+        <span class="section-tag">Closed</span>
+        <h3>Past Elections</h3>
+      </div>
+    </div>
+    <div class="past-elections-list">
+      {% for election in past_elections %}
+        <div class="past-election-row">
+          <div class="past-election-info">
+            <div class="past-election-title">{{ election.title }}</div>
+            <div class="past-election-meta">
+              <i class="fa-regular fa-calendar-xmark"></i>
+              Closed {{ election.end_time|date:"d M Y, H:i" }}
+            </div>
+          </div>
+          <a href="{% url 'voter_dashboard:election_results' election.id %}"
+             class="btn-view-results">
+            <i class="fa-solid fa-chart-bar"></i> View Results
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- ── Info alert ──────────────────────────────────────────────── -->
+  <div class="alert-info-block">
+    <i class="fa-solid fa-shield-halved"></i>
+    <p>
+      All votes are <strong>AES-256 encrypted</strong> and stored anonymously.
+      Your individual vote is never linked to your identity after submission.
+      Results are published only after an election closes.
+    </p>
+  </div>
 
 </div>
-<!-- /dashboard-page -->
-{% endblock %}
-
-
-{% block extra_js %}
-<script>
-  // ── Remaining votes counter ─────────────────────────────────────
-  const totalActive = {{ active_elections|length }};
-  const totalVoted  = {{ voted_election_ids|length }};
-  const remainingEl = document.getElementById('remainingCount');
-  if (remainingEl) {
-    remainingEl.textContent = Math.max(0, totalActive - totalVoted);
-  }
-
-  // ── Countdown timers ────────────────────────────────────────────
-  function formatCountdown(msLeft) {
-    if (msLeft <= 0) return 'Election closed';
-    const totalSeconds = Math.floor(msLeft / 1000);
-    const days    = Math.floor(totalSeconds / 86400);
-    const hours   = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    if (days > 0)   return `${days}d ${hours}h ${minutes}m`;
-    if (hours > 0)  return `${hours}h ${minutes}m ${seconds}s`;
-    return `${minutes}m ${seconds}s`;
-  }
-
-  const countdownEls = document.querySelectorAll('.countdown-timer');
-  function updateCountdowns() {
-    const now = Date.now();
-    countdownEls.forEach((el) => {
-      const endTime  = new Date(el.dataset.end).getTime();
-      const msLeft   = endTime - now;
-      const valueEl  = el.querySelector('.countdown-value');
-      if (valueEl) {
-        valueEl.textContent = formatCountdown(msLeft);
-        if (msLeft <= 0) {
-          el.style.borderColor = 'rgba(255,77,109,0.3)';
-          el.style.background  = 'rgba(255,77,109,0.05)';
-          valueEl.style.color  = 'var(--clr-danger)';
-        } else if (msLeft < 3600000) {
-          // Less than 1 hour — highlight in gold
-          el.style.borderColor = 'rgba(240,180,41,0.3)';
-          el.style.background  = 'rgba(240,180,41,0.06)';
-          valueEl.style.color  = 'var(--clr-gold-light)';
-        }
-      }
-    });
-  }
-
-  updateCountdowns();
-  setInterval(updateCountdowns, 1000);
-
-  // ── Card hover tilt micro-effect ────────────────────────────────
-  document.querySelectorAll('.election-card').forEach((card) => {
-    card.addEventListener('mousemove', (e) => {
-      const rect   = card.getBoundingClientRect();
-      const x      = (e.clientX - rect.left) / rect.width  - 0.5;
-      const y      = (e.clientY - rect.top)  / rect.height - 0.5;
-      card.style.transform = `translateY(-4px) rotateX(${-y * 3}deg) rotateY(${x * 3}deg)`;
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = '';
-      card.style.transition = 'transform 0.4s ease';
-    });
-  });
-</script>
 {% endblock %}

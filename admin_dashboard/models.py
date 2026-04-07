@@ -72,7 +72,6 @@ class FraudAlert(models.Model):
         voter = self.voter.student_id if self.voter else 'unknown'
         return f"[{self.alert_type}] {voter} — {self.timestamp:%Y-%m-%d %H:%M}"
 
-    # ── Factory helpers — called from core/views.py ────────────────────────────
 
     @classmethod
     def _active_election(cls):

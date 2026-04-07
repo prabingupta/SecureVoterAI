@@ -1,1007 +1,476 @@
-{% extends "core/base.html" %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureVoter AI — AI‑Secured Elections | Islington College</title>
+  <meta name="description" content="SecureVoter AI — AI‑secured, biometric‑verified online election platform for Islington College, Kamal Pokhari, Kathmandu.">
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/index.css' %}">
-{% endblock %}
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-{% block title %}Home{% endblock %}
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
 
-{% block content %}
+  <!-- AOS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
 
-<!-- 
-     HERO SECTION — Full-viewport slider
- -->
-<section id="hero" class="hero-section">
+  <!-- Base CSS -->
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/index.css' %}">
+  
+</head>
 
-  <div class="hero-slider">
+<body>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<header class="navbar" id="navbar">
+  <div class="container navbar-container">
+    <div class="brand">
+      <a href="{% url 'core:index' %}" class="brand-link">
+        <span class="brand-name">
+          <span class="brand-name-secure">Secure</span><span class="brand-name-voter">Voter</span>
+          <span class="brand-name-ai">AI</span>
+        </span>
+      </a>
+    </div>
+    <nav class="navigation" id="mainNav" aria-label="Main navigation">
+      <ul class="nav-menu">
+        <li><a href="#home"><i class="fa-solid fa-house"></i> Home</a></li>
+        <li><a href="#about"><i class="fa-solid fa-shield-halved"></i> About</a></li>
+        <li><a href="#how-it-works"><i class="fa-solid fa-route"></i> Process</a></li>
+        <li><a href="#features"><i class="fa-solid fa-lock"></i> Security</a></li>
+        <li><a href="#campus"><i class="fa-solid fa-location-dot"></i> Campus</a></li>
+        <li><a href="{% url 'core:login' %}"><i class="fa-solid fa-right-to-bracket"></i> Login</a></li>
+        <li><a href="{% url 'core:register' %}" class="btn-register"><i class="fa-solid fa-user-plus"></i> Register</a></li>
+      </ul>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero-section" id="home">
+
+  <!-- Background slider -->
+  <div class="hero-slider" id="heroSlider">
     <div class="slide active">
-      <img src="{% static 'core/images/slider1.jpg' %}" alt="Islington College Campus">
+      <img src="{% static 'core/images/slider1.jpg' %}" alt="Islington College campus">
     </div>
     <div class="slide">
-      <img src="{% static 'core/images/slider2.jpg' %}" alt="Students Participating in Election">
+      <img src="{% static 'core/images/slider2.jpg' %}" alt="Secure digital voting">
     </div>
     <div class="slide">
-      <img src="{% static 'core/images/slider3.jpg' %}" alt="AI Secured Voting Technology">
+      <img src="{% static 'core/images/slider3.jpg' %}" alt="AI face verification">
     </div>
   </div>
-
   <div class="hero-overlay"></div>
 
-  <div class="container hero-content">
+  <!-- Centred content -->
+  <div class="hero-content">
+    <div class="container">
+      <div class="hero-inner">
 
-    <div class="hero-badge" data-aos="fade-down">
-      <span class="badge-dot"></span>
-      Official AI-Secured Election Platform — Islington College
+        <!-- Eyebrow -->
+        <div class="hero-badge" data-aos="fade-down" data-aos-delay="0">
+          <span class="badge-dot"></span>
+          Islington College &nbsp;·&nbsp; Official Election Platform
+        </div>
+
+        <!-- Headline -->
+        <h1 data-aos="fade-up" data-aos-delay="100">
+          <span class="text-gradient">SecureVoter AI</span>
+        </h1>
+
+        <!-- Typewriter sub-heading -->
+        <div class="hero-typewriter" data-aos="fade-up" data-aos-delay="160">
+          <span id="typewriterText" class="typewriter-text"></span><span class="typewriter-cursor">|</span>
+        </div>
+
+        <!-- Description -->
+        <p class="hero-description" data-aos="fade-up" data-aos-delay="220">
+          Nepal's first AI‑powered biometric election system — combining MediaPipe face recognition,
+          AES‑256 encryption, and multi‑stage liveness detection to guarantee every vote is
+          genuine, anonymous, and tamper‑proof.
+        </p>
+
+        <!-- CTAs -->
+        <div class="hero-buttons" data-aos="fade-up" data-aos-delay="300">
+          <a href="{% url 'core:register' %}" class="btn-primary">
+            <i class="fa-solid fa-user-plus"></i> Register to Vote
+          </a>
+          <a href="{% url 'core:login' %}" class="btn-outline">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In
+          </a>
+          <a href="#how-it-works" class="btn-ghost">
+            <i class="fa-solid fa-chevron-down"></i> See how it works
+          </a>
+        </div>
+
+        <!-- Slider controls -->
+        <div class="slider-controls" data-aos="fade-up" data-aos-delay="380">
+          <button id="heroPrev" aria-label="Previous slide"><i class="fa-solid fa-chevron-left"></i></button>
+          <div class="slider-dots">
+            <button class="dot active" data-slide="0"></button>
+            <button class="dot" data-slide="1"></button>
+            <button class="dot" data-slide="2"></button>
+          </div>
+          <button id="heroNext" aria-label="Next slide"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+      </div><!-- /hero-inner -->
     </div>
-
-    <h1 data-aos="fade-up" data-aos-delay="80">
-      Your Vote. <br>
-      <span class="text-gradient">Verified. Secured.</span><br>
-      Counted Fairly.
-    </h1>
-
-    <p class="hero-description" data-aos="fade-up" data-aos-delay="180">
-      SecureVoter AI combines encrypted biometric face verification,
-      real-time liveness detection, and AI-powered fraud monitoring
-      to guarantee that every student vote at Islington College
-      is authentic, confidential, and tamper-proof.
-    </p>
-
-    <div class="hero-buttons" data-aos="fade-up" data-aos-delay="280">
-      <a href="{% url 'core:register' %}" class="btn-primary">
-        <i class="fa-solid fa-user-plus"></i> Register as Voter
-      </a>
-      <a href="{% url 'core:login' %}" class="btn-outline">
-        <i class="fa-solid fa-right-to-bracket"></i> Access Portal
-      </a>
-      <a href="#how-it-works" class="btn-ghost">
-        <i class="fa-solid fa-circle-play"></i> See How It Works
-      </a>
-    </div>
-
-    <div class="slider-controls" data-aos="fade-up" data-aos-delay="380">
-      <button id="prevSlide" aria-label="Previous slide">
-        <i class="fa-solid fa-chevron-left"></i>
-      </button>
-      <div class="slider-dots" id="sliderDots"></div>
-      <button id="nextSlide" aria-label="Next slide">
-        <i class="fa-solid fa-chevron-right"></i>
-      </button>
-    </div>
-
   </div>
 
-  <!-- Floating security pill badges -->
+  <!-- Floating security badges (bottom-right) -->
   <div class="hero-float-badges">
-    <div class="float-badge" style="--delay:0s">
-      <i class="fa-solid fa-shield-halved"></i> End-to-End Encrypted
-    </div>
-    <div class="float-badge" style="--delay:0.4s">
-      <i class="fa-solid fa-face-smile"></i> Liveness Verified
-    </div>
-    <div class="float-badge" style="--delay:0.8s">
-      <i class="fa-solid fa-clock-rotate-left"></i> Audit Logged
-    </div>
+    <span class="float-badge" style="--delay:0.5s"><i class="fa-solid fa-face-smile"></i> MediaPipe Biometrics</span>
+    <span class="float-badge" style="--delay:0.75s"><i class="fa-solid fa-lock"></i> AES‑256 Encrypted</span>
+    <span class="float-badge" style="--delay:1s"><i class="fa-solid fa-shield-halved"></i> Zero‑Trust Security</span>
   </div>
 
 </section>
 
 
-<!-- ═══════════════════════════════════════════════════════
-     STATS STRIP — Frosted glass over campus background
-═══════════════════════════════════════════════════════ -->
+<!-- ═══════════ STATS STRIP ═══════════ -->
 <section class="stats-strip">
-  <div class="stats-strip-bg" style="background-image: url('{% static 'core/images/slider1.jpg' %}')"></div>
+  <div class="stats-strip-bg" style="background-image:url('{% static 'core/images/slider2.jpg' %}')"></div>
   <div class="stats-strip-overlay"></div>
-
   <div class="container stats-strip-container">
     <div class="stats-glass">
-
-      <div class="stats-glass-item" data-aos="fade-up" data-aos-delay="0">
-        <div class="stats-glass-number">
-          <span class="stat-count" data-target="1500">0</span><span class="stats-glass-suffix">+</span>
-        </div>
-        <div class="stats-glass-label">Eligible Students</div>
+      <div class="stats-glass-item">
+        <div class="stats-glass-number"><span class="stat-count" data-target="1404">0</span><span class="stats-glass-suffix">D</span></div>
+        <div class="stats-glass-label">Face Embedding Dimensions</div>
       </div>
-
       <div class="stats-glass-divider"></div>
-
-      <div class="stats-glass-item" data-aos="fade-up" data-aos-delay="100">
-        <div class="stats-glass-number">
-          <span class="stat-count" data-target="8">0</span>
-        </div>
-        <div class="stats-glass-label">Fraud Protection Layers</div>
+      <div class="stats-glass-item">
+        <div class="stats-glass-number"><span class="stat-count" data-target="256">0</span><span class="stats-glass-suffix">bit</span></div>
+        <div class="stats-glass-label">AES Encryption Strength</div>
       </div>
-
       <div class="stats-glass-divider"></div>
-
-      <div class="stats-glass-item" data-aos="fade-up" data-aos-delay="200">
-        <div class="stats-glass-number">
-          <span class="stat-count" data-target="99">0</span><span class="stats-glass-suffix">%</span>
-        </div>
-        <div class="stats-glass-label">Auth Accuracy</div>
+      <div class="stats-glass-item">
+        <div class="stats-glass-number"><span class="stat-count" data-target="3">0</span><span class="stats-glass-suffix">×</span></div>
+        <div class="stats-glass-label">Liveness Challenges</div>
       </div>
-
       <div class="stats-glass-divider"></div>
-
-      <div class="stats-glass-item" data-aos="fade-up" data-aos-delay="300">
-        <div class="stats-glass-number">
-          <span class="stat-count" data-target="100">0</span><span class="stats-glass-suffix">%</span>
-        </div>
-        <div class="stats-glass-label">Audit Logged</div>
+      <div class="stats-glass-item">
+        <div class="stats-glass-number"><span class="stat-count" data-target="100">0</span><span class="stats-glass-suffix">%</span></div>
+        <div class="stats-glass-label">Anonymous Ballot Guarantee</div>
       </div>
-
     </div>
   </div>
 </section>
 
 
-<!-- ═══════════════════════════════════════════════════════
-     ELECTION STATUS BANNER
-═══════════════════════════════════════════════════════ -->
-<div class="election-banner" id="electionBanner">
-  <div class="container election-banner-inner">
-    <div class="election-status-pill">
-      <span class="pulse-dot"></span>
-      Election Active
-    </div>
-    <p class="election-banner-text">
-      <strong>Student Council Elections 2026</strong> are now open.
-      Voting closes on <strong>June 15, 2026</strong>.
-    </p>
-    <div class="election-countdown" id="electionCountdown">
-      <div class="countdown-unit"><span id="cd-days">--</span><label>Days</label></div>
-      <div class="countdown-sep">:</div>
-      <div class="countdown-unit"><span id="cd-hours">--</span><label>Hrs</label></div>
-      <div class="countdown-sep">:</div>
-      <div class="countdown-unit"><span id="cd-mins">--</span><label>Min</label></div>
-      <div class="countdown-sep">:</div>
-      <div class="countdown-unit"><span id="cd-secs">--</span><label>Sec</label></div>
-    </div>
-    <a href="{% url 'core:login' %}" class="banner-vote-btn">
-      Vote Now <i class="fa-solid fa-arrow-right"></i>
-    </a>
-  </div>
-</div>
-
-
-<!-- 
-     ABOUT SECTION
- -->
-<section id="about" class="section">
+<!-- ═══════════ ABOUT ═══════════ -->
+<section class="section" id="about">
   <div class="container">
-
     <div class="about-grid">
-
       <div class="about-text" data-aos="fade-right">
         <span class="eyebrow-label">About the Platform</span>
-        <h2>Built Specifically for<br>Islington College Elections</h2>
+        <h2>Democracy Secured by Artificial Intelligence</h2>
         <p>
-          SecureVoter AI is a next-generation digital election platform developed
-          from the ground up for Islington College, Kamal Pokhari. It replaces
-          unreliable paper-based ballots with an AI-powered, multi-layered
-          security system that ensures every vote is cast by a verified student —
-          and counted exactly once.
+          SecureVoter AI was built for Islington College, Kathmandu — replacing paper ballots with
+          a system where every voter's identity is verified by a 1404‑dimensional MediaPipe face
+          embedding before a single vote is cast.
         </p>
         <p>
-          The platform integrates encrypted facial biometrics, real-time liveness
-          detection, token-based session management, and an append-only audit
-          database, providing full transparency and integrity across every
-          election cycle conducted at the college.
+          From multi‑stage liveness detection that blocks photo‑replay attacks, to AES‑256
+          encrypted ballot storage that makes individual choices mathematically unreadable — every
+          layer of the system exists to protect both the integrity of elections and the privacy of voters.
         </p>
         <div class="about-highlights">
-          <div class="highlight-chip">
-            <i class="fa-solid fa-check"></i> No paper ballots
-          </div>
-          <div class="highlight-chip">
-            <i class="fa-solid fa-check"></i> No proxy voting
-          </div>
-          <div class="highlight-chip">
-            <i class="fa-solid fa-check"></i> No duplicate votes
-          </div>
-          <div class="highlight-chip">
-            <i class="fa-solid fa-check"></i> Full audit trail
-          </div>
+          <span class="highlight-chip"><i class="fa-solid fa-check"></i> Anti‑spoof liveness</span>
+          <span class="highlight-chip"><i class="fa-solid fa-check"></i> Cosine‑similarity face match</span>
+          <span class="highlight-chip"><i class="fa-solid fa-check"></i> Encrypted vote storage</span>
+          <span class="highlight-chip"><i class="fa-solid fa-check"></i> Real‑time fraud alerts</span>
+          <span class="highlight-chip"><i class="fa-solid fa-check"></i> Instant result analytics</span>
         </div>
-        <a href="{% url 'core:register' %}" class="btn-primary" style="margin-top:1.6rem; display:inline-flex;">
-          <i class="fa-solid fa-user-plus"></i> Register to Vote
+        <a href="{% url 'core:register' %}" class="btn-primary" style="margin-top:1.5rem;display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.6rem;border-radius:8px;font-size:1rem;font-weight:600;">
+          <i class="fa-solid fa-user-plus"></i> Create Voter Account
         </a>
       </div>
-
       <div class="about-visual" data-aos="fade-left" data-aos-delay="100">
         <div class="visual-card main-card">
-          <div class="visual-card-icon">
-            <i class="fa-solid fa-shield-halved"></i>
-          </div>
-          <h4>AI-Powered Verification</h4>
-          <p>128-dimensional biometric face encoding. Every voter confirmed before access.</p>
-          <div class="visual-card-stat">
-            <span>99%</span> Accuracy Rate
-          </div>
+          <div class="visual-card-icon"><i class="fa-solid fa-microchip"></i></div>
+          <h4>MediaPipe Biometric Engine</h4>
+          <p>468 facial landmarks produce a 1404‑dimensional L2‑normalised embedding compared with cosine similarity ≥ 0.97 for guaranteed identity accuracy.</p>
         </div>
-        <div class="visual-card secondary-card" style="--delay:0.15s">
-          <i class="fa-solid fa-database"></i>
-          <h4>Immutable Vote Records</h4>
-          <p>Append-only database with unique constraints ensures zero duplication.</p>
+        <div class="visual-card secondary-card">
+          <div class="visual-card-icon"><i class="fa-solid fa-lock"></i></div>
+          <h4>AES‑256 Votes</h4>
+          <p>Every ballot is encrypted immediately upon cast. Even system administrators cannot read individual votes.</p>
         </div>
-        <div class="visual-card secondary-card" style="--delay:0.3s">
-          <i class="fa-solid fa-chart-line"></i>
-          <h4>Real-Time Monitoring</h4>
-          <p>Live fraud logs, IP tracking, and behavioral analysis throughout voting.</p>
+        <div class="visual-card secondary-card">
+          <div class="visual-card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <h4>Fraud Detection</h4>
+          <p>DFT frequency analysis, Laplacian texture scoring, and HSV saturation checks block photo and screen‑replay attacks in real time.</p>
         </div>
-        <div class="about-orb"></div>
       </div>
-
     </div>
-
   </div>
 </section>
 
 
-<!-- 
-     LIVE ELECTION OVERVIEW
- -->
-<section id="election" class="section dark-section">
+<!-- ═══════════ ELECTION OVERVIEW ═══════════ -->
+<section class="section dark-section" id="election-overview">
   <div class="container">
-
-    <span class="eyebrow-label center" data-aos="fade-up">Current Election</span>
-    <h2 class="section-title" data-aos="fade-up" data-aos-delay="50">
-      Student Council Elections 2026
-    </h2>
-    <p class="section-text" data-aos="fade-up" data-aos-delay="100">
-      Islington College students elect representatives to the Student Council
-      across five key positions. Every registered and verified student
-      is eligible to cast one vote per position.
-    </p>
-
-    <!-- Election Info Cards -->
-    <div class="election-info-grid" data-aos="fade-up" data-aos-delay="150">
-
-      <div class="einfo-card">
-        <i class="fa-solid fa-calendar-check"></i>
-        <div>
-          <label>Voting Period</label>
-          <strong>Mar 1 – Mar 15, 2026</strong>
-        </div>
-      </div>
-
-      <div class="einfo-card">
-        <i class="fa-solid fa-users"></i>
-        <div>
-          <label>Eligible Voters</label>
-          <strong>1,500+ Registered Students</strong>
-        </div>
-      </div>
-
-      <div class="einfo-card">
-        <i class="fa-solid fa-trophy"></i>
-        <div>
-          <label>Positions Available</label>
-          <strong>5 Student Council Seats</strong>
-        </div>
-      </div>
-
-      <div class="einfo-card">
-        <i class="fa-solid fa-gavel"></i>
-        <div>
-          <label>Result Declaration</label>
-          <strong>March 18, 2026</strong>
-        </div>
-      </div>
-
+    <div class="text-center" data-aos="fade-up">
+      <span class="eyebrow-label center">Current Election Cycle</span>
+      <h2 class="section-title">Islington Student Council 2026</h2>
+      <p class="section-text">Five leadership positions open for student vote — each protected by full biometric verification and encrypted ballot submission.</p>
     </div>
-
-    <!-- Positions / Departments -->
-    <div class="positions-grid" data-aos="fade-up" data-aos-delay="200">
-
-      <div class="position-card">
-        <div class="position-badge">01</div>
-        <h4>President</h4>
-        <p>Overall student body representative. Chairs all council meetings and liaises directly with college administration.</p>
-        <div class="position-dept">All Departments</div>
-      </div>
-
-      <div class="position-card">
-        <div class="position-badge">02</div>
-        <h4>Vice President</h4>
-        <p>Supports the President, oversees committee activities, and steps in during presidential absence.</p>
-        <div class="position-dept">All Departments</div>
-      </div>
-
-      <div class="position-card">
-        <div class="position-badge">03</div>
-        <h4>Secretary</h4>
-        <p>Maintains official records, manages communications, and documents all council proceedings.</p>
-        <div class="position-dept">All Departments</div>
-      </div>
-
-      <div class="position-card">
-        <div class="position-badge">04</div>
-        <h4>Treasurer</h4>
-        <p>Manages student council funds, prepares budgets, and ensures financial transparency.</p>
-        <div class="position-dept">All Departments</div>
-      </div>
-
-      <div class="position-card">
-        <div class="position-badge">05</div>
-        <h4>Technical Representative</h4>
-        <p>Advocates for Computing, AI, and Networking students on matters of technical curriculum and lab resources.</p>
-        <div class="position-dept">Computing · AI · Networking</div>
-      </div>
-
+    <div class="election-info-grid" data-aos="fade-up" data-aos-delay="80">
+      <div class="einfo-card"><i class="fa-solid fa-calendar-day"></i><div><label>Voting Opens</label><strong>Apr 10, 2026</strong></div></div>
+      <div class="einfo-card"><i class="fa-solid fa-calendar-xmark"></i><div><label>Voting Closes</label><strong>Apr 17, 2026</strong></div></div>
+      <div class="einfo-card"><i class="fa-solid fa-users"></i><div><label>Eligible Voters</label><strong>All Active Students</strong></div></div>
+      <div class="einfo-card"><i class="fa-solid fa-building-columns"></i><div><label>Institution</label><strong>Islington College</strong></div></div>
     </div>
-
-    <!-- Voter Turnout Progress -->
-    <div class="turnout-block" data-aos="fade-up" data-aos-delay="250">
+    <div class="positions-grid" data-aos="fade-up" data-aos-delay="160">
+      <div class="position-card"><span class="position-badge">Position 01</span><h4>Student President</h4><p>Overall leadership, liaison with management, represents student interests at institutional level.</p><div class="position-dept">All Departments</div></div>
+      <div class="position-card"><span class="position-badge">Position 02</span><h4>Vice President</h4><p>Supports the President, chairs committees, oversees inter‑departmental coordination.</p><div class="position-dept">All Departments</div></div>
+      <div class="position-card"><span class="position-badge">Position 03</span><h4>Secretary General</h4><p>Minutes meetings, manages official communications, maintains council records.</p><div class="position-dept">All Departments</div></div>
+      <div class="position-card"><span class="position-badge">Position 04</span><h4>Cultural Secretary</h4><p>Plans cultural events, festivals, and creative initiatives across campus.</p><div class="position-dept">Arts &amp; Events</div></div>
+      <div class="position-card"><span class="position-badge">Position 05</span><h4>Sports Captain</h4><p>Organises inter‑college sports, manages teams, promotes student wellness.</p><div class="position-dept">Sports &amp; Health</div></div>
+    </div>
+    <div class="turnout-block" data-aos="fade-up" data-aos-delay="240">
       <div class="turnout-header">
         <h3>Live Voter Participation</h3>
         <span class="turnout-live-tag"><span class="pulse-dot small"></span> Live</span>
       </div>
       <div class="turnout-bars">
-        <div class="turnout-bar-wrap">
-          <span>Computing</span>
-          <div class="t-bar"><div class="t-fill" style="--pct:72%"></div></div>
-          <strong>72%</strong>
-        </div>
-        <div class="turnout-bar-wrap">
-          <span>Artificial Intelligence</span>
-          <div class="t-bar"><div class="t-fill" style="--pct:65%"></div></div>
-          <strong>65%</strong>
-        </div>
-        <div class="turnout-bar-wrap">
-          <span>Networking</span>
-          <div class="t-bar"><div class="t-fill" style="--pct:58%"></div></div>
-          <strong>58%</strong>
-        </div>
+        <div class="turnout-bar-wrap"><span>BSc Computing</span><div class="t-bar"><div class="t-fill" style="--pct:78%;"></div></div><strong>78%</strong></div>
+        <div class="turnout-bar-wrap"><span>BBA / MBA</span><div class="t-bar"><div class="t-fill" style="--pct:65%;"></div></div><strong>65%</strong></div>
+        <div class="turnout-bar-wrap"><span>BSc Psychology</span><div class="t-bar"><div class="t-fill" style="--pct:82%;"></div></div><strong>82%</strong></div>
+        <div class="turnout-bar-wrap"><span>A‑Level</span><div class="t-bar"><div class="t-fill" style="--pct:91%;"></div></div><strong>91%</strong></div>
       </div>
-      <p class="turnout-note">
-        <i class="fa-solid fa-circle-info"></i>
-        Participation data updates every 60 seconds. Individual votes remain anonymous.
-      </p>
+      <p class="turnout-note"><i class="fa-solid fa-circle-info"></i> Figures are illustrative projections. Live results are accessible only to authorised administrators after polls close.</p>
     </div>
-
   </div>
 </section>
 
 
-<!-- ═══════════════════════════════════════════════════════
-     SECURITY FEATURES
-═══════════════════════════════════════════════════════ -->
-<section id="features" class="section">
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<section class="section" id="how-it-works">
   <div class="container">
-
-    <span class="eyebrow-label center" data-aos="fade-up">Security Infrastructure</span>
-    <h2 class="section-title" data-aos="fade-up" data-aos-delay="50">
-      8 Layers of Fraud Protection
-    </h2>
-    <p class="section-text" data-aos="fade-up" data-aos-delay="100">
-      Every vote passes through a comprehensive stack of AI-driven security checks,
-      cryptographic protections, and database-level constraints before it is recorded.
-    </p>
-
-    <div class="feature-grid">
-
-      <div class="feature-card" data-aos="zoom-in">
-        <div class="feature-icon-wrap">
-          <i class="fa-solid fa-face-smile"></i>
-        </div>
-        <div class="feature-num">01</div>
-        <h3>AI Face Verification</h3>
-        <p>Encrypted 128-dimensional biometric face encoding maps each student's unique
-        facial geometry. The model compares live captures against stored embeddings
-        with sub-millisecond precision.</p>
-        <div class="feature-tag">DeepFace · dlib · FaceNet</div>
-      </div>
-
-      <div class="feature-card" data-aos="zoom-in" data-aos-delay="60">
-        <div class="feature-icon-wrap">
-          <i class="fa-solid fa-eye"></i>
-        </div>
-        <div class="feature-num">02</div>
-        <h3>Real-Time Liveness Detection</h3>
-        <p>Active gesture challenges (blink, head turn) prevent photo, video,
-        and mask-based spoofing attacks. No static image can pass the liveness gate.</p>
-        <div class="feature-tag">Gesture Challenge · Anti-Spoof</div>
-      </div>
-
-      <div class="feature-card" data-aos="zoom-in" data-aos-delay="120">
-        <div class="feature-icon-wrap">
-          <i class="fa-solid fa-key"></i>
-        </div>
-        <div class="feature-num">03</div>
-        <h3>JWT Token Authentication</h3>
-        <p>Every session is secured with signed JSON Web Tokens. Tokens expire
-        automatically and are blacklisted on logout, blocking session replay attacks.</p>
-        <div class="feature-tag">JWT · Token Blacklist · HTTPS Only</div>
-      </div>
-
-      <div class="feature-card" data-aos="zoom-in" data-aos-delay="180">
-        <div class="feature-icon-wrap">
-          <i class="fa-solid fa-database"></i>
-        </div>
-        <div class="feature-num">04</div>
-        <h3>Append-Only Vote Storage</h3>
-        <p>Votes are written to an immutable append-only table. Database-level
-        unique constraints on (voter_id, position_id) enforce a strict one-vote-per-position rule.</p>
-        <div class="feature-tag">PostgreSQL · Unique Constraints</div>
-      </div>
-
-      <div class="feature-card" data-aos="zoom-in" data-aos-delay="240">
-        <div class="feature-icon-wrap">
-          <i class="fa-solid fa-gauge-high"></i>
-        </div>
-        <div class="feature-num">05</div>
-        <h3>Rate Limiting</h3>
-        <p>All API endpoints are rate-limited per IP and per account.
-        Brute-force attempts on login and face verification trigger automatic
-        progressive cooldowns and account lockout.</p>
-        <div class="feature-tag">Django Ratelimit · IP Throttle</div>
-      </div>
-
-      <div class="feature-card" data-aos="zoom-in" data-aos-delay="300">
-        <div class="feature-icon-wrap">
-          <i class="fa-solid fa-lock"></i>
-        </div>
-        <div class="feature-num">06</div>
-        <h3>Account Lockout</h3>
-        <p>Consecutive failed authentication attempts lock the account for a
-        configurable cooldown period, protecting against automated credential stuffing.</p>
-        <div class="feature-tag">Progressive Lockout · Admin Alerts</div>
-      </div>
-
-      <div class="feature-card" data-aos="zoom-in" data-aos-delay="360">
-        <div class="feature-icon-wrap">
-          <i class="fa-solid fa-chart-line"></i>
-        </div>
-        <div class="feature-num">07</div>
-        <h3>Behavioral Fraud Analysis</h3>
-        <p>The system tracks login patterns, geographic anomalies, and device
-        fingerprints. Suspicious behavior triggers alerts to the election administrator
-        in real time.</p>
-        <div class="feature-tag">IP Tracking · Anomaly Detection</div>
-      </div>
-
-      <div class="feature-card" data-aos="zoom-in" data-aos-delay="420">
-        <div class="feature-icon-wrap">
-          <i class="fa-solid fa-scroll"></i>
-        </div>
-        <div class="feature-num">08</div>
-        <h3>Full Audit Logging</h3>
-        <p>Every significant action — login, face scan, vote submission, admin change —
-        is timestamped and written to a tamper-evident audit log, ensuring
-        complete election accountability.</p>
-        <div class="feature-tag">Immutable Logs · Admin Dashboard</div>
-      </div>
-
+    <div class="text-center" data-aos="fade-up">
+      <span class="eyebrow-label center">Election Process</span>
+      <h2 class="section-title">How SecureVoter AI Works</h2>
+      <p class="section-text">A six‑step verified pipeline — from account creation to encrypted result publication — engineered so that every vote is provably genuine and provably anonymous.</p>
     </div>
-
+    <div class="hiw-pipeline" data-aos="fade-up" data-aos-delay="80">
+      <div class="hiw-step">
+        <div class="hiw-step-left"><div class="hiw-num">01</div><div class="hiw-connector"></div></div>
+        <div class="hiw-card"><div class="hiw-card-icon" style="background:rgba(91,14,20,0.10);color:#5b0e14;"><i class="fa-solid fa-user-plus"></i></div><div class="hiw-card-body"><span class="hiw-card-tag">Account Registration</span><h3>Create Your Voter Account</h3><p>Submit your student ID, full name, department, and contact details. Your information is verified against the college registry before proceeding to biometric enrolment.</p><ul class="hiw-checklist"><li><i class="fa-solid fa-circle-dot"></i> Student ID verification</li><li><i class="fa-solid fa-circle-dot"></i> Department confirmation</li><li><i class="fa-solid fa-circle-dot"></i> Secure password setup</li></ul></div></div>
+      </div>
+      <div class="hiw-step hiw-step-right">
+        <div class="hiw-step-left"><div class="hiw-num">02</div><div class="hiw-connector"></div></div>
+        <div class="hiw-card"><div class="hiw-card-icon" style="background:rgba(163,112,0,0.10);color:#a37000;"><i class="fa-solid fa-face-smile"></i></div><div class="hiw-card-body"><span class="hiw-card-tag">Biometric Enrolment</span><h3>Face Registration &amp; Liveness Verification</h3><p>MediaPipe FaceMesh captures 468 facial landmarks and generates a 1404‑dimensional embedding. Three consecutive liveness challenges confirm you are physically present.</p><ul class="hiw-checklist"><li><i class="fa-solid fa-circle-dot"></i> 1404‑D landmark embedding</li><li><i class="fa-solid fa-circle-dot"></i> Anti‑spoof DFT + texture checks</li><li><i class="fa-solid fa-circle-dot"></i> Multi‑face guard (single person only)</li></ul></div></div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-step-left"><div class="hiw-num">03</div><div class="hiw-connector"></div></div>
+        <div class="hiw-card"><div class="hiw-card-icon" style="background:rgba(22,128,61,0.10);color:#166534;"><i class="fa-solid fa-clock"></i></div><div class="hiw-card-body"><span class="hiw-card-tag">Admin Approval</span><h3>Account Reviewed &amp; Approved</h3><p>The Election Committee reviews your registration. Only verified Islington College students receive approval. Rejected accounts are notified with a reason.</p><ul class="hiw-checklist"><li><i class="fa-solid fa-circle-dot"></i> Manual admin review layer</li><li><i class="fa-solid fa-circle-dot"></i> Fraud alert integration</li><li><i class="fa-solid fa-circle-dot"></i> Approval notification sent</li></ul></div></div>
+      </div>
+      <div class="hiw-step hiw-step-right">
+        <div class="hiw-step-left"><div class="hiw-num">04</div><div class="hiw-connector"></div></div>
+        <div class="hiw-card"><div class="hiw-card-icon" style="background:rgba(59,130,246,0.10);color:#1d4ed8;"><i class="fa-solid fa-right-to-bracket"></i></div><div class="hiw-card-body"><span class="hiw-card-tag">Election Day Login</span><h3>Two‑Factor Biometric Sign‑In</h3><p>On voting day, log in with your password then pass a real‑time face‑verification challenge. Cosine similarity must reach ≥ 0.97.</p><ul class="hiw-checklist"><li><i class="fa-solid fa-circle-dot"></i> Password + face = 2FA</li><li><i class="fa-solid fa-circle-dot"></i> Session expires in 5 minutes</li><li><i class="fa-solid fa-circle-dot"></i> 3‑strike lockout policy</li></ul></div></div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-step-left"><div class="hiw-num">05</div><div class="hiw-connector"></div></div>
+        <div class="hiw-card"><div class="hiw-card-icon" style="background:rgba(91,14,20,0.10);color:#5b0e14;"><i class="fa-solid fa-check-to-slot"></i></div><div class="hiw-card-body"><span class="hiw-card-tag">Cast Your Vote</span><h3>Select, Confirm &amp; Submit</h3><p>Select your candidate. A confirmation modal displays your choice — once confirmed, the vote is AES‑256 encrypted and stored. No reversal is possible.</p><ul class="hiw-checklist"><li><i class="fa-solid fa-circle-dot"></i> Pre‑vote liveness re‑verification</li><li><i class="fa-solid fa-circle-dot"></i> Double‑confirmation modal</li><li><i class="fa-solid fa-circle-dot"></i> Encrypted immediately on submit</li></ul></div></div>
+      </div>
+      <div class="hiw-step hiw-step-right">
+        <div class="hiw-step-left"><div class="hiw-num">06</div></div>
+        <div class="hiw-card"><div class="hiw-card-icon" style="background:rgba(163,112,0,0.10);color:#a37000;"><i class="fa-solid fa-chart-bar"></i></div><div class="hiw-card-body"><span class="hiw-card-tag">Results Publication</span><h3>Transparent, Auditable Results</h3><p>Once polls close, the Election Committee publishes aggregate results. Individual choices remain anonymous. A PDF audit report is generated automatically.</p><ul class="hiw-checklist"><li><i class="fa-solid fa-circle-dot"></i> Aggregate‑only decryption</li><li><i class="fa-solid fa-circle-dot"></i> Bar chart breakdown per candidate</li><li><i class="fa-solid fa-circle-dot"></i> Tie‑detection with runoff support</li></ul></div></div>
+      </div>
+    </div>
+    <div class="hiw-cta" data-aos="fade-up" data-aos-delay="160">
+      <i class="fa-solid fa-shield-halved hiw-cta-icon"></i>
+      <div class="hiw-cta-text"><strong>Ready to participate?</strong> Registration takes less than 3 minutes and your data stays encrypted at rest.</div>
+      <a href="{% url 'core:register' %}" class="banner-vote-btn"><i class="fa-solid fa-user-plus"></i> Register Now</a>
+    </div>
   </div>
 </section>
 
 
-<!-- 
-     HOW IT WORKS — DETAILED STEPS
- -->
-<section id="how-it-works" class="section dark-section">
+<!-- ═══════════ SECURITY FEATURES ═══════════ -->
+<section class="section dark-section" id="features">
   <div class="container">
-
-    <span class="eyebrow-label center" data-aos="fade-up">The Process</span>
-    <h2 class="section-title" data-aos="fade-up" data-aos-delay="50">
-      How the Election Process Works
-    </h2>
-    <p class="section-text" data-aos="fade-up" data-aos-delay="100">
-      From registration to results — every step is transparent,
-      verified, and secured by multiple independent mechanisms.
-    </p>
-
-    <div class="timeline">
-
-      <div class="timeline-item" data-aos="fade-right">
-        <div class="timeline-marker">
-          <div class="timeline-num">01</div>
-          <div class="timeline-line"></div>
-        </div>
-        <div class="timeline-card">
-          <div class="timeline-icon"><i class="fa-solid fa-user-plus"></i></div>
-          <h3>Student Registration</h3>
-          <p>
-            Students visit the SecureVoter AI portal and complete a three-step
-            registration: personal details (name, Student ID, department, year),
-            face enrollment (live biometric scan via webcam), and a final
-            review & submission.
-          </p>
-          <ul class="timeline-checklist">
-            <li><i class="fa-solid fa-check"></i> Student ID validated (ISL-XXXX format)</li>
-            <li><i class="fa-solid fa-check"></i> Department verified against college records</li>
-            <li><i class="fa-solid fa-check"></i> Biometric face data encrypted and stored</li>
-          </ul>
-          <div class="timeline-tag">Portal → Register</div>
-        </div>
-      </div>
-
-      <div class="timeline-item right" data-aos="fade-left">
-        <div class="timeline-marker">
-          <div class="timeline-num">02</div>
-          <div class="timeline-line"></div>
-        </div>
-        <div class="timeline-card">
-          <div class="timeline-icon"><i class="fa-solid fa-user-check"></i></div>
-          <h3>Admin Verification & Approval</h3>
-          <p>
-            The IT Administration team reviews each submitted registration.
-            Student IDs are cross-checked against the official Islington College
-            enrollment database. Suspicious or incomplete registrations are flagged
-            and rejected before approval is granted.
-          </p>
-          <ul class="timeline-checklist">
-            <li><i class="fa-solid fa-check"></i> ID cross-checked with enrollment records</li>
-            <li><i class="fa-solid fa-check"></i> Face photo quality assessed</li>
-            <li><i class="fa-solid fa-check"></i> Approval email sent to verified students</li>
-          </ul>
-          <div class="timeline-tag">Admin Dashboard → Approve</div>
-        </div>
-      </div>
-
-      <div class="timeline-item" data-aos="fade-right">
-        <div class="timeline-marker">
-          <div class="timeline-num">03</div>
-          <div class="timeline-line"></div>
-        </div>
-        <div class="timeline-card">
-          <div class="timeline-icon"><i class="fa-solid fa-face-smile"></i></div>
-          <h3>Secure Login + Live Face Match</h3>
-          <p>
-            On voting day, students log in with their Student ID and password.
-            After credential verification, they complete a live face scan with
-            a liveness challenge (blink detection). The system compares the live
-            capture to the registered biometric embedding in real time.
-          </p>
-          <ul class="timeline-checklist">
-            <li><i class="fa-solid fa-check"></i> Password hashed with bcrypt/Argon2</li>
-            <li><i class="fa-solid fa-check"></i> Live blink challenge defeats spoofing</li>
-            <li><i class="fa-solid fa-check"></i> Face similarity checked (&gt;85% threshold)</li>
-            <li><i class="fa-solid fa-check"></i> JWT session token issued on success</li>
-          </ul>
-          <div class="timeline-tag">Login → Face Scan → Session</div>
-        </div>
-      </div>
-
-      <div class="timeline-item right" data-aos="fade-left">
-        <div class="timeline-marker">
-          <div class="timeline-num">04</div>
-          <div class="timeline-line"></div>
-        </div>
-        <div class="timeline-card">
-          <div class="timeline-icon"><i class="fa-solid fa-ballot-check"></i></div>
-          <h3>Cast Your Vote</h3>
-          <p>
-            Verified students access the live election dashboard and view all
-            candidates for each position. They select one candidate per position
-            and confirm their ballot. The system atomically writes the vote and
-            immediately marks the position as voted for that student.
-          </p>
-          <ul class="timeline-checklist">
-            <li><i class="fa-solid fa-check"></i> One vote per position enforced at DB level</li>
-            <li><i class="fa-solid fa-check"></i> Atomic transaction prevents partial submissions</li>
-            <li><i class="fa-solid fa-check"></i> Vote receipt generated (no candidate linkage)</li>
-            <li><i class="fa-solid fa-check"></i> Audit log entry created immediately</li>
-          </ul>
-          <div class="timeline-tag">Election Portal → Cast Vote</div>
-        </div>
-      </div>
-
-      <div class="timeline-item" data-aos="fade-right">
-        <div class="timeline-marker">
-          <div class="timeline-num">05</div>
-          <div class="timeline-line"></div>
-        </div>
-        <div class="timeline-card">
-          <div class="timeline-icon"><i class="fa-solid fa-chart-column"></i></div>
-          <h3>Tally, Audit & Results</h3>
-          <p>
-            After the voting period closes, administrators run the verified tally.
-            Results are computed from the append-only vote table. The full
-            audit log is reviewed for anomalies before results are officially
-            published on the portal for all students.
-          </p>
-          <ul class="timeline-checklist">
-            <li><i class="fa-solid fa-check"></i> Votes tallied from immutable record</li>
-            <li><i class="fa-solid fa-check"></i> Audit log reviewed for irregularities</li>
-            <li><i class="fa-solid fa-check"></i> Results published on portal</li>
-            <li><i class="fa-solid fa-check"></i> Winners notified via official email</li>
-          </ul>
-          <div class="timeline-tag">Admin → Publish Results</div>
-        </div>
-      </div>
-
+    <div class="text-center" data-aos="fade-up">
+      <span class="eyebrow-label center">Security Architecture</span>
+      <h2 class="section-title">Eight Layers of Protection</h2>
+      <p class="section-text">Every vote passes through a chain of independent security controls — so the failure of any single layer cannot compromise the election.</p>
     </div>
-
+    <div class="feature-grid" data-aos="fade-up" data-aos-delay="80">
+      <div class="feature-card"><span class="feature-num">01</span><div class="feature-icon-wrap"><i class="fa-solid fa-face-viewfinder"></i></div><h3>MediaPipe Face Embedding</h3><p>468‑landmark mesh produces a 1404‑D unit vector unique to each voter. Cosine similarity ≥ 0.97 required for identity confirmation.</p><span class="feature-tag">Biometrics</span></div>
+      <div class="feature-card"><span class="feature-num">02</span><div class="feature-icon-wrap"><i class="fa-solid fa-eye"></i></div><h3>Multi‑Stage Liveness Detection</h3><p>Blink (EAR threshold), head‑turn (nose offset ratio), and DFT pixel‑grid analysis run in sequence to block any non‑live presentation.</p><span class="feature-tag">Anti‑Spoof</span></div>
+      <div class="feature-card"><span class="feature-num">03</span><div class="feature-icon-wrap"><i class="fa-solid fa-lock"></i></div><h3>AES‑256 Ballot Encryption</h3><p>Each vote is encrypted the moment it is cast using AES‑256. Decryption keys are held only by authorised system administrators post‑election.</p><span class="feature-tag">Cryptography</span></div>
+      <div class="feature-card"><span class="feature-num">04</span><div class="feature-icon-wrap"><i class="fa-solid fa-users-slash"></i></div><h3>Multi‑Face Guard</h3><p>Up to four simultaneous faces are detected. If more than one person is present in frame, the verification is immediately rejected.</p><span class="feature-tag">Access Control</span></div>
+      <div class="feature-card"><span class="feature-num">05</span><div class="feature-icon-wrap"><i class="fa-solid fa-triangle-exclamation"></i></div><h3>Real‑Time Fraud Alerts</h3><p>Any cosine similarity below 0.80 triggers an automatic FraudAlert log entry with IP, timestamp, and similarity score for admin review.</p><span class="feature-tag">Monitoring</span></div>
+      <div class="feature-card"><span class="feature-num">06</span><div class="feature-icon-wrap"><i class="fa-solid fa-timer"></i></div><h3>Session Lockout Policy</h3><p>Face‑verify sessions expire in 5 minutes. Three consecutive failed attempts trigger a 15‑minute account lockout with admin notification.</p><span class="feature-tag">Rate Limiting</span></div>
+      <div class="feature-card"><span class="feature-num">07</span><div class="feature-icon-wrap"><i class="fa-solid fa-fingerprint"></i></div><h3>One Vote, One Voter</h3><p>Database‑level unique constraint on (voter, election) pair enforces the single‑vote rule absolutely — no second submission is physically possible.</p><span class="feature-tag">Integrity</span></div>
+      <div class="feature-card"><span class="feature-num">08</span><div class="feature-icon-wrap"><i class="fa-solid fa-user-secret"></i></div><h3>Anonymous Ballot Storage</h3><p>Encrypted vote data is decoupled from voter identity at the database layer. Results are published as aggregate totals only.</p><span class="feature-tag">Privacy</span></div>
+    </div>
   </div>
 </section>
 
 
-<!--
-     TECHNOLOGY STACK
- -->
-<section id="tech" class="section">
+<!-- ═══════════ TECHNOLOGY STACK ═══════════ -->
+<section class="section" id="technology">
   <div class="container">
-
-    <span class="eyebrow-label center" data-aos="fade-up">Under the Hood</span>
-    <h2 class="section-title" data-aos="fade-up" data-aos-delay="50">
-      Technology Stack
-    </h2>
-    <p class="section-text" data-aos="fade-up" data-aos-delay="100">
-      SecureVoter AI is built with a production-grade, battle-tested
-      technology stack designed for security, reliability, and performance.
-    </p>
-
-    <div class="tech-grid">
-
-      <div class="tech-category" data-aos="fade-up" data-aos-delay="100">
-        <div class="tech-cat-header">
-          <i class="fa-solid fa-server"></i>
-          <h4>Backend</h4>
-        </div>
-        <div class="tech-items">
-          <div class="tech-item"><span class="tech-dot blue"></span> Django 5.x</div>
-          <div class="tech-item"><span class="tech-dot blue"></span> Django REST Framework</div>
-          <div class="tech-item"><span class="tech-dot blue"></span> PostgreSQL</div>
-          <div class="tech-item"><span class="tech-dot blue"></span> JWT Authentication</div>
-          <div class="tech-item"><span class="tech-dot blue"></span> Django Ratelimit</div>
-        </div>
-      </div>
-
-      <div class="tech-category" data-aos="fade-up" data-aos-delay="160">
-        <div class="tech-cat-header">
-          <i class="fa-solid fa-brain"></i>
-          <h4>AI & Biometrics</h4>
-        </div>
-        <div class="tech-items">
-          <div class="tech-item"><span class="tech-dot gold"></span> DeepFace</div>
-          <div class="tech-item"><span class="tech-dot gold"></span> dlib (68-point landmarks)</div>
-          <div class="tech-item"><span class="tech-dot gold"></span> MediaPipe Face Mesh</div>
-          <div class="tech-item"><span class="tech-dot gold"></span> OpenCV</div>
-          <div class="tech-item"><span class="tech-dot gold"></span> FaceNet Embeddings</div>
-        </div>
-      </div>
-
-      <div class="tech-category" data-aos="fade-up" data-aos-delay="220">
-        <div class="tech-cat-header">
-          <i class="fa-solid fa-display"></i>
-          <h4>Frontend</h4>
-        </div>
-        <div class="tech-items">
-          <div class="tech-item"><span class="tech-dot green"></span> Django Templates</div>
-          <div class="tech-item"><span class="tech-dot green"></span> Vanilla JavaScript</div>
-          <div class="tech-item"><span class="tech-dot green"></span> WebRTC (getUserMedia)</div>
-          <div class="tech-item"><span class="tech-dot green"></span> AOS Animations</div>
-          <div class="tech-item"><span class="tech-dot green"></span> Font Awesome 6</div>
-        </div>
-      </div>
-
-      <div class="tech-category" data-aos="fade-up" data-aos-delay="280">
-        <div class="tech-cat-header">
-          <i class="fa-solid fa-shield-halved"></i>
-          <h4>Security</h4>
-        </div>
-        <div class="tech-items">
-          <div class="tech-item"><span class="tech-dot red"></span> Argon2 / bcrypt Hashing</div>
-          <div class="tech-item"><span class="tech-dot red"></span> CSRF Protection</div>
-          <div class="tech-item"><span class="tech-dot red"></span> HTTPS / SSL Only</div>
-          <div class="tech-item"><span class="tech-dot red"></span> IP Geo-Anomaly Detection</div>
-          <div class="tech-item"><span class="tech-dot red"></span> Immutable Audit Logs</div>
-        </div>
-      </div>
-
+    <div class="text-center" data-aos="fade-up">
+      <span class="eyebrow-label center">Technology Stack</span>
+      <h2 class="section-title">Built with Production‑Grade Tools</h2>
+      <p class="section-text">Every component was chosen for security, maintainability, and performance.</p>
     </div>
-
+    <div class="tech-grid" data-aos="fade-up" data-aos-delay="80">
+      <div class="tech-category"><div class="tech-cat-header"><i class="fa-brands fa-python"></i><h4>Backend</h4></div><div class="tech-items"><div class="tech-item"><span class="tech-dot blue"></span> Django 5 (Python)</div><div class="tech-item"><span class="tech-dot blue"></span> Django ORM + SQLite</div><div class="tech-item"><span class="tech-dot blue"></span> PyCryptodome AES‑256</div><div class="tech-item"><span class="tech-dot blue"></span> Pillow (image processing)</div></div></div>
+      <div class="tech-category"><div class="tech-cat-header"><i class="fa-solid fa-brain"></i><h4>AI &amp; Biometrics</h4></div><div class="tech-items"><div class="tech-item"><span class="tech-dot gold"></span> MediaPipe FaceMesh</div><div class="tech-item"><span class="tech-dot gold"></span> OpenCV + NumPy</div><div class="tech-item"><span class="tech-dot gold"></span> DFT frequency analysis</div><div class="tech-item"><span class="tech-dot gold"></span> Laplacian + HSV anti‑spoof</div></div></div>
+      <div class="tech-category"><div class="tech-cat-header"><i class="fa-solid fa-code"></i><h4>Frontend</h4></div><div class="tech-items"><div class="tech-item"><span class="tech-dot green"></span> Django Templates</div><div class="tech-item"><span class="tech-dot green"></span> Vanilla JS (ES2022)</div><div class="tech-item"><span class="tech-dot green"></span> CSS Custom Properties</div><div class="tech-item"><span class="tech-dot green"></span> Chart.js v4</div></div></div>
+      <div class="tech-category"><div class="tech-cat-header"><i class="fa-solid fa-server"></i><h4>Infrastructure</h4></div><div class="tech-items"><div class="tech-item"><span class="tech-dot red"></span> Gunicorn WSGI server</div><div class="tech-item"><span class="tech-dot red"></span> Whitenoise static files</div><div class="tech-item"><span class="tech-dot red"></span> Session‑based 2FA auth</div><div class="tech-item"><span class="tech-dot red"></span> CSRF + rate‑limit guards</div></div></div>
+    </div>
   </div>
 </section>
 
 
-<!-- ═══════════════════════════════════════════════════════
-     ELIGIBILITY & RULES
-═══════════════════════════════════════════════════════ -->
-<section id="eligibility" class="section dark-section">
+<!-- ═══════════ ELIGIBILITY & RULES ═══════════ -->
+<section class="section dark-section" id="eligibility">
   <div class="container">
-
-    <span class="eyebrow-label center" data-aos="fade-up">Who Can Vote</span>
-    <h2 class="section-title" data-aos="fade-up" data-aos-delay="50">
-      Eligibility & Voting Rules
-    </h2>
-
-    <div class="rules-grid">
-
-      <div class="rules-col" data-aos="fade-right">
-        <h3 class="rules-col-title">
-          <i class="fa-solid fa-circle-check"></i> Who Is Eligible
-        </h3>
-        <ul class="rules-list">
-          <li>
-            <i class="fa-solid fa-check-circle"></i>
-            Currently enrolled students at Islington College, Kathmandu
-          </li>
-          <li>
-            <i class="fa-solid fa-check-circle"></i>
-            Students from Computing, Artificial Intelligence, or Networking departments
-          </li>
-          <li>
-            <i class="fa-solid fa-check-circle"></i>
-            Students who have completed the SecureVoter AI registration process
-          </li>
-          <li>
-            <i class="fa-solid fa-check-circle"></i>
-            Students whose registration has been approved by IT Administration
-          </li>
-          <li>
-            <i class="fa-solid fa-check-circle"></i>
-            Students able to complete the live face verification at time of voting
-          </li>
-        </ul>
-      </div>
-
-      <div class="rules-col" data-aos="fade-left" data-aos-delay="100">
-        <h3 class="rules-col-title">
-          <i class="fa-solid fa-circle-xmark"></i> Voting Rules
-        </h3>
-        <ul class="rules-list prohibited">
-          <li>
-            <i class="fa-solid fa-ban"></i>
-            Each student may cast exactly one vote per position — no exceptions
-          </li>
-          <li>
-            <i class="fa-solid fa-ban"></i>
-            Proxy voting, vote sharing, or voting on behalf of others is strictly prohibited
-          </li>
-          <li>
-            <i class="fa-solid fa-ban"></i>
-            Sharing login credentials or bypassing face verification is a violation
-          </li>
-          <li>
-            <i class="fa-solid fa-ban"></i>
-            Votes cannot be changed once submitted
-          </li>
-          <li>
-            <i class="fa-solid fa-ban"></i>
-            Attempting to manipulate, automate, or tamper with the voting system
-            will result in immediate disqualification and disciplinary action
-          </li>
-        </ul>
-      </div>
-
+    <div class="text-center" data-aos="fade-up">
+      <span class="eyebrow-label center">Voter Eligibility</span>
+      <h2 class="section-title">Who Can Vote?</h2>
+      <p class="section-text">Participation is open to all currently enrolled students — subject to identity verification and Election Committee approval.</p>
     </div>
-
-    <div class="confidentiality-banner" data-aos="fade-up" data-aos-delay="150">
-      <i class="fa-solid fa-eye-slash"></i>
-      <div>
-        <h4>Your Vote is Completely Anonymous</h4>
-        <p>
-          SecureVoter AI records <em>that</em> you voted but never links your identity
-          to your specific ballot choice. The vote tally system uses anonymised records
-          that cannot be traced back to individual students — not even by administrators.
-        </p>
-      </div>
+    <div class="rules-grid" data-aos="fade-up" data-aos-delay="80">
+      <div class="rules-col"><div class="rules-col-title"><i class="fa-solid fa-circle-check"></i> Eligibility Criteria</div><ul class="rules-list"><li><i class="fa-solid fa-check"></i> Currently enrolled Islington College student</li><li><i class="fa-solid fa-check"></i> Valid Student ID on file with registry</li><li><i class="fa-solid fa-check"></i> Completed biometric face enrolment</li><li><i class="fa-solid fa-check"></i> Account approved by Election Committee</li><li><i class="fa-solid fa-check"></i> Device with camera access (laptop/phone)</li><li><i class="fa-solid fa-check"></i> Must vote within the election window</li></ul></div>
+      <div class="rules-col"><div class="rules-col-title"><i class="fa-solid fa-ban"></i> Prohibited Actions</div><ul class="rules-list prohibited"><li><i class="fa-solid fa-xmark"></i> Attempting to register with another student's identity</li><li><i class="fa-solid fa-xmark"></i> Using photographs or screens during face verification</li><li><i class="fa-solid fa-xmark"></i> Having multiple people in frame during liveness check</li><li><i class="fa-solid fa-xmark"></i> Attempting to vote more than once</li><li><i class="fa-solid fa-xmark"></i> Tampering with or inspecting encrypted vote data</li><li><i class="fa-solid fa-xmark"></i> Sharing login credentials with any other person</li></ul></div>
     </div>
-
+    <div class="confidentiality-banner" data-aos="fade-up" data-aos-delay="160">
+      <i class="fa-solid fa-user-shield"></i>
+      <div><h4>Confidentiality Guarantee</h4><p>Your vote is <em>yours alone</em>. AES‑256 encryption ensures that no individual ballot can ever be linked back to you by any person or system, including platform administrators. Results are published as aggregate totals only.</p></div>
+    </div>
   </div>
 </section>
 
 
-<!-- ═══════════════════════════════════════════════════════
-     FAQ
-═══════════════════════════════════════════════════════ -->
-<section id="faq" class="section">
+<!-- ═══════════ CAMPUS MAP ═══════════ -->
+<section class="section" id="campus">
   <div class="container">
-
-    <span class="eyebrow-label center" data-aos="fade-up">FAQ</span>
-    <h2 class="section-title" data-aos="fade-up" data-aos-delay="50">
-      Frequently Asked Questions
-    </h2>
-    <p class="section-text" data-aos="fade-up" data-aos-delay="100">
-      Everything you need to know about SecureVoter AI and the election process.
-    </p>
-
-    <div class="faq-grid">
-
-      <div class="faq-item" data-aos="fade-up" data-aos-delay="100">
-        <button class="faq-question" aria-expanded="false">
-          <span>How do I register to vote?</span>
-          <i class="fa-solid fa-plus faq-icon"></i>
-        </button>
-        <div class="faq-answer">
-          <p>
-            Click <strong>Register as Voter</strong> in the navigation bar or hero section.
-            Complete the three-step form: enter your personal details and Student ID,
-            complete the live face scan, then review and submit. Your registration
-            will be reviewed and approved by the IT Administration team within 24–48 hours.
-          </p>
-        </div>
-      </div>
-
-      <div class="faq-item" data-aos="fade-up" data-aos-delay="130">
-        <button class="faq-question" aria-expanded="false">
-          <span>What happens if my face scan fails?</span>
-          <i class="fa-solid fa-plus faq-icon"></i>
-        </button>
-        <div class="faq-answer">
-          <p>
-            Ensure you are in a well-lit environment with your face clearly visible and
-            not obscured. Remove glasses or hats if possible. If the scan fails three
-            times, your account will be temporarily locked for 15 minutes as a security
-            precaution. Contact IT Administration if you experience persistent issues.
-          </p>
-        </div>
-      </div>
-
-      <div class="faq-item" data-aos="fade-up" data-aos-delay="160">
-        <button class="faq-question" aria-expanded="false">
-          <span>Can I change my vote after submitting?</span>
-          <i class="fa-solid fa-plus faq-icon"></i>
-        </button>
-        <div class="faq-answer">
-          <p>
-            No. Once a vote is submitted, it is written to an append-only immutable
-            database. This is by design — it ensures that no vote can be altered,
-            deleted, or replaced by anyone, including administrators. Please review
-            your selection carefully before confirming.
-          </p>
-        </div>
-      </div>
-
-      <div class="faq-item" data-aos="fade-up" data-aos-delay="190">
-        <button class="faq-question" aria-expanded="false">
-          <span>Is my vote anonymous?</span>
-          <i class="fa-solid fa-plus faq-icon"></i>
-        </button>
-        <div class="faq-answer">
-          <p>
-            Yes. The system records that you have voted (to prevent duplicate votes)
-            but your specific candidate choices are stored anonymously. Your identity
-            is never linked to your ballot in the vote tally table — this applies
-            to all users, including system administrators.
-          </p>
-        </div>
-      </div>
-
-      <div class="faq-item" data-aos="fade-up" data-aos-delay="220">
-        <button class="faq-question" aria-expanded="false">
-          <span>Who can see the audit logs?</span>
-          <i class="fa-solid fa-plus faq-icon"></i>
-        </button>
-        <div class="faq-answer">
-          <p>
-            Audit logs are accessible only to authorised IT Administrators through the
-            secure admin dashboard. Logs record actions (login, face scan, vote submission)
-            with timestamps and device information but do not expose individual vote choices.
-          </p>
-        </div>
-      </div>
-
-      <div class="faq-item" data-aos="fade-up" data-aos-delay="250">
-        <button class="faq-question" aria-expanded="false">
-          <span>What if I forget my password?</span>
-          <i class="fa-solid fa-plus faq-icon"></i>
-        </button>
-        <div class="faq-answer">
-          <p>
-            Use the "Forgot password?" link on the login page. A reset link will be
-            sent to your registered email address. If you don't receive it within
-            a few minutes, check your spam folder or contact IT Administration
-            at <strong>support@islingtoncollege.edu.np</strong>.
-          </p>
-        </div>
-      </div>
-
-      <div class="faq-item" data-aos="fade-up" data-aos-delay="280">
-        <button class="faq-question" aria-expanded="false">
-          <span>When will election results be announced?</span>
-          <i class="fa-solid fa-plus faq-icon"></i>
-        </button>
-        <div class="faq-answer">
-          <p>
-            Results for the 2026 Student Council Elections will be officially
-            published on <strong>March 18, 2026</strong> on this portal and
-            through official Islington College communication channels. Winners
-            will also be notified by email.
-          </p>
-        </div>
-      </div>
-
-      <div class="faq-item" data-aos="fade-up" data-aos-delay="310">
-        <button class="faq-question" aria-expanded="false">
-          <span>I'm a student but my registration was rejected. Why?</span>
-          <i class="fa-solid fa-plus faq-icon"></i>
-        </button>
-        <div class="faq-answer">
-          <p>
-            Registrations may be rejected if your Student ID cannot be verified
-            against enrollment records, if your biometric photo is unclear, or
-            if your account shows signs of duplication. Contact IT Administration
-            with your Student ID and the issue will be reviewed within 48 hours.
-          </p>
-        </div>
-      </div>
-
+    <div class="text-center" data-aos="fade-up">
+      <span class="eyebrow-label center">Campus Location</span>
+      <h2 class="section-title">Find Us at Islington College</h2>
+      <p class="section-text">Voting is conducted fully online — but if you need in‑person support, visit the Election Committee at Kumari Block, Islington College, Kamal Pokhari, Kathmandu.</p>
     </div>
-
+    <div class="campus-layout" data-aos="fade-up" data-aos-delay="80">
+      <div class="campus-info">
+        <div class="campus-info-card campus-primary-card"><div class="campus-info-icon"><i class="fa-solid fa-building-columns"></i></div><div><div class="campus-info-label">Institution</div><div class="campus-info-value">Islington College</div></div></div>
+        <div class="campus-info-card"><div class="campus-info-icon campus-icon-gold"><i class="fa-solid fa-location-dot"></i></div><div><div class="campus-info-label">Address</div><div class="campus-info-value">Kumari Block, Kamal Pokhari, Kathmandu 44600, Nepal</div></div></div>
+        <div class="campus-info-card"><div class="campus-info-icon campus-icon-green"><i class="fa-solid fa-envelope"></i></div><div><div class="campus-info-label">Support Email</div><div class="campus-info-value">support@islingtoncollege.edu.np</div></div></div>
+        <div class="campus-info-card"><div class="campus-info-icon campus-icon-blue"><i class="fa-solid fa-clock"></i></div><div><div class="campus-info-label">Election Committee Hours</div><div class="campus-info-value">Sun – Fri &nbsp;·&nbsp; 09:00 – 17:00 NPT</div></div></div>
+        <div class="campus-info-card"><div class="campus-info-icon campus-icon-red"><i class="fa-solid fa-circle-exclamation"></i></div><div><div class="campus-info-label">Voting Support</div><div class="campus-info-value">Visit IT Lab — Ground Floor, Kumari Block</div></div></div>
+        <a class="campus-directions-btn" href="https://www.google.com/maps/dir//Kumari+Block+-+Islington+College,+Kathmandu+44600/@27.708991,85.3250989,17z" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-diamond-turn-right"></i> Get Directions on Google Maps <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+      </div>
+      <div class="campus-map-wrap" data-aos="fade-left" data-aos-delay="120">
+        <div class="campus-map-badge"><span class="pulse-dot small"></span> Islington College · Kumari Block</div>
+        <iframe class="campus-map-iframe" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3531.9447698965044!2d85.32509887499!3d27.708990975659!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb19088cf744ff%3A0x5d442b976acd7fcc!2sKumari%20Block%20-%20Islington%20College!5e0!3m2!1sen!2snp!4v1711459200000!5m2!1sen!2snp" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Islington College location"></iframe>
+        <div class="campus-map-overlay-badge"><i class="fa-solid fa-location-dot"></i> 27.7090° N, 85.3251° E</div>
+      </div>
+    </div>
   </div>
 </section>
 
 
-<!-- ═══════════════════════════════════════════════════════
-     CONTACT / SUPPORT
-═══════════════════════════════════════════════════════ -->
-<section id="contact" class="section dark-section">
+<!-- ═══════════ FAQ ═══════════ -->
+<section class="section dark-section" id="faq">
   <div class="container">
-
-    <span class="eyebrow-label center" data-aos="fade-up">Support</span>
-    <h2 class="section-title" data-aos="fade-up" data-aos-delay="50">
-      Need Help?
-    </h2>
-    <p class="section-text" data-aos="fade-up" data-aos-delay="100">
-      For registration issues, technical support, voter verification problems,
-      or election-related inquiries, contact the IT Administration team.
-    </p>
-
-    <div class="contact-grid">
-
-      <div class="contact-card" data-aos="zoom-in" data-aos-delay="100">
-        <div class="contact-icon">
-          <i class="fa-solid fa-envelope"></i>
-        </div>
-        <h4>Email Support</h4>
-        <p>Send us your issue and Student ID for quickest resolution.</p>
-        <a href="mailto:support@islingtoncollege.edu.np" class="contact-link">
-          support@islingtoncollege.edu.np
-        </a>
-      </div>
-
-      <div class="contact-card" data-aos="zoom-in" data-aos-delay="160">
-        <div class="contact-icon">
-          <i class="fa-solid fa-location-dot"></i>
-        </div>
-        <h4>IT Administration Office</h4>
-        <p>Visit us in person during college working hours (9am – 5pm).</p>
-        <span class="contact-link">
-          Islington College, Kamal Pokhari, Kathmandu
-        </span>
-      </div>
-
-      <div class="contact-card" data-aos="zoom-in" data-aos-delay="220">
-        <div class="contact-icon">
-          <i class="fa-solid fa-circle-question"></i>
-        </div>
-        <h4>Common Issues</h4>
-        <p>Check the FAQ section above for answers to the most frequent questions.</p>
-        <a href="#faq" class="contact-link">
-          View FAQ <i class="fa-solid fa-arrow-up"></i>
-        </a>
-      </div>
-
+    <div class="text-center" data-aos="fade-up">
+      <span class="eyebrow-label center">Common Questions</span>
+      <h2 class="section-title">Frequently Asked Questions</h2>
+      <p class="section-text">Everything you need to know before casting your first vote.</p>
     </div>
-
-    <!-- CTA block -->
-    <div class="cta-block" data-aos="fade-up" data-aos-delay="200">
-      <div class="cta-text">
-        <h3>Ready to participate in the election?</h3>
-        <p>Register now to secure your place as a verified voter before the deadline.</p>
-      </div>
-      <div class="cta-buttons">
-        <a href="{% url 'core:register' %}" class="btn-primary">
-          <i class="fa-solid fa-user-plus"></i> Register as Voter
-        </a>
-        <a href="{% url 'core:login' %}" class="btn-outline">
-          <i class="fa-solid fa-right-to-bracket"></i> Already Registered? Login
-        </a>
-      </div>
+    <div class="faq-grid" data-aos="fade-up" data-aos-delay="80">
+      <div class="faq-item"><button class="faq-question" aria-expanded="false">Do I need a special device to vote?<i class="fa-solid fa-chevron-down faq-icon"></i></button><div class="faq-answer"><p>Any device with a working camera and internet connection works — laptop, desktop with webcam, smartphone, or tablet. Chrome or Firefox are the recommended browsers.</p></div></div>
+      <div class="faq-item"><button class="faq-question" aria-expanded="false">Is my vote really anonymous?<i class="fa-solid fa-chevron-down faq-icon"></i></button><div class="faq-answer"><p>Yes — absolutely. AES‑256 encryption separates your identity from your ballot at the point of submission. Even system administrators cannot determine how any individual voted.</p></div></div>
+      <div class="faq-item"><button class="faq-question" aria-expanded="false">What happens if face verification fails?<i class="fa-solid fa-chevron-down faq-icon"></i></button><div class="faq-answer"><p>You have three attempts per session. After three failures the account is locked for 15 minutes. Common causes: poor lighting, glasses, or another person in frame.</p></div></div>
+      <div class="faq-item"><button class="faq-question" aria-expanded="false">Can I change my vote after submitting?<i class="fa-solid fa-chevron-down faq-icon"></i></button><div class="faq-answer"><p><strong>No</strong> — votes are encrypted and committed to the database immediately upon confirmation. A database‑level unique constraint makes it physically impossible to submit a second vote for the same election.</p></div></div>
+      <div class="faq-item"><button class="faq-question" aria-expanded="false">How long does registration take?<i class="fa-solid fa-chevron-down faq-icon"></i></button><div class="faq-answer"><p>The form takes 2–3 minutes to complete. Biometric enrolment (three liveness challenges) takes an additional 60–90 seconds. Admin approval is typically completed within one working day.</p></div></div>
+      <div class="faq-item"><button class="faq-question" aria-expanded="false">What data does the system store about me?<i class="fa-solid fa-chevron-down faq-icon"></i></button><div class="faq-answer"><p>The system stores your name, student ID, department, contact information, and a numerical face embedding vector — not a photograph. No images are retained after enrolment.</p></div></div>
     </div>
-
   </div>
 </section>
 
-{% endblock %}
 
-{% block extra_js %}
+<!-- ═══════════ CONTACT ═══════════ -->
+<section class="section" id="contact">
+  <div class="container">
+    <div class="text-center" data-aos="fade-up">
+      <span class="eyebrow-label center">Get in Touch</span>
+      <h2 class="section-title">Need Help?</h2>
+      <p class="section-text">The Election Committee is available throughout the voting window to assist with technical issues, account queries, and eligibility questions.</p>
+    </div>
+    <div class="contact-grid" data-aos="fade-up" data-aos-delay="80">
+      <div class="contact-card"><div class="contact-icon"><i class="fa-solid fa-envelope"></i></div><h4>Email Support</h4><p>Write to the Election Committee for account queries, approval status, or technical help.</p><a href="mailto:support@islingtoncollege.edu.np" class="contact-link"><i class="fa-solid fa-arrow-right"></i> support@islingtoncollege.edu.np</a></div>
+      <div class="contact-card"><div class="contact-icon"><i class="fa-solid fa-building"></i></div><h4>In‑Person IT Lab</h4><p>Visit the IT Lab on the Ground Floor, Kumari Block for hands‑on camera and browser troubleshooting.</p><a href="#campus" class="contact-link"><i class="fa-solid fa-arrow-right"></i> View Campus Map</a></div>
+      <div class="contact-card"><div class="contact-icon"><i class="fa-solid fa-circle-question"></i></div><h4>FAQ &amp; Docs</h4><p>Most questions are answered in our FAQ above — check there first before reaching out.</p><a href="#faq" class="contact-link"><i class="fa-solid fa-arrow-right"></i> Browse FAQ</a></div>
+    </div>
+    <div class="cta-block" data-aos="fade-up" data-aos-delay="160">
+      <div class="cta-text"><h3>Your Vote Matters. Make It Count.</h3><p>Registration is free, secure, and takes under 3 minutes. Join the Islington College election today.</p></div>
+      <div class="cta-buttons"><a href="{% url 'core:register' %}" class="btn-primary"><i class="fa-solid fa-user-plus"></i> Register Now</a><a href="{% url 'core:login' %}" class="btn-outline"><i class="fa-solid fa-right-to-bracket"></i> Sign In</a></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="footer">
+  <div class="container footer-container">
+    <div class="footer-left">
+      <h3>SecureVoter AI</h3>
+      <p>Official AI‑Secured Election Platform of Islington College, Kamal Pokhari, Kathmandu.</p>
+      <div class="footer-badges">
+        <span class="footer-badge"><i class="fa-solid fa-lock"></i> AES‑256</span>
+        <span class="footer-badge"><i class="fa-solid fa-face-smile"></i> Biometric</span>
+        <span class="footer-badge"><i class="fa-solid fa-shield-halved"></i> Zero‑Trust</span>
+      </div>
+    </div>
+    <div class="footer-links-col">
+      <div class="footer-link-group">
+        <div class="footer-link-label">Platform</div>
+        <a href="#about">About</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#features">Security</a>
+        <a href="#technology">Technology</a>
+      </div>
+      <div class="footer-link-group">
+        <div class="footer-link-label">Voter</div>
+        <a href="{% url 'core:register' %}">Register</a>
+        <a href="{% url 'core:login' %}">Login</a>
+        <a href="#faq">FAQ</a>
+        <a href="#contact">Support</a>
+      </div>
+    </div>
+    <div class="footer-right">
+      <p><i class="fa-solid fa-location-dot"></i> Kumari Block, Kamal Pokhari, Kathmandu 44600</p>
+      <p><i class="fa-solid fa-envelope"></i> support@islingtoncollege.edu.np</p>
+      <p><i class="fa-solid fa-clock"></i> Sun – Fri &nbsp;·&nbsp; 09:00 – 17:00 NPT</p>
+      <a href="#campus" class="footer-map-btn"><i class="fa-solid fa-map"></i> View Campus Map</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 Islington College · SecureVoter AI · All rights reserved.</p>
+  </div>
+</footer>
+
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js" crossorigin="anonymous"></script>
 <script src="{% static 'js/index.js' %}"></script>
-{% endblock %}
+
+</body>
+</html>

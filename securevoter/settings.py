@@ -16,21 +16,25 @@ import os
 from dotenv import load_dotenv
 
 
-# BASE DIRECTORY
+# BASE DIRECTORY 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# LOAD ENVIRONMENT VARIABLES
-# DJANGO_SECRET_KEY, DEBUG, VOTE_ENCRYPTION_KEY
+#  LOAD ENVIRONMENT VARIABLES 
 load_dotenv(BASE_DIR / ".env")
 
-# SECURITY SETTINGS
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")  
-DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
+
+#  SECURITY SETTINGS 
+SECRET_KEY    = os.getenv("DJANGO_SECRET_KEY", "unsafe-dev-key")
+DEBUG         = os.getenv("DEBUG", "True") == "True"
+ALLOWED_HOSTS = (
+    os.getenv("ALLOWED_HOSTS", "").split(",")
+    if os.getenv("ALLOWED_HOSTS")
+    else []
+)
 
 
-# APPLICATIONS
+#  APPLICATIONS 
 INSTALLED_APPS = [
     # Django default apps
     'django.contrib.admin',
@@ -51,7 +55,7 @@ INSTALLED_APPS = [
 ]
 
 
-# MIDDLEWARE
+#  MIDDLEWARE 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -63,11 +67,11 @@ MIDDLEWARE = [
 ]
 
 
-# ROOT URL CONFIGURATION
+#  ROOT URL CONFIGURATION 
 ROOT_URLCONF = 'securevoter.urls'
 
 
-# TEMPLATES
+#  TEMPLATES 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -86,16 +90,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'securevoter.wsgi.application'
 
 
-# DATABASE
+# DATABASE 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME':   BASE_DIR / 'db.sqlite3',
     }
 }
 
 
-# PASSWORD VALIDATORS
+# PASSWORD VALIDATORS 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -104,27 +108,39 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# INTERNATIONALIZATION
+#  INTERNATIONALIZATION 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Asia/Kathmandu'
-USE_I18N = True
-USE_TZ = True
+TIME_ZONE     = 'Asia/Kathmandu'
+USE_I18N      = True
+USE_TZ        = True
 
 
-# STATIC FILES
+
+# settings.py
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'core' / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'staticfiles'   # collectstatic destination — never serve this in dev
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'core' / 'static',
+    BASE_DIR / 'voter_dashboard' / 'static',
+    BASE_DIR / 'admin_dashboard' / 'static',
+]
 
 
-# DEFAULT AUTO FIELD (fixes primary key warning)
+#  MEDIA FILES (candidate photos, uploads) 
+MEDIA_URL  = '/media/'
+MEDIA_ROOT = BASE_DIR / 'candidate_photos'
+
+
+# DEFAULT AUTO FIELD 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# CUSTOM USER MODEL
+# CUSTOM USER MODEL 
 AUTH_USER_MODEL = 'core.Student'
 
-# DJANGO REST FRAMEWORK SETTINGS
+
+#  DJANGO REST FRAMEWORK 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -135,17 +151,17 @@ REST_FRAMEWORK = {
 }
 
 
-# SIMPLE JWT SETTINGS
+#  SIMPLE JWT 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'ACCESS_TOKEN_LIFETIME':  timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': False,
+    'ROTATE_REFRESH_TOKENS':  False,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
 
-# VOTE ENCRYPTION KEY (Critical)
+#  VOTE ENCRYPTION KEY 
 VOTE_ENCRYPTION_KEY = os.getenv("VOTE_ENCRYPTION_KEY")
 if not VOTE_ENCRYPTION_KEY:
-    print("⚠ WARNING: VOTE_ENCRYPTION_KEY is not set in .env. Vote encryption will fail!")
+    print("WARNING: VOTE_ENCRYPTION_KEY is not set in .env. Vote encryption will fail!")

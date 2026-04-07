@@ -1,0 +1,176 @@
+{% extends 'voter_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Settings{% endblock %}
+{% block navbar_title %}Settings{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'voter_dashboard/css/settings.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Inline toast feedback ─────────────────────────────────── -->
+<div class="toast-bar" id="toastBar">
+  <i class="fa-solid fa-circle-check" id="toastIcon"></i>
+  <span id="toastMsg"></span>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SETTINGS PAGE WRAPPER
+════════════════════════════════════════════════════════════ -->
+<div style="
+  display:        flex;
+  flex-direction: column;
+  gap:            1.75rem;
+  max-width:      720px;
+  margin:         0 auto;
+">
+
+  <!-- ── 1. Notification Preferences ──────────────────────── -->
+  <form id="prefsForm" method="POST" action="{% url 'voter_dashboard:settings' %}">
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="preferences">
+
+    <div class="settings-card">
+      <h4><i class="fa-solid fa-bell"></i> Notification Preferences</h4>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <h5>Election Opens</h5>
+          <p>Get notified when a new election starts and voting begins.</p>
+        </div>
+        <label class="toggle-switch" aria-label="Election opens notifications">
+          <input type="checkbox" name="notify_election_open"
+                 {% if student.notify_election_open %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <h5>Election Closes</h5>
+          <p>Get notified when an election's voting period ends.</p>
+        </div>
+        <label class="toggle-switch" aria-label="Election closes notifications">
+          <input type="checkbox" name="notify_election_close"
+                 {% if student.notify_election_close %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <h5>Results Published</h5>
+          <p>Get notified when election results are released.</p>
+        </div>
+        <label class="toggle-switch" aria-label="Results published notifications">
+          <input type="checkbox" name="notify_election_results"
+                 {% if student.notify_election_results %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="settings-actions">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Save Preferences
+        </button>
+      </div>
+    </div>
+  </form>
+
+
+  <!-- ── 2. Change Phone Number ────────────────────────────── -->
+  <form id="phoneForm" method="POST" action="{% url 'voter_dashboard:settings' %}">
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="change_phone">
+
+    <div class="settings-card">
+      <h4><i class="fa-solid fa-phone"></i> Change Phone Number</h4>
+
+      <div class="field-row">
+        <label>Current Phone</label>
+        <input type="text" value="{{ student.phone|default:'—' }}" disabled>
+      </div>
+      <div class="field-row">
+        <label for="new_phone">New Phone Number</label>
+        <input type="tel" id="new_phone" name="new_phone"
+               placeholder="+977 98XXXXXXXX" autocomplete="tel">
+      </div>
+      <div class="field-row">
+        <label for="phone_password">Confirm Password</label>
+        <input type="password" id="phone_password" name="phone_password"
+               placeholder="Enter your password to confirm"
+               autocomplete="current-password">
+      </div>
+
+      <div class="settings-actions">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Update Phone
+        </button>
+      </div>
+    </div>
+  </form>
+
+
+  <!-- ── 3. Change Password ────────────────────────────────── -->
+  <form id="passwordForm" method="POST" action="{% url 'voter_dashboard:settings' %}">
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="change_password">
+
+    <div class="settings-card">
+      <h4><i class="fa-solid fa-lock"></i> Change Password</h4>
+
+      <div class="field-row">
+        <label for="current_password">Current Password</label>
+        <input type="password" id="current_password" name="current_password"
+               placeholder="Enter your current password"
+               autocomplete="current-password">
+      </div>
+      <div class="field-row">
+        <label for="new_password">New Password</label>
+        <input type="password" id="new_password" name="new_password"
+               placeholder="At least 8 characters"
+               autocomplete="new-password">
+      </div>
+      <div class="field-row">
+        <label for="confirm_password">Confirm New Password</label>
+        <input type="password" id="confirm_password" name="confirm_password"
+               placeholder="Repeat new password"
+               autocomplete="new-password">
+      </div>
+
+      <div class="settings-actions">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Update Password
+        </button>
+      </div>
+    </div>
+  </form>
+
+
+  <!-- ── 4. Account Actions ────────────────────────────────── -->
+  <div class="settings-card">
+    <h4><i class="fa-solid fa-user-gear"></i> Account</h4>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <h5>Download My Data</h5>
+        <p>Export all your voting records and account information as JSON.</p>
+      </div>
+      <a href="{% url 'voter_dashboard:download_my_data' %}" class="btn btn-outline">
+        <i class="fa-solid fa-download"></i> Download
+      </a>
+    </div>
+
+  </div>
+
+</div><!-- /settings page wrapper -->
+
+{% endblock %}
+
+{# ─── NO extra_js block here ───────────────────────────────────────────────── #}
+{# main.js already calls wireSettingsForm('prefsForm'), wireSettingsForm('phoneForm'), #}
+{# and wireSettingsForm('passwordForm') on DOMContentLoaded.                          #}
+{# Adding a second block here causes both handlers to fire simultaneously,            #}
+{# making the second one capture origHtml = "Saving…" and reset to that on finish.   #}

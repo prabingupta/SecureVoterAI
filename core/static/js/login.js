@@ -1,31 +1,116 @@
 'use strict';
 
-const MP_CDN    = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/';
-const LEFT_EYE  = [33, 160, 158, 133, 153, 144];
-const RIGHT_EYE = [263, 387, 385, 362, 373, 380];
-const NOSE_IDX  = 1;
+const MP_CDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/';
 
-// Liveness detection thresholds (match liveness.py)
-const BLINK_EAR  = 0.22;   // EAR below this = eye closing = blink detected
-const MOVE_DELTA = 0.015;  // nose movement above this = head moved
+//  Landmark indices 
+const L_EYE  = [33, 160, 158, 133, 153, 144];
+const R_EYE  = [263, 387, 385, 362, 373, 380];
+const NOSE   = 1;
+const L_EAR  = 234;
+const R_EAR  = 454;
 
-// Module-level — survive DOM transitions
-let _capturedFrame = '';
-let _livenessOK    = false;
+function pd(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 
-function dbg(msg) { console.log(`[login.js v7] ${msg}`); }
+function avgEAR(lm) {
+  function ear(idx) {
+    const p = idx.map(i => lm[i]);
+    return (pd(p[1], p[5]) + pd(p[2], p[4])) / (2 * pd(p[0], p[3]) + 1e-6);
+  }
+  return (ear(L_EYE) + ear(R_EYE)) / 2;
+}
 
+function headRelX(lm) {
+  const faceW = pd(lm[L_EAR], lm[R_EAR]) + 1e-6;
+  return -((lm[NOSE].x - (lm[L_EAR].x + lm[R_EAR].x) / 2) / faceW);
+}
+
+// Thresholds 
+const EAR_OPEN_THRESH     = 0.27;
+const EAR_CLOSED_THRESH   = 0.24;
+const NEUTRAL_BAND        = 0.04;
+const TURN_THRESH         = 0.06;
+const TURN_CONFIRM_FRAMES = 3;
+
+//  Challenge catalogue — look_up intentionally absent 
+const CHALLENGES = {
+  blink: {
+    icon:  'fa-eye',
+    label: 'Blink both eyes',
+    createState: () => ({ phase: 'waiting_open', closedFrames: 0 }),
+    update(s, lm) {
+      const e = avgEAR(lm);
+      if (s.phase === 'waiting_open') {
+        if (e >= EAR_OPEN_THRESH) s.phase = 'waiting_blink';
+        return false;
+      }
+      if (e < EAR_CLOSED_THRESH) { s.closedFrames++; if (s.closedFrames >= 1) return true; }
+      else s.closedFrames = 0;
+      return false;
+    },
+  },
+  turn_left: {
+    icon:  'fa-arrow-left',
+    label: 'Turn head LEFT',
+    createState: () => ({ phase: 'waiting_neutral', turnFrames: 0 }),
+    update(s, lm) {
+      const rx = headRelX(lm);
+      if (s.phase === 'waiting_neutral') {
+        if (Math.abs(rx) <= NEUTRAL_BAND) s.phase = 'waiting_turn';
+        return false;
+      }
+      if (rx < -TURN_THRESH) { s.turnFrames++; if (s.turnFrames >= TURN_CONFIRM_FRAMES) return true; }
+      else s.turnFrames = 0;
+      return false;
+    },
+  },
+  turn_right: {
+    icon:  'fa-arrow-right',
+    label: 'Turn head RIGHT',
+    createState: () => ({ phase: 'waiting_neutral', turnFrames: 0 }),
+    update(s, lm) {
+      const rx = headRelX(lm);
+      if (s.phase === 'waiting_neutral') {
+        if (Math.abs(rx) <= NEUTRAL_BAND) s.phase = 'waiting_turn';
+        return false;
+      }
+      if (rx > TURN_THRESH) { s.turnFrames++; if (s.turnFrames >= TURN_CONFIRM_FRAMES) return true; }
+      else s.turnFrames = 0;
+      return false;
+    },
+  },
+};
+
+//  Anti-spoof / session constants
+const MOTION_FLOOR       = 0.3;
+const STALE_FRAME_LIMIT  = 30;
+const SESSION_WARN_MS    = 4 * 60 * 1000;
+const SESSION_EXPIRE_MS  = 5 * 60 * 1000;
+
+//  Module state
+let _capturedFrame   = '';
+let _livenessOK      = false;
+let _motionScore     = 999;
+let _challengeId     = null;
+let _challengeState  = null;
+let _challengeLocked = false;
+let _firstFaceSeen   = false;
+let _staleCount      = 0;
+let _prevFrameData   = null;
+let _step2StartedAt  = null;
+
+function dbg(msg) { console.log(`[login.js v11] ${msg}`); }
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // DOM refs — Step 1
-  const step1El   = document.getElementById('loginStep1');
-  const step1Next = document.getElementById('step1Next');
-
-  // DOM refs — Step 2
+  const step1El     = document.getElementById('loginStep1');
   const step2El     = document.getElementById('loginStep2');
+  const step1Next   = document.getElementById('step1Next');
   const step2Prev   = document.getElementById('step2Prev');
   const loginSubmit = document.getElementById('loginSubmit');
+  const progressBar = document.getElementById('progressBar');
+  const asideStep1  = document.querySelector('.aside-step[data-step="1"]');
+  const asideStep2  = document.querySelector('.aside-step[data-step="2"]');
+  const connector   = document.querySelector('.aside-step-connector');
   const video       = document.getElementById('loginWebcam');
   const statusWrap  = document.getElementById('webcamStatus');
   const statusText  = document.getElementById('webcamStatusText');
@@ -33,38 +118,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const instructTxt = document.getElementById('instructionText');
   const dot1        = document.getElementById('dot1');
   const dot2        = document.getElementById('dot2');
-  const attemptsEl  = document.getElementById('attemptsLeft');
-
-  // Shared
-  const progressBar = document.getElementById('progressBar');
-  const asideStep1  = document.querySelector('.aside-step[data-step="1"]');
-  const asideStep2  = document.querySelector('.aside-step[data-step="2"]');
-  const connector   = document.querySelector('.aside-step-connector');
   const msgBox      = document.getElementById('ajaxMessages');
 
   const getCsrf = () =>
     document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
 
-  // Camera state
-  let cameraStream  = null;
-  let faceMesh      = null;
-  let animFrame     = null;
-  let prevNose      = null;
-  let livenessTimer = null;
+  let cameraStream       = null;
+  let faceMesh           = null;
+  let animFrame          = null;
+  let challengeTimer     = null;
+  let countdownInterval  = null;
+  let sessionWarnTimer   = null;
+  let sessionExpireTimer = null;
+
+  // Off-screen canvas for optical-flow
+  const _offCanvas  = document.createElement('canvas');
+  _offCanvas.width  = 64;
+  _offCanvas.height = 48;
+  const _offCtx     = _offCanvas.getContext('2d', { willReadFrequently: true });
 
   dbg('loaded ✓');
 
-  /*
-     STEP 1 — Password check
-  */
+  /*  credential check */
   step1Next?.addEventListener('click', async () => {
     if (!validateStep1()) return;
     setButtonLoading(step1Next, '<span class="spinner"></span> Checking…');
     clearMsg();
 
     const fd = new FormData();
-    fd.append('student_id',          sidVal().trim());
-    fd.append('password',            pwVal());
+    fd.append('student_id', document.getElementById('student_id')?.value.trim() || '');
+    fd.append('password',   document.getElementById('password')?.value || '');
     fd.append('csrfmiddlewaretoken', getCsrf());
 
     try {
@@ -76,25 +159,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await resp.json();
       dbg(`step1 → ${JSON.stringify(data)}`);
 
-      // Admin: password passed, no face step needed → redirect immediately
       if (data.success && !data.require_face && data.redirect) {
         showMsg(data.message || 'Login successful!', 'success');
         setTimeout(() => { window.location.href = data.redirect; }, 600);
         return;
       }
-
-      // Voter: password passed → open face verification step
       if (data.success && data.require_face) {
         resetBtn(step1Next, 'Continue <i class="fa-solid fa-arrow-right"></i>');
         showStep2();
         return;
       }
-
-      // Failure (wrong password, locked, pending approval, etc.)
       showMsg(data.error || 'Login failed.', data.type || 'error');
       resetBtn(step1Next, 'Continue <i class="fa-solid fa-arrow-right"></i>');
-
-    } catch {
+    } catch (_) {
       showMsg('Network error. Check your connection.', 'error');
       resetBtn(step1Next, 'Continue <i class="fa-solid fa-arrow-right"></i>');
     }
@@ -102,13 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   step2Prev?.addEventListener('click', () => {
     stopCamera();
+    clearSessionTimers();
     hideStep2();
-    clearMsg();
   });
 
-  /* 
-     STEP VISIBILITY
- */
+  /*  Step visibility  */
   function showStep2() {
     step1El?.classList.remove('active');
     step2El.style.display = '';
@@ -118,6 +193,8 @@ document.addEventListener('DOMContentLoaded', () => {
     connector?.classList.add('filled');
     if (progressBar) progressBar.style.width = '100%';
     document.querySelector('.login-main')?.scrollTo({ top: 0, behavior: 'smooth' });
+    _step2StartedAt = Date.now();
+    startSessionTimers();
     startCamera();
   }
 
@@ -132,22 +209,67 @@ document.addEventListener('DOMContentLoaded', () => {
     if (progressBar) progressBar.style.width = '50%';
   }
 
-  /*
-     CAMERA + LIVENESS
- */
-  async function startCamera() {
-    _capturedFrame = '';
-    _livenessOK    = false;
-    prevNose       = null;
+  /*  Session timers  */
+  function startSessionTimers() {
+    clearSessionTimers();
+    sessionWarnTimer = setTimeout(() => {
+      showMsg(
+        'Your session expires in 1 minute. Please complete face verification.',
+        'warning',
+      );
+    }, SESSION_WARN_MS);
+    sessionExpireTimer = setTimeout(() => {
+      stopCamera();
+      showMsg('Session expired. Redirecting to login…', 'error');
+      setTimeout(() => { window.location.href = '/login/'; }, 2500);
+    }, SESSION_EXPIRE_MS);
+  }
+  function clearSessionTimers() {
+    clearTimeout(sessionWarnTimer);
+    clearTimeout(sessionExpireTimer);
+  }
 
-    dot1?.classList.remove('done');
-    dot2?.classList.remove('done');
+  /*  Camera + challenge liveness  */
+  async function startCamera() {
+    _capturedFrame   = '';
+    _livenessOK      = false;
+    _motionScore     = 999;
+    _challengeId     = null;
+    _challengeState  = null;
+    _challengeLocked = false;
+    _firstFaceSeen   = false;
+    _staleCount      = 0;
+    _prevFrameData   = null;
+
+    dot1?.classList.remove('done', 'active');
+    dot2?.classList.remove('done', 'active');
     instructEl?.classList.remove('success', 'error');
     if (loginSubmit) loginSubmit.disabled = true;
 
     setStatus('Requesting camera…', '');
-    setInstr('Allow camera access to continue.');
+    setInstr('Allow camera access to continue.', '');
 
+    // Fetch server-issued challenge (1 random from blink/turn_left/turn_right)
+    try {
+      const res  = await fetch('/api/liveness-challenges/?mode=login');
+      const data = await res.json();
+      if (data.error) {
+        setInstr(data.error, 'error');
+        setStatus('Session error', 'error');
+        return;
+      }
+      _challengeId = Array.isArray(data.challenges) ? data.challenges[0] : null;
+    } catch (_) {}
+
+    // Fallback — never look_up
+    if (!_challengeId || !CHALLENGES[_challengeId]) {
+      const fallback = ['blink', 'turn_left', 'turn_right'];
+      _challengeId = fallback[Math.floor(Math.random() * fallback.length)];
+    }
+    _challengeState = CHALLENGES[_challengeId].createState();
+    dbg(`Server challenge: ${_challengeId}`);
+
+    // Open camera
     try {
       cameraStream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
@@ -155,39 +277,64 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       video.srcObject = cameraStream;
       await video.play();
-      setStatus('Camera active — look at the camera', 'ready');
-    } catch {
+      setStatus('Camera active', 'ready');
+    } catch (_) {
       setStatus('Camera access denied', 'error');
-      setInstr('Enable camera permissions, then click Back and try again.', 'error');
+      setInstr('Enable camera permissions, then go Back and try again.', 'error');
       return;
     }
 
-    setInstr('Loading face detection…');
+    // Load FaceMesh with maxNumFaces=4 for multi-face detection
+    setInstr('Loading face detection…', '');
     try {
       faceMesh = new window.FaceMesh({ locateFile: f => `${MP_CDN}${f}` });
       faceMesh.setOptions({
-        maxNumFaces: 1, refineLandmarks: true,
+        maxNumFaces: 4, refineLandmarks: true,
         minDetectionConfidence: 0.5, minTrackingConfidence: 0.5,
       });
       await faceMesh.initialize();
       faceMesh.onResults(onFaceResults);
       dbg('FaceMesh ready');
-    } catch {
-      setInstr('Face detection failed to load. Check your internet connection.', 'error');
+    } catch (_) {
+      setInstr(
+        'Face detection failed to load. Check your internet connection.',
+        'error',
+      );
       return;
     }
 
-    setInstr('Blink once or move your head slightly to confirm liveness…');
-
-    // 15-second timeout — if no liveness detected the user must retry
-    livenessTimer = setTimeout(() => {
-      if (!_livenessOK) {
-        setInstr('Timed out. Click Back and try again.', 'error');
-        setStatus('Timed out', 'error');
-      }
-    }, 15000);
-
+    const ch   = CHALLENGES[_challengeId];
+    const icon = instructEl?.querySelector('i');
+    if (icon) icon.className = `fa-solid ${ch.icon}`;
+    setInstr('Look at the camera to begin…', '');
     runLoop();
+  }
+
+  function startChallengeClock() {
+    clearTimeout(challengeTimer);
+    clearInterval(countdownInterval);
+    const ch = CHALLENGES[_challengeId];
+    dot1?.classList.add('active');
+    let secsLeft = 5;
+    instructEl?.classList.remove('success', 'error');
+    setInstr(`${ch.label} (${secsLeft}s)…`, '');
+    countdownInterval = setInterval(() => {
+      secsLeft--;
+      if (secsLeft > 0) setInstr(`${ch.label} (${secsLeft}s)…`, '');
+      else clearInterval(countdownInterval);
+    }, 1000);
+    challengeTimer = setTimeout(() => {
+      clearInterval(countdownInterval);
+      if (!_livenessOK) {
+        dot1?.classList.remove('active');
+        setInstr(
+          `Timed out — "${ch.label}" not detected. Press Back to retry.`,
+          'error',
+        );
+        setStatus('Timed out', 'error');
+        stopCamera();
+      }
+    }, 5000);
   }
 
   function runLoop() {
@@ -200,77 +347,145 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function onFaceResults(results) {
-    if (_livenessOK) return;
-    const lm = results.multiFaceLandmarks?.[0];
-    if (!lm) { setStatus('No face detected — move closer', ''); return; }
-    setStatus('Face detected', 'ready');
+    if (_livenessOK || _challengeLocked) return;
 
-    // Liveness detection: blink (EAR drops) OR head movement (nose shifts)
-    const earL  = calcEAR(lm, LEFT_EYE);
-    const earR  = calcEAR(lm, RIGHT_EYE);
-    const blink = earL < BLINK_EAR || earR < BLINK_EAR;
+    const faces = results.multiFaceLandmarks || [];
 
-    const nose  = { x: lm[NOSE_IDX].x, y: lm[NOSE_IDX].y };
-    const moved = prevNose
-      ? Math.hypot(nose.x - prevNose.x, nose.y - prevNose.y) > MOVE_DELTA
-      : false;
-    prevNose = nose;
-
-    if (blink || moved) {
-      clearTimeout(livenessTimer);
+    // Multi-face guard
+    if (faces.length > 1) {
+      clearTimeout(challengeTimer);
+      clearInterval(countdownInterval);
       cancelAnimationFrame(animFrame);
-      _livenessOK = true;
-
-      // Wait one extra animation frame so the video element renders the
-      // peak-closed eye frame before we snapshot it.
-      const doCapture = () => {
-        const canvas  = document.createElement('canvas');
-        canvas.width  = video.videoWidth  || 640;
-        canvas.height = video.videoHeight || 480;
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-        _capturedFrame = canvas.toDataURL('image/jpeg', 0.85);
-        dbg(`Frame captured len=${_capturedFrame.length}`);
-
-        dot1?.classList.add('done');
-        dot2?.classList.add('done');
-        setInstr(
-          `✓ ${blink ? 'Blink' : 'Movement'} confirmed! Click Verify & Login.`,
-          'success'
-        );
-        setStatus('Liveness confirmed', 'ready');
-        instructEl?.classList.add('success');
-        if (loginSubmit) loginSubmit.disabled = false;
-      };
-
-      if (blink) requestAnimationFrame(doCapture);
-      else       doCapture();
+      dot1?.classList.remove('active');
+      setStatus('Multiple faces detected', 'error');
+      setInstr(
+        `Security: ${faces.length} faces visible. Only you may be present. ` +
+        'Press Back to retry.',
+        'error',
+      );
+      showMsg(
+        'Multiple faces detected. Only the voter may be in frame.',
+        'error',
+      );
+      return;
     }
-  }
+    if (faces.length === 0) {
+      setStatus('No face detected — look at the camera', '');
+      return;
+    }
 
-  // stopCamera does NOT clear capturedFrame intentionally 
-  // the frame is needed by the submit handler after the camera stops.
-  function stopCamera() {
-    clearTimeout(livenessTimer);
+    const lm = faces[0];
+
+    // Optical-flow motion score (anti-static-image)
+    const score = computeMotionScore();
+    _motionScore = Math.min(_motionScore, score);
+    if (score < MOTION_FLOOR) {
+      _staleCount++;
+      if (_staleCount >= STALE_FRAME_LIMIT) {
+        clearTimeout(challengeTimer);
+        clearInterval(countdownInterval);
+        cancelAnimationFrame(animFrame);
+        dot1?.classList.remove('active');
+        setStatus('Static image detected', 'error');
+        setInstr(
+          'Anti-spoof: static image detected. Use your live camera. ' +
+          'Press Back to retry.',
+          'error',
+        );
+        showMsg(
+          'Anti-spoof: no natural camera movement detected.',
+          'error',
+        );
+        return;
+      }
+    } else {
+      _staleCount = 0;
+    }
+
+    // Start challenge clock on first face
+    if (!_firstFaceSeen) {
+      _firstFaceSeen = true;
+      setStatus('Face detected — complete the gesture', 'ready');
+      startChallengeClock();
+      return;
+    }
+
+    setStatus('Face detected — complete the gesture', 'ready');
+    const ch = CHALLENGES[_challengeId];
+    if (!ch || !_challengeState) return;
+    if (!ch.update(_challengeState, lm)) return;
+
+    // Gesture confirmed 
+    _challengeLocked = true;
+    clearTimeout(challengeTimer);
+    clearInterval(countdownInterval);
     cancelAnimationFrame(animFrame);
-    if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
-    faceMesh    = null;
-    _livenessOK = false;
-    prevNose    = null;
-    dbg('Camera stopped');
+    _livenessOK = true;
+
+    const canvas  = document.createElement('canvas');
+    canvas.width  = video.videoWidth  || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    _capturedFrame = canvas.toDataURL('image/jpeg', 0.85);
+
+    dot1?.classList.remove('active');
+    dot1?.classList.add('done');
+    dot2?.classList.add('done');
+    setInstr(`✓ ${ch.label} confirmed! Click Verify & Login.`, 'success');
+    setStatus('Liveness confirmed', 'ready');
+    instructEl?.classList.add('success');
+    if (loginSubmit) loginSubmit.disabled = false;
+
+    dbg(
+      `Challenge ${_challengeId} PASSED. ` +
+      `motion=${_motionScore.toFixed(2)} frame=${_capturedFrame.length}`,
+    );
   }
 
-  /* 
-     SUBMIT — POST frame to face-verify API
- */
-  loginSubmit?.addEventListener('click', async () => {
-    dbg(`Submit: livenessOK=${_livenessOK} frameLen=${_capturedFrame.length}`);
+  function computeMotionScore() {
+    _offCtx.drawImage(video, 0, 0, 64, 48);
+    const curr = _offCtx.getImageData(0, 0, 64, 48).data;
+    let score = MOTION_FLOOR + 1;
+    if (_prevFrameData) {
+      let diff = 0;
+      for (let i = 0; i < curr.length; i += 4)
+        diff += Math.abs(curr[i] - _prevFrameData[i]);
+      score = diff / (64 * 48);
+    }
+    _prevFrameData = new Uint8ClampedArray(curr);
+    return score;
+  }
 
+  function stopCamera() {
+    clearTimeout(challengeTimer);
+    clearInterval(countdownInterval);
+    cancelAnimationFrame(animFrame);
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream = null;
+    }
+    faceMesh         = null;
+    _livenessOK      = false;
+    _challengeLocked = false;
+    _prevFrameData   = null;
+    _staleCount      = 0;
+    _firstFaceSeen   = false;
+  }
+
+  /*  Submit: face verify */
+  loginSubmit?.addEventListener('click', async () => {
     if (!_livenessOK || !_capturedFrame) {
-      setInstr('Please complete the liveness check first.', 'error');
+      setInstr('Please complete the liveness challenge first.', 'error');
+      return;
+    }
+    if (_step2StartedAt && (Date.now() - _step2StartedAt) > SESSION_EXPIRE_MS) {
+      showMsg('Session expired. Please log in again.', 'error');
+      setTimeout(() => { window.location.href = '/login/'; }, 2000);
       return;
     }
 
     stopCamera();
+    clearSessionTimers();
     setButtonLoading(loginSubmit, '<span class="spinner"></span> Verifying face…');
 
     try {
@@ -284,86 +499,94 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({
           frame:              _capturedFrame,
           liveness_confirmed: true,
+          motion_score:       _motionScore,
         }),
       });
 
       const data = await resp.json();
       dbg(`face-verify ${resp.status} → ${JSON.stringify(data)}`);
 
-      // SUCCESS: same person confirmed
       if (data.success && data.redirect) {
         setInstr('✓ Face matched! Redirecting…', 'success');
         setStatus('Verified', 'ready');
-        showMsg(data.message || 'Login successful!', 'success');
         setTimeout(() => { window.location.href = data.redirect; }, 700);
         return;
       }
-
-      //  ACCOUNT BLOCKED (403): 3 face failures 
+      if (resp.status === 401) {
+        showMsg(data.error || 'Session expired. Please log in again.', 'error');
+        setTimeout(() => { window.location.href = '/login/'; }, 2500);
+        return;
+      }
       if (resp.status === 403) {
         setInstr('🔒 ' + (data.error || 'Account blocked.'), 'error');
-        setStatus('Account blocked', 'error');
-        showMsg(data.error || 'Account blocked. Contact the administrator.', 'error');
-        resetBtn(loginSubmit, '<i class="fa-solid fa-right-to-bracket"></i> Verify & Login');
-        loginSubmit.disabled = true;   // can't retry — account is locked
-        if (attemptsEl) {
-          attemptsEl.textContent = '0 attempts remaining';
-          attemptsEl.style.display = '';
-        }
+        setStatus('Blocked', 'error');
+        showMsg(data.error || 'Account blocked. Contact admin.', 'error');
+        resetBtn(
+          loginSubmit,
+          '<i class="fa-solid fa-right-to-bracket"></i> Verify &amp; Login',
+        );
+        loginSubmit.disabled = true;
         return;
       }
 
-      //  FACE MISMATCH: attempts remaining  restart camera for retry 
-      const errMsg = data.error || 'Face not recognised. Try again.';
+      // Mismatch — allow retry
+      const errMsg =
+        data.error || 'Face not recognised. Try again with better lighting.';
       setInstr('✗ ' + errMsg, 'error');
       setStatus('Verification failed', 'error');
       showMsg(errMsg, 'error');
-      resetBtn(loginSubmit, '<i class="fa-solid fa-right-to-bracket"></i> Verify & Login');
+      resetBtn(
+        loginSubmit,
+        '<i class="fa-solid fa-right-to-bracket"></i> Verify &amp; Login',
+      );
 
-      // Update attempts badge
-      const m = errMsg.match(/(\d+) attempt/);
-      if (attemptsEl && m) {
-        attemptsEl.textContent  = `${m[1]} attempt${m[1] === '1' ? '' : 's'} remaining`;
-        attemptsEl.style.display = '';
-      }
-
-      // Reset liveness state and restart camera so user can try again
-      _capturedFrame = '';
-      _livenessOK    = false;
+      _capturedFrame   = '';
+      _livenessOK      = false;
+      _motionScore     = 999;
+      _challengeState  = null;
+      _challengeLocked = false;
+      _firstFaceSeen   = false;
+      startSessionTimers();
       setTimeout(() => startCamera(), 2000);
 
-    } catch (exc) {
-      dbg(`fetch error: ${exc}`);
+    } catch (_) {
       setInstr('Network error. Check your connection.', 'error');
-      resetBtn(loginSubmit, '<i class="fa-solid fa-right-to-bracket"></i> Verify & Login');
+      resetBtn(
+        loginSubmit,
+        '<i class="fa-solid fa-right-to-bracket"></i> Verify &amp; Login',
+      );
     }
   });
 
-  /* 
-     STEP 1 VALIDATION
- */
+  /*  Step 1 validation */
   function validateStep1() {
     clearErrors();
     let ok = true;
-
     const sid = document.getElementById('student_id');
     if (!sid?.value || !/^ISL-\d{4}$/.test(sid.value.trim())) {
       markErr('student_id', 'Format: ISL-XXXX (e.g. ISL-1234)');
       ok = false;
-    } else markOk(sid);
-
+    } else {
+      markOk(sid);
+    }
     const pw = document.getElementById('password');
     if (!pw?.value || pw.value.length < 6) {
-      markErr('password', 'Enter your password (min 6 characters).');
+      markErr('password', 'Enter your password.');
       ok = false;
-    } else markOk(pw);
-
+    } else {
+      markOk(pw);
+    }
     if (!ok) {
       const first = document.querySelector('.form-control.invalid');
-      first?.focus();
-      first?.classList.add('shake');
-      first?.addEventListener('animationend',
-        () => first.classList.remove('shake'), { once: true });
+      if (first) {
+        first.focus();
+        first.classList.add('shake');
+        first.addEventListener(
+          'animationend',
+          () => first.classList.remove('shake'),
+          { once: true },
+        );
+      }
     }
     return ok;
   }
@@ -375,10 +598,15 @@ document.addEventListener('DOMContentLoaded', () => {
     el?.classList.remove('valid');
     if (e) e.textContent = msg;
   }
-  function markOk(el) { el.classList.remove('invalid'); el.classList.add('valid'); }
+  function markOk(el) {
+    el.classList.remove('invalid');
+    el.classList.add('valid');
+  }
   function clearErrors() {
-    document.querySelectorAll('.field-error').forEach(e => e.textContent = '');
-    document.querySelectorAll('.form-control').forEach(e => e.classList.remove('invalid', 'valid'));
+    document.querySelectorAll('.field-error').forEach(e => (e.textContent = ''));
+    document.querySelectorAll('.form-control').forEach(e =>
+      e.classList.remove('invalid', 'valid'),
+    );
   }
 
   ['student_id', 'password'].forEach(id => {
@@ -392,29 +620,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Password toggle
   const togBtn  = document.getElementById('togglePw');
   const togIcon = document.getElementById('togglePwIcon');
   const pwEl    = document.getElementById('password');
   togBtn?.addEventListener('click', () => {
-    const h = pwEl.type === 'password';
-    pwEl.type         = h ? 'text' : 'password';
+    const h       = pwEl.type === 'password';
+    pwEl.type     = h ? 'text' : 'password';
     togIcon.className = h ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
   });
 
-  /* ══════════════════════════════════════════════════════════════════════
-     UTILITIES
-  ══════════════════════════════════════════════════════════════════════ */
-  function sidVal() { return document.getElementById('student_id')?.value || ''; }
-  function pwVal()  { return document.getElementById('password')?.value   || ''; }
-
-  function calcEAR(lm, idx) {
-    const p   = idx.map(i => lm[i]);
-    const num = ptDist(p[1], p[5]) + ptDist(p[2], p[4]);
-    return num / (2 * ptDist(p[0], p[3]) + 1e-6);
-  }
-  function ptDist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
-
+  /*  Helpers  */
   function setStatus(text, state) {
     if (!statusText || !statusWrap) return;
     statusText.textContent = text;
@@ -449,25 +664,17 @@ document.addEventListener('DOMContentLoaded', () => {
     msgBox.innerHTML = '';
   }
 
-  /* Injected styles */
   const style = document.createElement('style');
   style.textContent = `
-    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}
-      40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
     .shake{animation:shake .4s ease both}
-    .spinner{display:inline-block;width:14px;height:14px;border:2px solid
-      rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;
-      animation:_sp .7s linear infinite;vertical-align:middle}
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:_sp .7s linear infinite;vertical-align:middle}
     @keyframes _sp{to{transform:rotate(360deg)}}
     .liveness-instruction.success{color:var(--clr-green,#2dce89)!important}
     .liveness-instruction.error  {color:var(--clr-red,#ff4d6d)!important}
-    .capture-dot.done{background:var(--clr-gold,#f0b429)!important;
-      box-shadow:0 0 8px rgba(240,180,41,.6)}
-    .attempts-badge{display:inline-block;padding:.3rem .8rem;border-radius:6px;
-      background:rgba(255,77,109,.15);color:#ff4d6d;font-size:.85rem;
-      font-weight:600;margin-bottom:.75rem}
+    .capture-dot.done  {background:var(--clr-gold,#f0b429)!important;box-shadow:0 0 8px rgba(240,180,41,.6)}
+    .capture-dot.active{background:#3b82f6!important;animation:dot-pulse 1s ease-in-out infinite}
+    @keyframes dot-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3);opacity:.7}}
   `;
   document.head.appendChild(style);
-
-  dbg('DOMContentLoaded done ✓');
 });

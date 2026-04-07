@@ -1,39 +1,165 @@
 'use strict';
 
+/* 
+   MEDIAPIPE LOADER
+    */
 const MP_CDN = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/';
 
-// MediaPipe landmark indices (match liveness.py)
-const LEFT_EYE_IDX  = [33, 160, 158, 133, 153, 144];
-const RIGHT_EYE_IDX = [263, 387, 385, 362, 373, 380];
-const NOSE_TIP_IDX  = 1;
-const L_EAR_IDX     = 234;
-const R_EAR_IDX     = 454;
-const MOUTH_LEFT    = 61;
-const MOUTH_RIGHT   = 291;
+async function loadFaceMesh() {
+  return new Promise((resolve, reject) => {
+    if (typeof window.FaceMesh === 'undefined') {
+      reject(new Error('MediaPipe FaceMesh not loaded.'));
+      return;
+    }
+    const fm = new window.FaceMesh({ locateFile: f => `${MP_CDN}${f}` });
+    fm.setOptions({
+      maxNumFaces: 1, refineLandmarks: true,
+      minDetectionConfidence: 0.5, minTrackingConfidence: 0.5,
+    });
+    fm.initialize().then(() => resolve(fm)).catch(reject);
+  });
+}
 
-// Detection thresholds (must match liveness.py)
-const BLINK_EAR        = 0.22;   
-const TURN_DELTA       = 0.04;   
-const SMILE_MAR        = 0.35;   
+/* 
+   LANDMARK HELPERS
+    */
+const L_EYE  = [33, 160, 158, 133, 153, 144];
+const R_EYE  = [263, 387, 385, 362, 373, 380];
+const NOSE   = 1;
+const L_EAR  = 234;
+const R_EAR  = 454;
 
-// Challenge metadata — label + icon for each gesture key
-const CHALLENGE_META = {
-  blink:      { label: 'Blink your eyes',  icon: 'fa-eye'        },
-  turn_left:  { label: 'Turn head LEFT',   icon: 'fa-arrow-left' },
-  turn_right: { label: 'Turn head RIGHT',  icon: 'fa-arrow-right'},
-  smile:      { label: 'Smile',            icon: 'fa-face-smile' },
+function pd(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+function ear(lm, idx) {
+  const p = idx.map(i => lm[i]);
+  return (pd(p[1], p[5]) + pd(p[2], p[4])) / (2 * pd(p[0], p[3]) + 1e-6);
+}
+function avgEar(lm) { return (ear(lm, L_EYE) + ear(lm, R_EYE)) / 2; }
+
+function headRelX(lm) {
+  const faceW = pd(lm[L_EAR], lm[R_EAR]) + 1e-6;
+  return -((lm[NOSE].x - (lm[L_EAR].x + lm[R_EAR].x) / 2) / faceW);
+}
+
+/* 
+   THRESHOLDS
+  */
+const EAR_OPEN_THRESH     = 0.27;
+const EAR_CLOSED_THRESH   = 0.24;
+const NEUTRAL_BAND        = 0.04;
+const TURN_THRESH         = 0.06;
+const TURN_CONFIRM_FRAMES = 3;
+
+const CHALLENGE_MS = 3000; // 3 seconds per challenge
+
+/*
+   CHALLENGE CATALOGUE look_up intentionally absent
+   */
+const CATALOGUE = {
+  blink: {
+    icon:        'fa-eye',
+    label:       'Blink both eyes',
+    usePreFrame: true,
+    createState() { return { phase: 'waiting_open', closedFrames: 0 }; },
+    update(s, lm) {
+      const e = avgEar(lm);
+      if (s.phase === 'waiting_open') {
+        if (e >= EAR_OPEN_THRESH) s.phase = 'waiting_blink';
+        return false;
+      }
+      if (e < EAR_CLOSED_THRESH) {
+        s.closedFrames++;
+        if (s.closedFrames >= 1) return true;
+      } else {
+        s.closedFrames = 0;
+      }
+      return false;
+    },
+  },
+  turn_left: {
+    icon:        'fa-arrow-left',
+    label:       'Turn head LEFT and hold',
+    usePreFrame: false,
+    createState() { return { phase: 'waiting_neutral', turnFrames: 0 }; },
+    update(s, lm) {
+      const rx = headRelX(lm);
+      if (s.phase === 'waiting_neutral') {
+        if (Math.abs(rx) <= NEUTRAL_BAND) s.phase = 'waiting_turn';
+        return false;
+      }
+      if (rx < -TURN_THRESH) {
+        s.turnFrames++;
+        if (s.turnFrames >= TURN_CONFIRM_FRAMES) return true;
+      } else {
+        s.turnFrames = 0;
+      }
+      return false;
+    },
+  },
+  turn_right: {
+    icon:        'fa-arrow-right',
+    label:       'Turn head RIGHT and hold',
+    usePreFrame: false,
+    createState() { return { phase: 'waiting_neutral', turnFrames: 0 }; },
+    update(s, lm) {
+      const rx = headRelX(lm);
+      if (s.phase === 'waiting_neutral') {
+        if (Math.abs(rx) <= NEUTRAL_BAND) s.phase = 'waiting_turn';
+        return false;
+      }
+      if (rx > TURN_THRESH) {
+        s.turnFrames++;
+        if (s.turnFrames >= TURN_CONFIRM_FRAMES) return true;
+      } else {
+        s.turnFrames = 0;
+      }
+      return false;
+    },
+  },
 };
 
-const STAGE_TIMEOUT_MS = 4000;   // 4 seconds per stage (smile needs a bit more)
 
-// Module-level state
-let _stages  = [];           // filled by fetchChallenges() e.g. ['blink','smile','turn_right']
-let _frames  = ['', '', '']; // captured JPEG data URLs indexed by stage position
-let _allDone = false;
+const POOL = Object.keys(CATALOGUE); // ['blink', 'turn_left', 'turn_right']
 
-function dbg(msg) { console.log(`[register.js v8] ${msg}`); }
+/* 
+   MODULE-LEVEL STATE
+   */
+let _capturedFrames    = {};   
+let _challenges        = [];   
+let _allDone           = false;
+let _pendingFrame      = '';
+let _challengeLocked   = false;
+let _challengeState    = null;
+let _firstFaceDetected = false;
+let video;
 
+function dbg(msg) { console.log(`[register.js v14] ${msg}`); }
 
+function captureFromVideo() {
+  const c = document.createElement('canvas');
+  c.width  = video.videoWidth  || 640;
+  c.height = video.videoHeight || 480;
+  c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.80);
+}
+
+function captureFromResults(results) {
+  try {
+    if (results.image) {
+      const c = document.createElement('canvas');
+      c.width  = results.image.width  || video.videoWidth  || 640;
+      c.height = results.image.height || video.videoHeight || 480;
+      c.getContext('2d').drawImage(results.image, 0, 0, c.width, c.height);
+      return c.toDataURL('image/jpeg', 0.80);
+    }
+  } catch (_) {}
+  return captureFromVideo();
+}
+
+/* 
+   MAIN
+    */
 document.addEventListener('DOMContentLoaded', () => {
 
   const form        = document.getElementById('registrationForm');
@@ -42,65 +168,47 @@ document.addEventListener('DOMContentLoaded', () => {
   const connectors  = document.querySelectorAll('.aside-step-connector');
   const progressBar = document.getElementById('progressBar');
 
-  const video       = document.getElementById('webcam');
+  video             = document.getElementById('webcam');
   const statusWrap  = document.getElementById('webcamStatus');
   const statusText  = document.getElementById('webcamStatusText');
   const instructEl  = document.getElementById('livenessInstruction');
   const instructTxt = document.getElementById('instructionText');
-  const countdownEl = document.getElementById('livenessCountdown');
+  const step2Next   = document.getElementById('step2Next');
+  const dots        = ['dot1', 'dot2', 'dot3'].map(id => document.getElementById(id));
+  const submitBtn   = document.getElementById('submitBtn');
+  const msgBox      = document.getElementById('jsMessages');
 
-  const dots = [1, 2, 3].map(n => document.getElementById('dot' + n));
+  let currentStep       = 1;
+  const TOTAL           = steps.length;
+  let stream            = null;
+  let faceMesh          = null;
+  let animFrame         = null;
+  let challengeIdx      = 0;
+  let challengeTimer    = null;
+  let countdownInterval = null;
 
-  // Hidden inputs — now generic: challenge_0, challenge_1, challenge_2
-  // Make sure your register.html has these 3 hidden inputs with these IDs.
-  const fb0 = document.getElementById('face_data_challenge_0');
-  const fb1 = document.getElementById('face_data_challenge_1');
-  const fb2 = document.getElementById('face_data_challenge_2');
-
-  const step2NextBtn = document.getElementById('step2Next');
-  const submitBtn    = document.getElementById('submitBtn');
-  const msgBox       = document.getElementById('jsMessages');
-
-  let currentStep = 1;
-  const TOTAL     = steps.length;
-
-  // Camera / MediaPipe state
-  let stream       = null;
-  let faceMesh     = null;
-  let animFrame    = null;
-  let stageIndex   = 0;
-  let stageTimerID = null;
-  let countdownID  = null;
-  let secsLeft     = 4;
-  let stageActive  = false;
-
-  const getCsrf = () =>
-    document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
-
-  /*  Step navigation */
+  /* Step navigation  */
   function showStep(n) {
     steps.forEach((s, i) => s.classList.toggle('active', i + 1 === n));
     asideSteps.forEach((s, i) => {
       s.classList.remove('active', 'completed');
       if (i + 1 === n) s.classList.add('active');
-      if (i + 1 < n)   s.classList.add('completed');
+      if (i + 1 < n)  s.classList.add('completed');
     });
     connectors.forEach((c, i) => c.classList.toggle('filled', i + 1 < n));
     if (progressBar) progressBar.style.width = `${(n / TOTAL) * 100}%`;
     currentStep = n;
-    document.querySelector('.register-main')
-      ?.scrollTo({ top: 0, behavior: 'smooth' });
-    dbg(`showStep(${n})`);
+    document.querySelector('.register-main')?.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /*  Next buttons  */
+  /* Next buttons  */
   document.querySelectorAll('.next-step').forEach(btn => {
     btn.addEventListener('click', () => {
       const next = parseInt(btn.dataset.next);
       if (currentStep === 1 && !validateStep1()) return;
       if (currentStep === 2) {
         if (!_allDone) {
-          setInstr('Complete all 3 liveness stages first.', 'error');
+          setInstruction('Complete all 3 liveness challenges first.', 'error');
           return;
         }
         stopCamera();
@@ -110,95 +218,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /*  Prev buttons  */
+  /* Prev buttons  */
   document.querySelectorAll('.prev-step').forEach(btn => {
     btn.addEventListener('click', () => {
       const prev = parseInt(btn.dataset.prev);
-      if (currentStep === 2) {
-        stopCamera();
-        resetLivenessUI();
-        _frames  = ['', '', ''];
-        _stages  = [];
-        _allDone = false;
-        dbg('Frames + stages cleared on Back');
-      }
+      if (currentStep === 2) { stopCamera(); resetLiveness(); }
       showStep(prev);
     });
   });
 
-  /*  Start liveness when step 2 becomes active */
+  /*  Watch step 2 becoming active  */
   const obs = new MutationObserver(() => {
     const step2 = document.getElementById('step2');
-    if (step2?.classList.contains('active') && !stream && !_allDone) {
+    if (step2?.classList.contains('active') && !stream) {
+      dbg('step2 active → startLiveness');
       startLiveness();
     }
   });
   steps.forEach(s => obs.observe(s, { attributes: true, attributeFilter: ['class'] }));
 
   /* 
-     FETCH CHALLENGES FROM BACKEND
-  */
-  async function fetchChallenges() {
-    try {
-      const resp = await fetch('/api/liveness-challenges/', {
-        method:  'GET',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      });
-      const data = await resp.json();
-      if (data.challenges && data.challenges.length === 3) {
-        _stages = data.challenges;
-        dbg(`Challenges fetched: ${_stages.join(', ')}`);
-        updateStageBadges();
-        return true;
-      }
-    } catch (e) {
-      dbg(`fetchChallenges error: ${e}`);
-    }
-    // Fallback to default order if API fails
-    _stages = ['blink', 'turn_left', 'turn_right'];
-    dbg('Using fallback challenges');
-    updateStageBadges();
-    return false;
-  }
-
-  /**
-   * Overwrites the 3 stage badge elements in the HTML with the correct
-   * icon + label for whichever random challenges were assigned this session.
-   * Called immediately after fetchChallenges() resolves.
-   */
-  function updateStageBadges() {
-    _stages.forEach((key, i) => {
-      const badge = document.getElementById(`stageBadge${i + 1}`);
-      if (!badge) return;
-      const meta = CHALLENGE_META[key] || { label: key, icon: 'fa-circle' };
-      badge.innerHTML = `
-        <i class="fa-solid ${meta.icon}"></i>
-        <span>${meta.label}</span>
-      `;
-      // Also update the dot tooltip so it matches the actual challenge
-      const dot = dots[i];
-      if (dot) dot.title = meta.label;
-    });
-  }
-
-  /* 
-     LIVENESS ENGINE
-   */
+     LIVENESS FLOW
+      */
   async function startLiveness() {
-    stageIndex  = 0;
-    stageActive = false;
-    _allDone    = false;
-    _frames     = ['', '', ''];
-    resetLivenessUI();
-    if (step2NextBtn) step2NextBtn.disabled = true;
-
-    // 1. Fetch random challenges from backend
-    setInstr('Preparing liveness challenges…');
-    await fetchChallenges();
-
-    // 2. Open camera
+    resetLiveness();
     setStatus('Requesting camera…', '');
-    setInstr('Allow camera access to continue.');
+    setInstruction('Allow camera access to continue.', '');
+
+    // Fetch 3 challenges from server (all 3 gestures, random order)
+    try {
+      const res  = await fetch('/api/liveness-challenges/');
+      const data = await res.json();
+      const known = (data.challenges || []).filter(c => c in CATALOGUE);
+      _challenges = known.slice(0, 3);
+      dbg(`Challenges from server: ${data.challenges} → using: ${_challenges}`);
+    } catch (_) {
+      _challenges = [];
+    }
+
+    // Client-side fallback — ensure all 3 pool entries are present
+    if (_challenges.length < 3) {
+      const shuffled  = [...POOL].sort(() => Math.random() - 0.5);
+      const existing  = new Set(_challenges);
+      for (const ch of shuffled) {
+        if (!existing.has(ch)) { _challenges.push(ch); existing.add(ch); }
+        if (_challenges.length === 3) break;
+      }
+      dbg(`Padded to 3 with local fallback: ${_challenges}`);
+    }
+
+    // Open camera
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
@@ -209,200 +278,220 @@ document.addEventListener('DOMContentLoaded', () => {
       setStatus('Camera active', 'ready');
     } catch {
       setStatus('Camera denied', 'error');
-      setInstr('Enable camera in browser settings, then go Back and try again.', 'error');
+      setInstruction(
+        'Enable camera in browser settings, then go Back and try again.',
+        'error',
+      );
       return;
     }
 
-    // 3. Load MediaPipe
-    setInstr('Loading face detection…');
+    // Load FaceMesh
+    setInstruction('Loading face detection…', '');
     try {
-      faceMesh = new window.FaceMesh({ locateFile: f => `${MP_CDN}${f}` });
-      faceMesh.setOptions({
-        maxNumFaces: 1, refineLandmarks: true,
-        minDetectionConfidence: 0.5, minTrackingConfidence: 0.5,
-      });
-      await faceMesh.initialize();
-      faceMesh.onResults(onFaceResults);
+      faceMesh = await loadFaceMesh();
+      faceMesh.onResults(onResults);
       dbg('FaceMesh ready');
-    } catch {
-      setInstr('Face detection failed. Check your internet connection.', 'error');
+    } catch (e) {
+      setInstruction(
+        'Face detection failed to load. Check your internet connection.',
+        'error',
+      );
+      console.error(e);
       return;
     }
 
-    // 4. Brief pause then start stage 0
-    setInstr('Look straight at the camera…');
-    await sleep(800);
-    beginStage(0);
+    setInstruction('Look at the camera — detecting your face…', '');
     runLoop();
   }
 
-  function beginStage(idx) {
-    stageIndex  = idx;
-    stageActive = true;
-    secsLeft    = Math.round(STAGE_TIMEOUT_MS / 1000);
+  /* Begin one challenge  */
+  function beginChallenge(idx) {
+    _challengeLocked = false;
+    challengeIdx     = idx;
 
-    const key  = _stages[idx];
-    const meta = CHALLENGE_META[key] || { label: key, icon: 'fa-circle' };
+    const chId = _challenges[idx];
+    const ch   = CATALOGUE[chId];
+    if (!ch) { failedAll('Unknown challenge.'); return; }
 
-    setInstr(`<i class="fa-solid ${meta.icon}"></i> ${meta.label} — ${secsLeft}s`);
-    setCountdown(secsLeft);
-    updateDot(idx, 'active');
+    _challengeState = ch.createState();
+    clearTimeout(challengeTimer);
+    clearInterval(countdownInterval);
 
-    clearInterval(countdownID);
-    countdownID = setInterval(() => {
-      secsLeft--;
-      setCountdown(secsLeft);
-      setInstr(`<i class="fa-solid ${meta.icon}"></i> ${meta.label} — ${secsLeft}s`);
-      if (secsLeft <= 0) clearInterval(countdownID);
+    const icon = instructEl?.querySelector('i');
+    if (icon) icon.className = `fa-solid ${ch.icon}`;
+
+    let secs = Math.ceil(CHALLENGE_MS / 1000);
+    setInstruction(`${ch.label} (${secs}s)`, '');
+    instructEl?.classList.remove('success', 'error');
+
+    countdownInterval = setInterval(() => {
+      secs--;
+      if (secs > 0) setInstruction(`${ch.label} (${secs}s)`, '');
+      else clearInterval(countdownInterval);
     }, 1000);
 
-    clearTimeout(stageTimerID);
-    stageTimerID = setTimeout(() => {
-      if (!stageActive) return;
-      stageActive = false;
-      clearInterval(countdownID);
-      onStageTimeout(idx);
-    }, STAGE_TIMEOUT_MS);
+    challengeTimer = setTimeout(() => {
+      clearInterval(countdownInterval);
+      dbg(`Challenge ${chId} TIMED OUT`);
+      failedAll(
+        `"${ch.label}" timed out — registration blocked. ` +
+        'Go Back and try again.',
+      );
+    }, CHALLENGE_MS);
   }
 
-  function onStageTimeout(idx) {
-    cancelAnimationFrame(animFrame);
-    updateDot(idx, 'fail');
-    setCountdown(null);
-    const key  = _stages[idx];
-    const meta = CHALLENGE_META[key] || { label: key, icon: 'fa-circle' };
-    setInstr(`✗ "${meta.label}" not detected in time. Try again.`, 'error');
-    setStatus('Liveness failed', 'error');
-    showRetry();
-  }
-
-  function onFaceResults(results) {
-    if (!stageActive) return;
-    const lm = results.multiFaceLandmarks?.[0];
-    if (!lm) { setStatus('No face — move closer', ''); return; }
-    setStatus('Face detected', 'ready');
-
-    const key = _stages[stageIndex];
-    let detected = false;
-
-    if (key === 'blink') {
-      detected = calcEAR(lm, LEFT_EYE_IDX) < BLINK_EAR
-              || calcEAR(lm, RIGHT_EYE_IDX) < BLINK_EAR;
-
-    } else if (key === 'turn_left' || key === 'turn_right') {
-      const nose  = lm[NOSE_TIP_IDX].x;
-      const lEar  = lm[L_EAR_IDX].x;
-      const rEar  = lm[R_EAR_IDX].x;
-      const faceW = Math.abs(rEar - lEar) + 1e-6;
-      const relX  = (nose - (lEar + rEar) / 2) / faceW;
-      if (key === 'turn_left')  detected = relX < -TURN_DELTA;
-      if (key === 'turn_right') detected = relX >  TURN_DELTA;
-
-    } else if (key === 'smile') {
-      // MAR = mouth width / face width
-      const mLeft  = lm[MOUTH_LEFT].x;
-      const mRight = lm[MOUTH_RIGHT].x;
-      const fLeft  = lm[L_EAR_IDX].x;
-      const fRight = lm[R_EAR_IDX].x;
-      const mar = Math.abs(mRight - mLeft) / (Math.abs(fRight - fLeft) + 1e-6);
-      detected = mar > SMILE_MAR;
-    }
-
-    if (detected) {
-      stageActive = false;
-      clearTimeout(stageTimerID);
-      clearInterval(countdownID);
-
-      const doCapture = () => {
-        const canvas  = document.createElement('canvas');
-        canvas.width  = video.videoWidth  || 640;
-        canvas.height = video.videoHeight || 480;
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-        _frames[stageIndex] = canvas.toDataURL('image/jpeg', 0.85);
-        dbg(`Stage ${stageIndex} (${key}) captured len=${_frames[stageIndex].length}`);
-
-        updateDot(stageIndex, 'done');
-        setCountdown(null);
-
-        const next = stageIndex + 1;
-        if (next < _stages.length) {
-          const meta = CHALLENGE_META[key] || { label: key };
-          setInstr(`✓ ${meta.label} confirmed! Get ready…`, 'success');
-          setTimeout(() => { if (stream) beginStage(next); }, 700);
-        } else {
-          _allDone = true;
-          cancelAnimationFrame(animFrame);
-          setInstr('✓ All liveness checks passed! Click Continue.', 'success');
-          setStatus('Liveness verified', 'ready');
-          instructEl?.classList.add('success');
-          if (step2NextBtn) step2NextBtn.disabled = false;
-          dbg('All stages passed ✓');
-        }
-      };
-
-      // For blink: wait one frame to capture peak-closed eye
-      if (key === 'blink') requestAnimationFrame(doCapture);
-      else doCapture();
-    }
-  }
-
+  /*  Animation loop */
   function runLoop() {
     if (!stream || !faceMesh) return;
     animFrame = requestAnimationFrame(async () => {
       if (!stream) return;
-      try { await faceMesh.send({ image: video }); } catch (_) {}
-      if (stream && !_allDone) runLoop();
+      try {
+        if (video.readyState < 2) { if (!_allDone) runLoop(); return; }
+        const ch = CATALOGUE[_challenges[challengeIdx]];
+        if (ch?.usePreFrame) _pendingFrame = captureFromVideo();
+        await faceMesh.send({ image: video });
+      } catch (_) {}
+      if (!_allDone) runLoop();
     });
   }
 
-  function stopCamera() {
-    clearTimeout(stageTimerID);
-    clearInterval(countdownID);
-    cancelAnimationFrame(animFrame);
-    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-    faceMesh    = null;
-    stageActive = false;
-    dbg('Camera stopped');
+  /*  MediaPipe result callback */
+  function onResults(results) {
+    if (_allDone || _challengeLocked || challengeIdx >= _challenges.length) return;
+
+    const lm = results.multiFaceLandmarks?.[0];
+    if (!lm) { setStatus('No face detected — move closer', ''); return; }
+    setStatus(`Challenge ${challengeIdx + 1} of 3 — face detected`, 'ready');
+
+    // Start first challenge on first face detection
+    if (!_firstFaceDetected) {
+      _firstFaceDetected = true;
+      dbg('First face detected → starting challenge 0');
+      beginChallenge(0);
+      return;
+    }
+
+    if (!_challengeState) return;
+
+    const chId = _challenges[challengeIdx];
+    const ch   = CATALOGUE[chId];
+    if (!ch) return;
+
+    if (!ch.update(_challengeState, lm)) return;
+
+    // Challenge PASSED 
+    _challengeLocked = true;
+    clearTimeout(challengeTimer);
+    clearInterval(countdownInterval);
+
+    const frame = ch.usePreFrame ? _pendingFrame : captureFromResults(results);
+    _capturedFrames[challengeIdx] = frame;
+    _pendingFrame = '';
+
+    if (dots[challengeIdx]) dots[challengeIdx].classList.add('done');
+    setInstruction(`✓ ${ch.label} confirmed!`, 'success');
+    instructEl?.classList.remove('error');
+    instructEl?.classList.add('success');
+    dbg(`Challenge ${chId} PASSED (idx=${challengeIdx})`);
+
+    const nextIdx = challengeIdx + 1;
+    if (nextIdx < _challenges.length) {
+      setTimeout(() => {
+        instructEl?.classList.remove('success');
+        beginChallenge(nextIdx);
+      }, 600);
+    } else {
+      _allDone = true;
+      cancelAnimationFrame(animFrame);
+      animFrame = null;
+      setStatus('All 3 challenges passed!', 'ready');
+      setInstruction('✓ All liveness checks passed! Click Continue.', 'success');
+      if (step2Next) step2Next.disabled = false;
+      dbg('All 3 challenges PASSED');
+    }
   }
 
-  /*  Retry button */
-  function showRetry() {
-    const wrap = document.getElementById('retryWrap');
-    if (wrap) wrap.style.display = '';
-  }
-  function hideRetry() {
-    const wrap = document.getElementById('retryWrap');
-    if (wrap) wrap.style.display = 'none';
-  }
-  document.getElementById('retryBtn')?.addEventListener('click', async () => {
-    hideRetry();
+  /* Failure handler  */
+  function failedAll(reason) {
+    cancelAnimationFrame(animFrame);
+    animFrame = null;
     stopCamera();
-    await sleep(300);
-    startLiveness();   // re-fetches a NEW random set of challenges
-  });
+    _allDone         = false;
+    _capturedFrames  = {};
+    _pendingFrame    = '';
+    _challengeLocked = false;
+    _challengeState  = null;
+    if (step2Next) step2Next.disabled = true;
+    dots.forEach(d => d?.classList.remove('done'));
+    setStatus('Verification failed', 'error');
+    setInstruction(`✗ ${reason}`, 'error');
+    instructEl?.classList.remove('success');
+    instructEl?.classList.add('error');
+    for (let i = 0; i < 3; i++) {
+      const el = document.getElementById(`face_data_challenge_${i}`);
+      if (el) el.value = '';
+    }
+    showMsg(`Registration blocked: ${reason}`, 'error');
+  }
+
+  function stopCamera() {
+    clearTimeout(challengeTimer);
+    clearInterval(countdownInterval);
+    cancelAnimationFrame(animFrame);
+    animFrame = null;
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    faceMesh      = null;
+    _pendingFrame = '';
+  }
+
+  function resetLiveness() {
+    stopCamera();
+    _capturedFrames    = {};
+    _challenges        = [];
+    _allDone           = false;
+    _pendingFrame      = '';
+    _challengeLocked   = false;
+    _challengeState    = null;
+    _firstFaceDetected = false;
+    challengeIdx       = 0;
+    if (step2Next) step2Next.disabled = true;
+    dots.forEach(d => d?.classList.remove('done'));
+    instructEl?.classList.remove('success', 'error');
+    for (let i = 0; i < 3; i++) {
+      const el = document.getElementById(`face_data_challenge_${i}`);
+      if (el) el.value = '';
+    }
+  }
 
   /* 
-     FORM SUBMIT
-*/
-  form?.addEventListener('submit', async e => {
+     SUBMIT
+      */
+  form?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    dbg(`submit: frames[0]=${_frames[0].length} [1]=${_frames[1].length} [2]=${_frames[2].length}`);
+    dbg(`submit: allDone=${_allDone} frames=${Object.keys(_capturedFrames).length}`);
 
-    const terms = document.getElementById('agreeTerms');
-    if (!terms?.checked) {
+    if (!document.getElementById('agreeTerms')?.checked) {
       showFieldError('terms', 'You must agree to the Terms & Conditions.');
       return;
     }
-    if (!_frames[0] || !_frames[1] || !_frames[2]) {
-      showMsg('Face scan incomplete. Go back to step 2 and complete all 3 stages.', 'error');
+    if (
+      !_allDone ||
+      !_capturedFrames[0] ||
+      !_capturedFrames[1] ||
+      !_capturedFrames[2]
+    ) {
+      showMsg(
+        'Please complete all 3 liveness challenges before submitting.',
+        'error',
+      );
       return;
     }
 
-    // Write frames into generic hidden inputs RIGHT before FormData snapshot
-    if (fb0) fb0.value = _frames[0];
-    if (fb1) fb1.value = _frames[1];
-    if (fb2) fb2.value = _frames[2];
-    dbg(`Hidden inputs written: ${fb0?.value.length} / ${fb1?.value.length} / ${fb2?.value.length}`);
+    // Write frames into hidden inputs
+    for (let i = 0; i < 3; i++) {
+      const el = document.getElementById(`face_data_challenge_${i}`);
+      if (el) el.value = _capturedFrames[i];
+    }
 
     if (submitBtn) {
       submitBtn.disabled  = true;
@@ -410,110 +499,131 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const fd   = new FormData(form);
       const resp = await fetch(form.action || window.location.pathname, {
         method:  'POST',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        body:    fd,
+        body:    new FormData(form),
       });
       const data = await resp.json();
       dbg(`server → ${JSON.stringify(data)}`);
 
       if (data.success) {
         showMsg(data.message || 'Registration successful!', 'success');
-        setTimeout(() => { window.location.href = data.redirect || '/login/'; }, 2800);
+        setTimeout(() => {
+          window.location.href = data.redirect || '/login/';
+        }, 2500);
       } else {
         showMsg(data.error || 'Registration failed. Please try again.', 'error');
         if (submitBtn) {
           submitBtn.disabled  = false;
-          submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Registration';
+          submitBtn.innerHTML =
+            '<i class="fa-solid fa-paper-plane"></i> Submit Registration';
         }
       }
-    } catch (exc) {
-      dbg(`fetch error: ${exc}`);
-      showMsg('Network error. Check your connection and try again.', 'error');
+    } catch (err) {
+      showMsg(
+        'Network error. Please check your connection and try again.',
+        'error',
+      );
       if (submitBtn) {
         submitBtn.disabled  = false;
-        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Registration';
+        submitBtn.innerHTML =
+          '<i class="fa-solid fa-paper-plane"></i> Submit Registration';
       }
     }
   });
 
   /* 
-     STEP 1 VALIDATION
-  */
+     VALIDATION
+      */
   function validateStep1() {
     clearAllErrors();
     let ok = true;
-    const v = id => document.getElementById(id)?.value || '';
 
-    if (v('full_name').trim().length < 3)
+    if (!val('full_name') || val('full_name').trim().length < 3)
       ok = showFieldError('full_name', 'Full name must be at least 3 characters.') && false;
-    if (!/^ISL-\d{4}$/.test(v('student_id').trim()))
+    if (!val('student_id') || !/^ISL-\d{4}$/.test(val('student_id').trim()))
       ok = showFieldError('student_id', 'Must match format ISL-XXXX (e.g. ISL-1234).') && false;
-    if (!v('department'))
+    if (!val('department'))
       ok = showFieldError('department', 'Please select your department.') && false;
-    if (!v('year_of_study'))
+    if (!val('year_of_study'))
       ok = showFieldError('year_of_study', 'Please select your year of study.') && false;
-    if (v('password').length < 8)
+
+    const ageRaw = document.getElementById('age')?.value?.trim();
+    if (!ageRaw) {
+      ok = showFieldError('age', 'Age is required.') && false;
+    } else {
+      const ageNum = parseInt(ageRaw, 10);
+      if (isNaN(ageNum) || ageNum < 18 || ageNum > 35)
+        ok = showFieldError('age', 'Age must be a whole number between 18 and 35.') && false;
+    }
+
+    if (!document.getElementById('gender')?.value?.trim())
+      ok = showFieldError('gender', 'Please select your gender.') && false;
+    if (!val('password') || val('password').length < 8)
       ok = showFieldError('password', 'Password must be at least 8 characters.') && false;
 
     if (!ok) {
       const first = form?.querySelector('.form-control.invalid');
-      first?.focus();
-      first?.classList.add('shake');
-      first?.addEventListener('animationend',
-        () => first.classList.remove('shake'), { once: true });
+      if (first) {
+        first.focus();
+        first.classList.add('shake');
+        first.addEventListener(
+          'animationend',
+          () => first.classList.remove('shake'),
+          { once: true },
+        );
+      }
     }
     return ok;
   }
 
-  ['full_name','student_id','department','year_of_study','password'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', () => {
-      const el = document.getElementById(id);
-      if (el?.classList.contains('invalid')) {
-        el.classList.remove('invalid');
-        const e = document.getElementById('err-' + id);
-        if (e) e.textContent = '';
-      }
-    });
-  });
-
-  /*
+  /* 
      REVIEW PANEL
-  */
+   */
   function populateReview() {
     const box = document.getElementById('reviewInfo');
     if (!box) return;
-    const v = id => document.getElementById(id)?.value || '—';
-    const challengeLabels = _stages
-      .map(k => CHALLENGE_META[k]?.label || k)
-      .join(' → ');
-    const rows = [
-      { label: 'Full Name',     val: v('full_name')     },
-      { label: 'Student ID',    val: v('student_id')    },
-      { label: 'Department',    val: v('department')    },
-      { label: 'Year',          val: v('year_of_study') },
-      { label: 'Phone',         val: v('phone') || '—'  },
+    const gLabel  = { male: 'Male', female: 'Female' };
+    const ageVal  = document.getElementById('age')?.value?.trim() || '';
+    const genVal  = document.getElementById('gender')?.value?.trim() || '';
+    const fields  = [
+      { label: 'Full Name',  id: 'full_name'     },
+      { label: 'Student ID', id: 'student_id'    },
+      { label: 'Department', id: 'department'    },
+      { label: 'Year',       id: 'year_of_study' },
+      { label: 'Phone',      id: 'phone'         },
+      { label: 'Age',        id: null, value: ageVal || '—' },
       {
-        label: 'Face Verified',
-        val: _allDone
-          ? `✓ ${challengeLabels}`
-          : '✗ Not verified',
-        ok: _allDone,
+        label: 'Gender',
+        id:    null,
+        value: gLabel[genVal] || genVal || '—',
+      },
+      {
+        label:    'Liveness',
+        id:       null,
+        value:    _allDone
+          ? '✓ All 3 challenges passed'
+          : '✗ Not completed',
+        verified: _allDone,
       },
     ];
-    box.innerHTML = rows.map(r =>
-      `<div class="review-item">
-         <span class="review-label">${r.label}</span>
-         <span class="review-value${r.ok ? ' verified' : ''}">${r.val}</span>
-       </div>`
-    ).join('');
+    box.innerHTML = fields
+      .map(f => {
+        const v = f.id
+          ? document.getElementById(f.id)?.value || '—'
+          : f.value;
+        return `<div class="review-item">
+          <span class="review-label">${f.label}</span>
+          <span class="review-value${f.verified ? ' verified' : ''}">${v || '—'}</span>
+        </div>`;
+      })
+      .join('');
   }
 
-  /*
+  /* 
      PASSWORD STRENGTH
- */
+      */
   const pwInput      = document.getElementById('password');
   const pwFill       = document.getElementById('pwStrengthFill');
   const pwLabel      = document.getElementById('pwStrengthLabel');
@@ -521,16 +631,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const togglePwIcon = document.getElementById('togglePwIcon');
 
   pwInput?.addEventListener('input', () => {
-    const lvls = [
+    const levels = [
       { label: 'Too weak', pct: 20,  color: '#ff4d6d' },
       { label: 'Weak',     pct: 35,  color: '#ff8c42' },
       { label: 'Fair',     pct: 58,  color: '#f0b429' },
       { label: 'Good',     pct: 78,  color: '#5bc0de' },
       { label: 'Strong',   pct: 100, color: '#2dce89' },
     ];
-    const s = Math.min(pwScore(pwInput.value), 4);
-    if (pwFill)  pwFill.style.width   = lvls[s].pct + '%';
-    if (pwLabel) { pwLabel.textContent = lvls[s].label; pwLabel.style.color = lvls[s].color; }
+    const score = Math.min(pwScore(pwInput.value), 4);
+    if (pwFill)  pwFill.style.width = levels[score].pct + '%';
+    if (pwLabel) {
+      pwLabel.textContent = levels[score].label;
+      pwLabel.style.color = levels[score].color;
+    }
   });
 
   function pwScore(pw) {
@@ -539,7 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pw.length >= 8)  s++;
     if (pw.length >= 12) s++;
     if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++;
-    if (/\d/.test(pw))   s++;
+    if (/\d/.test(pw)) s++;
     if (/[^A-Za-z0-9]/.test(pw)) s++;
     return Math.min(s, 4);
   }
@@ -550,48 +663,9 @@ document.addEventListener('DOMContentLoaded', () => {
     togglePwIcon.className = h ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
   });
 
-  /* 
-     UTILITIES
- */
-  function calcEAR(lm, idx) {
-    const p   = idx.map(i => lm[i]);
-    const num = ptDist(p[1], p[5]) + ptDist(p[2], p[4]);
-    return num / (2 * ptDist(p[0], p[3]) + 1e-6);
-  }
-  function ptDist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
-  function sleep(ms)    { return new Promise(r => setTimeout(r, ms)); }
+  /* utilities */
+  function val(id) { return document.getElementById(id)?.value || ''; }
 
-  function setStatus(text, state) {
-    if (!statusText || !statusWrap) return;
-    statusText.textContent = text;
-    statusWrap.className   = 'webcam-status' + (state ? ' ' + state : '');
-  }
-  function setInstr(html, state) {
-    if (!instructTxt || !instructEl) return;
-    instructTxt.innerHTML = html;
-    instructEl.className  = 'liveness-instruction' + (state ? ' ' + state : '');
-  }
-  function setCountdown(n) {
-    if (!countdownEl) return;
-    if (n === null || n === undefined) { countdownEl.style.display = 'none'; return; }
-    countdownEl.style.display = '';
-    countdownEl.textContent   = n > 0 ? n : '✗';
-    countdownEl.className     = 'liveness-countdown' + (n <= 1 && n > 0 ? ' urgent' : '');
-  }
-  function updateDot(idx, state) {
-    const dot = dots[idx];
-    if (!dot) return;
-    dot.classList.remove('active', 'done', 'fail');
-    dot.classList.add(state);
-  }
-  function resetLivenessUI() {
-    dots.forEach(d => d?.classList.remove('active', 'done', 'fail'));
-    setCountdown(null);
-    setStatus('Initialising camera…', '');
-    setInstr('Getting ready…');
-    instructEl?.classList.remove('success', 'error');
-    hideRetry();
-  }
   function showFieldError(id, msg) {
     const errEl = document.getElementById('err-' + id);
     const input = document.getElementById(id);
@@ -600,8 +674,20 @@ document.addEventListener('DOMContentLoaded', () => {
     return false;
   }
   function clearAllErrors() {
-    document.querySelectorAll('.field-error').forEach(e => e.textContent = '');
-    document.querySelectorAll('.form-control').forEach(e => e.classList.remove('invalid'));
+    document.querySelectorAll('.field-error').forEach(e => (e.textContent = ''));
+    document.querySelectorAll('.form-control').forEach(e =>
+      e.classList.remove('invalid'),
+    );
+  }
+  function setStatus(text, state) {
+    if (!statusText || !statusWrap) return;
+    statusText.textContent = text;
+    statusWrap.className   = 'webcam-status' + (state ? ' ' + state : '');
+  }
+  function setInstruction(text, state) {
+    if (!instructTxt || !instructEl) return;
+    instructTxt.textContent = text;
+    instructEl.className    = 'liveness-instruction' + (state ? ' ' + state : '');
   }
   function showMsg(msg, type) {
     if (!msgBox) return;
@@ -611,39 +697,16 @@ document.addEventListener('DOMContentLoaded', () => {
     msgBox.scrollIntoView({ behavior: 'smooth' });
   }
 
-  /* Injected styles */
   const style = document.createElement('style');
   style.textContent = `
-    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}
-      40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
     .shake{animation:shake .4s ease both}
-    .spinner{display:inline-block;width:16px;height:16px;border:2px solid
-      rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;
-      animation:_sp .7s linear infinite;vertical-align:middle}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:_sp .7s linear infinite;vertical-align:middle}
     @keyframes _sp{to{transform:rotate(360deg)}}
-    .liveness-instruction.success{color:var(--clr-green,#2dce89)!important;
-      border-color:rgba(45,206,137,.3)!important}
-    .liveness-instruction.error{color:var(--clr-red,#ff4d6d)!important;
-      border-color:rgba(255,77,109,.3)!important}
-    .capture-dot.done{background:var(--clr-gold,#f0b429)!important;
-      box-shadow:0 0 8px rgba(240,180,41,.6)}
-    .capture-dot.fail{background:var(--clr-red,#ff4d6d)!important;
-      box-shadow:0 0 8px rgba(255,77,109,.6)}
-    .capture-dot.active{background:var(--clr-blue,#5bc0de)!important;
-      box-shadow:0 0 8px rgba(91,192,222,.6);animation:_pulse 1s ease-in-out infinite}
-    @keyframes _pulse{0%,100%{opacity:1}50%{opacity:.4}}
-    .liveness-countdown{display:inline-flex;align-items:center;justify-content:center;
-      min-width:36px;height:36px;border-radius:50%;background:rgba(91,192,222,.15);
-      border:2px solid rgba(91,192,222,.4);color:#5bc0de;font-size:1.1rem;
-      font-weight:700;margin-left:.75rem;flex-shrink:0;transition:all .3s}
-    .liveness-countdown.urgent{background:rgba(255,77,109,.15);
-      border-color:rgba(255,77,109,.5);color:#ff4d6d;
-      animation:_pulse .5s ease-in-out infinite}
-    #retryWrap{display:none;margin-top:1rem;text-align:center}
-    #retryBtn{padding:.55rem 1.4rem;border:none;border-radius:8px;
-      background:var(--clr-gold,#f0b429);color:#111;font-weight:600;
-      cursor:pointer;font-size:.9rem;transition:opacity .2s}
-    #retryBtn:hover{opacity:.85}
+    .liveness-instruction.success{color:var(--clr-green,#2dce89)!important;border-color:rgba(45,206,137,.3)!important}
+    .liveness-instruction.error{color:var(--clr-red,#ff4d6d)!important;border-color:rgba(255,77,109,.3)!important}
+    .capture-dot.done{background:var(--clr-gold,#f0b429);box-shadow:0 0 8px rgba(240,180,41,.6)}
+    .req{color:var(--clr-red,#ff4d6d);margin-left:2px;font-weight:700;}
   `;
   document.head.appendChild(style);
 

@@ -19,12 +19,12 @@ from cryptography.fernet import Fernet, InvalidToken
 logger = logging.getLogger(__name__)
 
 
-# ── Custom exception ───────────────────────────────────────────────
+#  Custom exception 
 class VoteEncryptionError(Exception):
     """Raised when vote encryption or decryption fails."""
 
 
-# ── Key loading ────────────────────────────────────────────────────
+#  Key loading
 def _load_fernet() -> Fernet:
     """
     Load the Fernet instance from the environment.
@@ -49,8 +49,7 @@ def _load_fernet() -> Fernet:
         ) from exc
 
 
-# Module-level singleton — loaded once on import.
-# Any misconfiguration fails loudly at startup, not silently at runtime.
+
 try:
     _fernet = _load_fernet()
 except EnvironmentError as _env_err:
@@ -58,7 +57,7 @@ except EnvironmentError as _env_err:
     logger.critical("Vote encryption service failed to initialise: %s", _env_err)
 
 
-# ── Public API ─────────────────────────────────────────────────────
+#  Public API 
 
 def encrypt_vote(vote: str) -> bytes:
     """
@@ -110,7 +109,7 @@ def decrypt_vote(token: bytes | memoryview) -> str:
             "Check that VOTE_ENCRYPTION_KEY is set correctly."
         )
 
-    # Django BinaryField returns memoryview — convert to bytes
+    # Django BinaryField returns memoryview it onvert to bytes
     if isinstance(token, memoryview):
         token = bytes(token)
 

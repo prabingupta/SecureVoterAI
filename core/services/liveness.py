@@ -1,167 +1,255 @@
 # core/services/liveness.py
+
 import cv2
 import mediapipe as mp
 import numpy as np
 import logging
+import random
 
 logger = logging.getLogger(__name__)
 
-# MediaPipe landmark indices 
+#  Landmark indices 
 LEFT_EYE      = [33, 160, 158, 133, 153, 144]
 RIGHT_EYE     = [263, 387, 385, 362, 373, 380]
 NOSE_TIP      = 1
 LEFT_EAR_IDX  = 234
 RIGHT_EAR_IDX = 454
 
-# Mouth landmarks for smile detection
-# Outer mouth corners (left, right) and top/bottom lip centre
-MOUTH_LEFT    = 61    # left mouth corner
-MOUTH_RIGHT   = 291   # right mouth corner
-MOUTH_TOP     = 13    # upper lip centre
-MOUTH_BOTTOM  = 14    # lower lip centre
-LEFT_CHEEK    = 234   # reuse ear landmark as cheek reference
-RIGHT_CHEEK   = 454
+#  Gesture thresholds 
+BLINK_EAR_THRESHOLD = 0.26     
+HEAD_TURN_THRESHOLD = 0.025    
 
-# ── Detection thresholds ───────────────────────────────────────────────────────
-BLINK_EAR_THRESHOLD  = 0.30   # EAR below this = eye closed
-HEAD_TURN_THRESHOLD  = 0.04   # nose offset ratio above this = head turned
-SMILE_MAR_THRESHOLD  = 0.35   # Mouth Aspect Ratio above this = smiling
-                               # neutral face ≈ 0.20–0.30, smile ≈ 0.35–0.55
+#  Anti-spoof thresholds 
+LOW_TEXTURE  = 0.0006
+HIGH_TEXTURE = 0.20
+HIGH_FREQ    = 0.73
+MIN_SAT      = 15
+MAX_SAT      = 178
+MIN_FACE_H   = 0.10
+
+
+
+# Login uses one randomly selected from this pool.
+CHALLENGE_POOL = ['blink', 'turn_left', 'turn_right']
+
+
+def generate_random_challenges(count: int = 3) -> list:
+    
+    if count > len(CHALLENGE_POOL):
+        raise ValueError(
+            f"count={count} exceeds pool size ({len(CHALLENGE_POOL)}). "
+            "Cannot generate more unique challenges than the pool contains."
+        )
+    pool = list(CHALLENGE_POOL)
+    random.shuffle(pool)
+    return pool[:count]
 
 
 class LivenessChallenge:
+
     def __init__(self):
         mp_fm = mp.solutions.face_mesh
-        self.face_mesh = mp_fm.FaceMesh(
+        # Single-face model for gesture / embedding extraction
+        self._fm_single = mp_fm.FaceMesh(
+            static_image_mode        = True,
             max_num_faces            = 1,
             refine_landmarks         = True,
-            min_detection_confidence = 0.5,
-            min_tracking_confidence  = 0.5,
+            min_detection_confidence = 0.4,
+            min_tracking_confidence  = 0.4,
+        )
+        # Multi-face model only for the "is more than 1 person present?" guard
+        self._fm_multi = mp_fm.FaceMesh(
+            static_image_mode        = True,
+            max_num_faces            = 4,
+            refine_landmarks         = False,
+            min_detection_confidence = 0.4,
+            min_tracking_confidence  = 0.4,
         )
 
-    @staticmethod
-    def _pt(lm, idx) -> np.ndarray:
-        return np.array([lm[idx].x, lm[idx].y])
+    #  Public API 
+
+    def verify(self, frame, challenge_type: str) -> "tuple[bool, str]":
+        """
+        Verify one captured frame against a challenge type.
+        Returns (passed: bool, reason: str).
+        """
+        if challenge_type not in CHALLENGE_POOL:
+            return False, (
+                f'Unknown challenge type: "{challenge_type}". '
+                f'Valid options are: {CHALLENGE_POOL}.'
+            )
+
+        if frame is None:
+            return False, "Empty frame received."
+
+        h, w = frame.shape[:2]
+        rgb  = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Multi-face guard
+        try:
+            multi_res  = self._fm_multi.process(rgb)
+            face_count = len(multi_res.multi_face_landmarks or [])
+        except Exception as exc:
+            logger.error(f"LivenessChallenge multi-face error: {exc}")
+            face_count = 0
+
+        if face_count == 0:
+            return False, "No face detected in the challenge frame."
+        if face_count > 1:
+            logger.warning(f"LivenessChallenge: {face_count} faces — REJECTED")
+            return (
+                False,
+                f"Multiple faces detected ({face_count}). "
+                "Only one person may be present during verification.",
+            )
+
+        # Single-face landmarks
+        try:
+            single_res = self._fm_single.process(rgb)
+        except Exception as exc:
+            logger.error(f"LivenessChallenge landmark error: {exc}")
+            return False, "Face landmark extraction failed."
+
+        if not single_res.multi_face_landmarks:
+            return False, "Could not extract face landmarks."
+
+        lm = single_res.multi_face_landmarks[0].landmark
+
+        # 3. Anti-spoof checks
+        spoof_ok, spoof_reason = self._anti_spoof(frame, lm, h, w)
+        if not spoof_ok:
+            return False, spoof_reason
+
+        # 4. Gesture verification
+        return self._check_gesture(lm, challenge_type)
+
+    def run_liveness_sequence(
+        self,
+        frames: list,
+        challenges: list,
+    ) -> "tuple[bool, str]":
+        """
+        Verify a list of (frame, challenge_type) pairs in order.
+        Returns (all_passed: bool, failure_reason: str).
+        """
+        if len(frames) != len(challenges):
+            return False, "Frame / challenge count mismatch."
+        for i, (frame, ch) in enumerate(zip(frames, challenges)):
+            ok, reason = self.verify(frame, ch)
+            if not ok:
+                label = ch.replace('_', ' ').title()
+                return False, f'Stage {i + 1} "{label}" failed: {reason}'
+        return True, "All liveness challenges passed."
+
+    # Anti-spoof 
+
+    def _anti_spoof(self, frame, lm, h, w) -> "tuple[bool, str]":
+        xs  = [p.x for p in lm]
+        ys  = [p.y for p in lm]
+        pad = 12
+        x1  = max(0,   int(min(xs) * w) - pad)
+        y1  = max(0,   int(min(ys) * h) - pad)
+        x2  = min(w-1, int(max(xs) * w) + pad)
+        y2  = min(h-1, int(max(ys) * h) + pad)
+        fh  = y2 - y1
+        fw  = x2 - x1
+
+        if fh < 10 or fw < 10:
+            return False, "Face crop too small — move closer to the camera."
+        if (fh / h) < MIN_FACE_H:
+            return False, "Face too far from camera. Please move closer."
+
+        crop = frame[y1:y2, x1:x2]
+        gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+
+        # Laplacian texture variance
+        tex_var = float(cv2.Laplacian(gray, cv2.CV_64F).var() / max(fh * fw, 1))
+        logger.debug(f"anti-spoof tex_var={tex_var:.6f}")
+        if tex_var < LOW_TEXTURE:
+            return False, "Image appears to be a photo or screen. Use your live camera."
+        if tex_var > HIGH_TEXTURE:
+            return False, "Screen or printed image detected. Use your live camera."
+
+        # DFT high-frequency ratio
+        freq = self._dft_high_freq(gray)
+        logger.debug(f"anti-spoof freq={freq:.4f}")
+        if freq > HIGH_FREQ:
+            return False, "Screen pixel-grid detected. Use your live camera."
+
+        # HSV saturation
+        sat = float(cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)[:, :, 1].mean())
+        logger.debug(f"anti-spoof sat={sat:.1f}")
+        if sat < MIN_SAT:
+            return False, "Image appears washed out. Use your live camera."
+        if sat > MAX_SAT:
+            return False, "Unusually high saturation detected. Use your live camera."
+
+        return True, "Anti-spoof checks passed."
 
     @staticmethod
+    def _dft_high_freq(gray_crop: np.ndarray) -> float:
+        resized   = cv2.resize(gray_crop, (64, 64)).astype(np.float32)
+        mag       = np.abs(np.fft.fftshift(np.fft.fft2(resized))) + 1e-10
+        cx, cy    = 32, 32
+        y_i, x_i = np.ogrid[:64, :64]
+        dist      = np.sqrt((x_i - cx) ** 2 + (y_i - cy) ** 2)
+        return float(1.0 - mag[dist <= 8].sum() / max(float(mag.sum()), 1e-6))
+
+    
+    @staticmethod
     def _ear(lm, indices) -> float:
-        """Eye Aspect Ratio — drops below threshold when eye is closed."""
         p   = [np.array([lm[i].x, lm[i].y]) for i in indices]
         num = np.linalg.norm(p[1] - p[5]) + np.linalg.norm(p[2] - p[4])
-        den = np.linalg.norm(p[0] - p[3]) * 2 + 1e-6
+        den = np.linalg.norm(p[0] - p[3]) * 2.0 + 1e-6
         return float(num / den)
 
     @staticmethod
-    def _mar(lm) -> float:
-        m_left  = np.array([lm[MOUTH_LEFT].x,  lm[MOUTH_LEFT].y])
-        m_right = np.array([lm[MOUTH_RIGHT].x, lm[MOUTH_RIGHT].y])
-        f_left  = np.array([lm[LEFT_CHEEK].x,  lm[LEFT_CHEEK].y])
-        f_right = np.array([lm[RIGHT_CHEEK].x, lm[RIGHT_CHEEK].y])
+    def _head_rel_x(lm) -> float:
+        """Positive = turned right, negative = turned left."""
+        nose_x  = lm[NOSE_TIP].x
+        l_ear_x = lm[LEFT_EAR_IDX].x
+        r_ear_x = lm[RIGHT_EAR_IDX].x
+        face_w  = abs(l_ear_x - r_ear_x) + 1e-6
+        return -(nose_x - (l_ear_x + r_ear_x) / 2.0) / face_w
 
-        mouth_width = np.linalg.norm(m_right - m_left)
-        face_width  = np.linalg.norm(f_right - f_left) + 1e-6
-        return float(mouth_width / face_width)
+    def _check_gesture(self, lm, challenge_type: str) -> "tuple[bool, str]":
 
-    def _landmarks(self, frame):
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        res = self.face_mesh.process(rgb)
-        if not res.multi_face_landmarks:
-            return None
-        return res.multi_face_landmarks[0].landmark
-
-    def verify(self, frame, challenge_type: str) -> tuple[bool, str]:
-        lm = self._landmarks(frame)
-        if lm is None:
-            return False, 'No face detected in the challenge frame.'
-
-        # ── Blink ──────────────────────────────────────────────────────────────
-        if challenge_type == 'blink':
+        if challenge_type == "blink":
             ear_l = self._ear(lm, LEFT_EYE)
             ear_r = self._ear(lm, RIGHT_EYE)
+            logger.debug(
+                f"blink: EAR L={ear_l:.3f} R={ear_r:.3f} "
+                f"threshold={BLINK_EAR_THRESHOLD}"
+            )
             if ear_l < BLINK_EAR_THRESHOLD or ear_r < BLINK_EAR_THRESHOLD:
-                return True, 'Blink confirmed.'
+                return True, "Blink confirmed."
             return False, (
-                f'Blink not detected '
-                f'(EAR L={ear_l:.3f} R={ear_r:.3f}, '
-                f'need below {BLINK_EAR_THRESHOLD}).'
+                f"Blink not detected "
+                f"(EAR L={ear_l:.3f} R={ear_r:.3f}, "
+                f"need < {BLINK_EAR_THRESHOLD})."
             )
 
-        #  Head turn 
-        if challenge_type in ('turn_left', 'turn_right'):
-            nose  = self._pt(lm, NOSE_TIP)
-            l_ear = self._pt(lm, LEFT_EAR_IDX)
-            r_ear = self._pt(lm, RIGHT_EAR_IDX)
-            face_w = np.linalg.norm(r_ear - l_ear) + 1e-6
-            rel_x  = float((nose[0] - (l_ear[0] + r_ear[0]) / 2) / face_w)
-
-            if challenge_type == 'turn_left':
+        if challenge_type in ("turn_left", "turn_right"):
+            rel_x = self._head_rel_x(lm)
+            logger.debug(
+                f"head turn: rel_x={rel_x:.3f} "
+                f"challenge={challenge_type} "
+                f"threshold=±{HEAD_TURN_THRESHOLD}"
+            )
+            if challenge_type == "turn_left":
                 if rel_x < -HEAD_TURN_THRESHOLD:
-                    return True, 'Head-left turn confirmed.'
+                    return True, "Head-left turn confirmed."
                 return False, (
-                    f'Head-left turn not detected '
-                    f'(rel_x={rel_x:.3f}, need < -{HEAD_TURN_THRESHOLD}).'
+                    f"Head-left not detected "
+                    f"(rel_x={rel_x:.3f}, need < -{HEAD_TURN_THRESHOLD})."
                 )
             else:
                 if rel_x > HEAD_TURN_THRESHOLD:
-                    return True, 'Head-right turn confirmed.'
+                    return True, "Head-right turn confirmed."
                 return False, (
-                    f'Head-right turn not detected '
-                    f'(rel_x={rel_x:.3f}, need > {HEAD_TURN_THRESHOLD}).'
+                    f"Head-right not detected "
+                    f"(rel_x={rel_x:.3f}, need > {HEAD_TURN_THRESHOLD})."
                 )
 
-        #  Smile 
-        if challenge_type == 'smile':
-            mar = self._mar(lm)
-            if mar > SMILE_MAR_THRESHOLD:
-                return True, 'Smile confirmed.'
-            return False, (
-                f'Smile not detected '
-                f'(MAR={mar:.3f}, need above {SMILE_MAR_THRESHOLD}). '
-                f'Please show a bigger smile.'
-            )
-
-        return False, f'Unknown challenge type: "{challenge_type}".'
-
-
-class LivenessDetector:
-    def __init__(self):
-        mp_fm = mp.solutions.face_mesh
-        self.face_mesh = mp_fm.FaceMesh(
-            max_num_faces            = 1,
-            refine_landmarks         = True,
-            min_detection_confidence = 0.5,
-            min_tracking_confidence  = 0.5,
-        )
-        self.blink_threshold = BLINK_EAR_THRESHOLD
-        self.prev_nose: np.ndarray | None = None
-
-    def _ear(self, landmarks):
-        left  = [landmarks[i] for i in LEFT_EYE]
-        right = [landmarks[i] for i in RIGHT_EYE]
-
-        def _e(pts):
-            p   = np.array([[pt.x, pt.y] for pt in pts])
-            num = np.linalg.norm(p[1] - p[5]) + np.linalg.norm(p[2] - p[4])
-            den = np.linalg.norm(p[0] - p[3]) * 2 + 1e-6
-            return float(num / den)
-
-        return _e(left), _e(right)
-
-    def detect(self, frame) -> bool:
-        rgb     = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = self.face_mesh.process(rgb)
-        if not results.multi_face_landmarks:
-            return False
-        lm = results.multi_face_landmarks[0].landmark
-
-        ear_l, ear_r = self._ear(lm)
-        if ear_l < self.blink_threshold or ear_r < self.blink_threshold:
-            return True
-
-        nose = np.array([lm[NOSE_TIP].x, lm[NOSE_TIP].y])
-        if self.prev_nose is not None:
-            if np.linalg.norm(nose - self.prev_nose) > 0.005:
-                self.prev_nose = nose
-                return True
-        self.prev_nose = nose
-        return False
+        
+        return False, f'Unhandled challenge type: "{challenge_type}".'

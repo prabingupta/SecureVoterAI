@@ -1,471 +1,153 @@
 {% extends 'voter_dashboard/base.html' %}
 {% load static %}
 
-{% block title %}My Profile | SecureVoter AI — Islington College{% endblock %}
+{% block title %}My Profile{% endblock %}
+{% block navbar_title %}My Profile{% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'voter_dashboard/css/profile.css' %}" />
+  <link rel="stylesheet" href="{% static 'voter_dashboard/css/profile.css' %}">
 {% endblock %}
-
 
 {% block content %}
 <div class="profile-page">
 
-  <!-- ============================================================
-       PAGE HEADER
-       ============================================================ -->
-  <div class="page-header">
-    <div class="page-header-meta">
-      <a
-        href="{% url 'voter_dashboard:dashboard' %}"
-        class="badge badge-muted"
-        style="text-decoration:none;"
-        aria-label="Back to dashboard"
-      >
-        <i class="fas fa-arrow-left" aria-hidden="true"></i> Dashboard
-      </a>
-      <span style="color:var(--clr-border);" aria-hidden="true">/</span>
-      <span class="page-eyebrow">My Profile</span>
+  <!-- ── Profile header ──────────────────────────────────────────── -->
+  <div class="profile-header">
+    <div class="profile-avatar-wrap">
+      {% if student.profile_photo %}
+        <img src="{{ student.profile_photo.url }}" alt="{{ student.full_name }}">
+      {% else %}
+        {{ student.full_name|slice:":2"|upper }}
+      {% endif %}
     </div>
-    <h1>Voter Profile</h1>
-    <p>
-      Your registered identity, AI verification status, and complete
-      voting history for all Islington College elections.
-    </p>
+
+    <div class="profile-info">
+      <h3>{{ student.full_name }}</h3>
+      <p>{{ student.student_id }}&nbsp;&middot;&nbsp;{{ student.department }}</p>
+    </div>
+
+    <div class="welcome-badges">
+      {% if student.approval_status == 'approved' %}
+        <span class="badge badge-green">
+          <i class="fa-solid fa-circle-check"></i> Approved
+        </span>
+      {% elif student.approval_status == 'pending' %}
+        <span class="badge badge-gold">
+          <i class="fa-solid fa-clock"></i> Pending
+        </span>
+      {% endif %}
+      {% if student.face_embedding %}
+        <span class="badge badge-blue">
+          <i class="fa-solid fa-eye"></i> Face Registered
+        </span>
+      {% endif %}
+    </div>
   </div>
 
-
-  <!-- ============================================================
-       TWO-COLUMN PROFILE LAYOUT
-       ============================================================ -->
-  <div class="profile-grid">
-
-    <!-- ── LEFT COLUMN: Identity Card ─────────────────────────── -->
-    <aside aria-label="Voter identity card">
-      <div class="profile-card">
-
-        <!-- Header / avatar -->
-        <div class="profile-card-header">
-
-          <div class="profile-avatar-wrap" aria-hidden="true">
-            <div class="avatar-scan-ring"></div>
-            <div class="profile-avatar">
-              {% if student.profile_photo %}
-                <img src="{{ student.profile_photo.url }}" alt="{{ student.full_name }} profile photo" />
-              {% else %}
-                {{ student.full_name|default:student.username|slice:":2"|upper }}
-              {% endif %}
-              <div class="avatar-verified-badge" aria-hidden="true">
-                <i class="fas fa-check"></i>
-              </div>
-            </div>
-          </div>
-
-          <h2 class="profile-name">{{ student.full_name|default:student.username }}</h2>
-          <p class="profile-student-id" aria-label="Student ID: {{ student.student_id|default:'N/A' }}">
-            ID: {{ student.student_id|default:"N/A" }}
-          </p>
-
-          <!-- Face verification status -->
-          <div
-            class="face-verification-status verified"
-            role="status"
-            aria-label="AI face verification: Verified"
-          >
-            <span class="pulse-dot" aria-hidden="true"></span>
-            <i class="fas fa-eye" aria-hidden="true"></i>
-            AI Face Verified
-          </div>
-
-        </div>
-        <!-- /profile-card-header -->
-
-
-        <!-- Islington College chip -->
-        <div class="college-chip" role="note" aria-label="Islington College member">
-          <span class="college-chip-icon" aria-hidden="true">
-            <i class="fas fa-university"></i>
-          </span>
-          <div class="college-chip-text">
-            <h4>Islington College</h4>
-            <p>Registered Voter · Election 2024–25</p>
-          </div>
-        </div>
-
-
-        <!-- Voter details list -->
-        <div class="profile-card-body" role="list" aria-label="Voter details">
-
-          <div class="profile-detail-row" role="listitem">
-            <span class="detail-key">
-              <i class="fas fa-user" aria-hidden="true"></i> Full Name
-            </span>
-            <span class="detail-value">{{ student.full_name|default:"—" }}</span>
-          </div>
-
-          <div class="profile-detail-row" role="listitem">
-            <span class="detail-key">
-              <i class="fas fa-id-badge" aria-hidden="true"></i> Student ID
-            </span>
-            <span class="detail-value font-mono">{{ student.student_id|default:"—" }}</span>
-          </div>
-
-          <div class="profile-detail-row" role="listitem">
-            <span class="detail-key">
-              <i class="fas fa-building-columns" aria-hidden="true"></i> Department
-            </span>
-            <span class="detail-value">{{ student.department|default:"—" }}</span>
-          </div>
-
-          <div class="profile-detail-row" role="listitem">
-            <span class="detail-key">
-              <i class="fas fa-graduation-cap" aria-hidden="true"></i> Year
-            </span>
-            <span class="detail-value">Year {{ student.year_of_study|default:"—" }}</span>
-          </div>
-
-          {% if student.phone %}
-          <div class="profile-detail-row" role="listitem">
-            <span class="detail-key">
-              <i class="fas fa-phone" aria-hidden="true"></i> Phone
-            </span>
-            <span class="detail-value">{{ student.phone }}</span>
-          </div>
-          {% endif %}
-
-          {% if student.email %}
-          <div class="profile-detail-row" role="listitem">
-            <span class="detail-key">
-              <i class="fas fa-envelope" aria-hidden="true"></i> Email
-            </span>
-            <span class="detail-value" style="font-size:0.78rem;">
-              {{ student.email|truncatechars:26 }}
-            </span>
-          </div>
-          {% endif %}
-
-          <div class="profile-detail-row" role="listitem">
-            <span class="detail-key">
-              <i class="fas fa-circle-check" aria-hidden="true"></i> Status
-            </span>
-            <span class="badge badge-live">
-              <span class="dot" aria-hidden="true"></span> Active
-            </span>
-          </div>
-
-          <div class="profile-detail-row" role="listitem">
-            <span class="detail-key">
-              <i class="fas fa-check-to-slot" aria-hidden="true"></i> Votes Cast
-            </span>
-            <span class="detail-value font-mono">
-              {{ vote_history|length }}
-            </span>
-          </div>
-
-        </div>
-        <!-- /profile-card-body -->
-
+  <!-- ── Account details ─────────────────────────────────────────── -->
+  <div class="settings-card">
+    <h4><i class="fa-solid fa-id-card"></i> Account Details</h4>
+    <div class="info-grid">
+      <div class="info-item">
+        <label>Student ID</label>
+        <span>{{ student.student_id }}</span>
       </div>
-      <!-- /profile-card -->
-    </aside>
-    <!-- /left column -->
-
-
-    <!-- ── RIGHT COLUMN ─────────────────────────────────────────── -->
-    <div class="profile-right">
-
-      <!-- ══ AI VERIFICATION PANEL ══════════════════════════════ -->
-      <section class="profile-section-card" aria-labelledby="aiVerifyHeading">
-
-        <div class="profile-section-head">
-          <div class="profile-section-head-left">
-            <div class="section-icon" aria-hidden="true">
-              <i class="fas fa-eye"></i>
-            </div>
-            <div>
-              <h3 id="aiVerifyHeading">AI Face Verification</h3>
-              <p>Identity confirmed via biometric face recognition</p>
-            </div>
-          </div>
-          <span class="badge badge-voted" role="status" aria-label="Verification passed">
-            <i class="fas fa-check" aria-hidden="true"></i> Passed
-          </span>
-        </div>
-
-        <div class="profile-section-body">
-          <div class="ai-verification-grid" role="list" aria-label="Verification details">
-
-            <div class="ai-verify-item" role="listitem">
-              <span class="ai-verify-label">Face Match Score</span>
-              <span class="ai-verify-value ok">
-                <i class="fas fa-circle-check" aria-hidden="true"></i>
-                98.6% — Pass
-              </span>
-            </div>
-
-            <div class="ai-verify-item" role="listitem">
-              <span class="ai-verify-label">Liveness Check</span>
-              <span class="ai-verify-value ok">
-                <i class="fas fa-circle-check" aria-hidden="true"></i>
-                Live Face Detected
-              </span>
-            </div>
-
-            <div class="ai-verify-item" role="listitem">
-              <span class="ai-verify-label">Registration Status</span>
-              <span class="ai-verify-value blue">
-                <i class="fas fa-id-card" aria-hidden="true"></i>
-                Approved
-              </span>
-            </div>
-
-            <div class="ai-verify-item" role="listitem">
-              <span class="ai-verify-label">Embedding Stored</span>
-              <span class="ai-verify-value ok">
-                <i class="fas fa-database" aria-hidden="true"></i>
-                Encrypted &amp; Saved
-              </span>
-            </div>
-
-            <div class="ai-verify-item" role="listitem">
-              <span class="ai-verify-label">Verification Method</span>
-              <span class="ai-verify-value blue">
-                <i class="fas fa-microchip" aria-hidden="true"></i>
-                Face Recognition API
-              </span>
-            </div>
-
-            <div class="ai-verify-item" role="listitem">
-              <span class="ai-verify-label">Anti-Spoofing</span>
-              <span class="ai-verify-value ok">
-                <i class="fas fa-shield-halved" aria-hidden="true"></i>
-                Active
-              </span>
-            </div>
-
-          </div>
-
-          <!-- Privacy notice -->
-          <div class="privacy-notice mt-3" role="note" aria-label="Privacy information">
-            <i class="fas fa-lock" aria-hidden="true"></i>
-            <p>
-              Your facial data is stored as an encrypted embedding only — no raw photos are retained
-              after verification. Biometric data is never shared with third parties and is governed
-              by Islington College's data protection policy.
-            </p>
-          </div>
-        </div>
-
-      </section>
-      <!-- /ai verification panel -->
-
-
-      <!-- ══ VOTING HISTORY ═════════════════════════════════════ -->
-      <section class="profile-section-card" aria-labelledby="voteHistoryHeading">
-
-        <div class="profile-section-head">
-          <div class="profile-section-head-left">
-            <div class="section-icon gold-icon" aria-hidden="true">
-              <i class="fas fa-scroll"></i>
-            </div>
-            <div>
-              <h3 id="voteHistoryHeading">Voting History</h3>
-              <p>All elections you have participated in</p>
-            </div>
-          </div>
-          {% if vote_history %}
-            <span class="badge badge-blue" aria-label="{{ vote_history|length }} votes cast">
-              {{ vote_history|length }} Vote{{ vote_history|length|pluralize }}
-            </span>
-          {% endif %}
-        </div>
-
-        <div class="profile-section-body" style="padding:0;">
-
-          {% if vote_history %}
-
-            <div class="vote-history-table-wrap">
-              <table aria-label="Voting history table">
-                <thead>
-                  <tr>
-                    <th scope="col"># </th>
-                    <th scope="col">Election</th>
-                    <th scope="col">Candidate Voted</th>
-                    <th scope="col">Encryption</th>
-                    <th scope="col">Date &amp; Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for item in vote_history %}
-                    <tr>
-
-                      <!-- Row number -->
-                      <td>
-                        <span class="font-mono text-muted" style="font-size:0.75rem;">
-                          {{ forloop.counter|stringformat:"02d" }}
-                        </span>
-                      </td>
-
-                      <!-- Election title -->
-                      <td class="td-election">
-                        {{ item.election.title }}
-                      </td>
-
-                      <!-- Candidate name -->
-                      <td>
-                        <div class="td-candidate">
-                          <span class="td-candidate-dot" aria-hidden="true"></span>
-                          <span class="td-candidate-name">{{ item.candidate.name }}</span>
-                        </div>
-                      </td>
-
-                      <!-- Encryption status -->
-                      <td>
-                        {% if item.decrypted_candidate %}
-                          <span class="encrypted-badge" aria-label="Vote encrypted">
-                            <i class="fas fa-lock" aria-hidden="true"></i>
-                            Encrypted
-                          </span>
-                        {% else %}
-                          <span class="badge badge-muted">N/A</span>
-                        {% endif %}
-                      </td>
-
-                      <!-- Timestamp -->
-                      <td class="td-timestamp" aria-label="{{ item.timestamp|date:'Y-m-d H:i' }}">
-                        {{ item.timestamp|date:"M d, Y" }}
-                        <br />
-                        <span style="opacity:0.6;">{{ item.timestamp|date:"H:i" }}</span>
-                      </td>
-
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            <!-- /table-wrap -->
-
-            <!-- Privacy note below table -->
-            <div class="privacy-notice" style="margin:1.25rem 1.75rem 1.5rem;" role="note">
-              <i class="fas fa-eye-slash" aria-hidden="true"></i>
-              <p>
-                Candidate names are shown for your personal record only.
-                Publicly, all votes are anonymous — results are published as aggregate
-                tallies with no voter identification.
-              </p>
-            </div>
-
-          {% else %}
-
-            <!-- Empty state -->
-            <div class="vote-history-empty" role="region" aria-label="No votes cast yet">
-              <i class="fas fa-ballot" aria-hidden="true"></i>
-              <p>You have not participated in any elections yet.</p>
-              <a
-                href="{% url 'voter_dashboard:dashboard' %}"
-                class="btn btn-ghost btn-sm"
-                style="margin-top:1.25rem; display:inline-flex;"
-                aria-label="Go to dashboard to vote"
-              >
-                <i class="fas fa-arrow-left" aria-hidden="true"></i>
-                View Active Elections
-              </a>
-            </div>
-
-          {% endif %}
-
-        </div>
-
-      </section>
-      <!-- /voting history -->
-
-
-      <!-- ══ ACCOUNT SECURITY CARD ══════════════════════════════ -->
-      <section class="profile-section-card" aria-labelledby="securityHeading">
-
-        <div class="profile-section-head">
-          <div class="profile-section-head-left">
-            <div class="section-icon" aria-hidden="true">
-              <i class="fas fa-shield-halved"></i>
-            </div>
-            <div>
-              <h3 id="securityHeading">Account Security</h3>
-              <p>Your account and ballot protection status</p>
-            </div>
-          </div>
-          <span class="badge badge-live" role="status" aria-label="Account secure">
-            <span class="dot" aria-hidden="true"></span> Secure
-          </span>
-        </div>
-
-        <div class="profile-section-body">
-          <div class="ai-verification-grid" role="list" aria-label="Security status items">
-
-            <div class="ai-verify-item" role="listitem">
-              <span class="ai-verify-label">Ballot Encryption</span>
-              <span class="ai-verify-value ok">
-                <i class="fas fa-lock" aria-hidden="true"></i>
-                AES-256 Fernet
-              </span>
-            </div>
-
-            <div class="ai-verify-item" role="listitem">
-              <span class="ai-verify-label">Double Voting Guard</span>
-              <span class="ai-verify-value ok">
-                <i class="fas fa-shield-halved" aria-hidden="true"></i>
-                Enabled
-              </span>
-            </div>
-
-            <div class="ai-verify-item" role="listitem">
-              <span class="ai-verify-label">CSRF Protection</span>
-              <span class="ai-verify-value ok">
-                <i class="fas fa-circle-check" aria-hidden="true"></i>
-                Active
-              </span>
-            </div>
-
-            <div class="ai-verify-item" role="listitem">
-              <span class="ai-verify-label">Session Auth</span>
-              <span class="ai-verify-value blue">
-                <i class="fas fa-key" aria-hidden="true"></i>
-                Authenticated
-              </span>
-            </div>
-
-          </div>
-
-          <!-- Back to dashboard button -->
-          <div style="margin-top:1.5rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
-            <a
-              href="{% url 'voter_dashboard:dashboard' %}"
-              class="btn btn-solid btn-sm"
-              aria-label="Return to dashboard"
-            >
-              <i class="fas fa-th-large" aria-hidden="true"></i>
-              Dashboard
-            </a>
-            <a
-              href="{% url 'core:logout' %}"
-              class="btn btn-ghost btn-sm"
-              aria-label="Logout from SecureVoter AI"
-            >
-              <i class="fas fa-right-from-bracket" aria-hidden="true"></i>
-              Logout
-            </a>
-          </div>
-
-        </div>
-
-      </section>
-      <!-- /account security -->
-
+      <div class="info-item">
+        <label>Full Name</label>
+        <span>{{ student.full_name }}</span>
+      </div>
+      <div class="info-item">
+        <label>Department</label>
+        <span>{{ student.department }}</span>
+      </div>
+      <div class="info-item">
+        <label>Year of Study</label>
+        <span>Year {{ student.year_of_study }}</span>
+      </div>
+      <div class="info-item">
+        <label>Phone</label>
+        <span>{{ student.phone|default:"—" }}</span>
+      </div>
+      <div class="info-item">
+        <label>Age</label>
+        <span>{{ student.age|default:"—" }}</span>
+      </div>
+      <div class="info-item">
+        <label>Gender</label>
+        <span>{{ student.get_gender_display|default:"—" }}</span>
+      </div>
+      <div class="info-item">
+        <label>Last Login IP</label>
+        <span>{{ student.last_login_ip|default:"—" }}</span>
+      </div>
     </div>
-    <!-- /profile-right -->
-
   </div>
-  <!-- /profile-grid -->
+
+  <!-- ── Voting history ──────────────────────────────────────────── -->
+  <div class="settings-card">
+    <h4><i class="fa-solid fa-check-to-slot"></i> Voting History</h4>
+
+    <div class="privacy-notice">
+      <i class="fa-solid fa-shield-halved"></i>
+      <p>
+        Candidate names are shown for your reference only. Your votes are stored
+        encrypted and your identity is never linked to individual ballot choices
+        in any public record.
+      </p>
+    </div>
+
+    {% with votes=student.vote_set.all %}
+      {% if votes %}
+        <div class="vote-history-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Election</th>
+                <th>Candidate</th>
+                <th>Status</th>
+                <th>Date &amp; Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for vote in votes %}
+                <tr>
+                  <td class="td-election">{{ vote.election.title }}</td>
+                  <td>
+                    <div class="td-candidate">
+                      <span class="td-candidate-dot"></span>
+                      <span class="td-candidate-name">{{ vote.candidate.name }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="encrypted-badge">
+                      <i class="fa-solid fa-lock"></i> Encrypted
+                    </span>
+                  </td>
+                  <td class="td-timestamp">
+                    {# Vote model uses 'timestamp' (auto_now_add), not 'created_at' #}
+                    {% if vote.timestamp %}
+                      {{ vote.timestamp|date:"d M Y" }}
+                      <br>
+                      <span style="opacity:0.6; font-size:0.78rem;">
+                        {{ vote.timestamp|date:"H:i" }}
+                      </span>
+                    {% else %}
+                      <span style="color:var(--vd-ink-400);">—</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="vote-history-empty">
+          <i class="fa-solid fa-ballot"></i>
+          <p>You haven't cast any votes yet. When you do, they'll appear here.</p>
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
 
 </div>
-<!-- /profile-page -->
 {% endblock %}

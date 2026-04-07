@@ -12,7 +12,7 @@
 <section id="login" class="login-section">
   <div class="login-wrapper">
 
-    <!-- ══ LEFT PANEL — Branding ══════════════════════════════════════ -->
+    <!-- LEFT PANEL -->
     <div class="login-aside">
       <div class="aside-inner">
 
@@ -54,7 +54,7 @@
       </div>
     </div>
 
-    <!-- ══ RIGHT PANEL — Form ════════════════════════════════════════ -->
+    <!-- RIGHT PANEL -->
     <div class="login-main">
 
       <div class="progress-bar-wrap">
@@ -63,7 +63,6 @@
 
       <div class="login-form-wrap">
 
-        <!-- Django flash messages (locked account, admin notices, etc.) -->
         {% if messages %}
           <div class="messages-wrap" id="serverMessages">
             {% for message in messages %}
@@ -75,17 +74,12 @@
           </div>
         {% endif %}
 
-        <!-- AJAX messages injected by login.js -->
         <div class="messages-wrap" id="ajaxMessages" style="display:none;"></div>
 
         <form id="loginForm" novalidate>
           {% csrf_token %}
 
-          <!-- ══════════════════════════════════════════════════════
-               STEP 1 — Credentials
-               • Admin  → server skips face step, redirects to admin dashboard
-               • Voter  → server returns { require_face: true } → Step 2
-          ══════════════════════════════════════════════════════ -->
+          <!-- STEP 1 -->
           <div class="form-step active" id="loginStep1">
 
             <div class="step-header">
@@ -131,7 +125,7 @@
                 <a href="#" class="forgot-link">Forgot password?</a>
               </div>
 
-            </div><!-- /form-fields -->
+            </div>
 
             <div class="step-actions">
               <span></span>
@@ -140,26 +134,20 @@
               </button>
             </div>
 
-          </div><!-- /loginStep1 -->
+          </div>
 
-
-          <!-- ══════════════════════════════════════════════════════
-               STEP 2 — Face Verification  (voters only, hidden by default)
-               login.js reveals this div only when server returns
-               { require_face: true } for an approved voter.
-          ══════════════════════════════════════════════════════ -->
+          <!-- STEP 2 -->
           <div class="form-step" id="loginStep2" style="display:none;">
 
             <div class="step-header">
               <span class="step-tag">Step 2 of 2</span>
               <h2>Face Verification</h2>
-              <p>Blink once or move your head slightly to confirm liveness, then click Verify &amp; Login.</p>
+              <p>Complete the on-screen gesture challenge, then click Verify &amp; Login.
+                 Only <strong>you</strong> — the registered voter — will pass.</p>
             </div>
 
-            <!-- Attempts remaining badge (populated by JS on failure) -->
             <div class="attempts-badge" id="attemptsLeft" style="display:none;"></div>
 
-            <!-- Camera panel -->
             <div class="webcam-panel">
               <video id="loginWebcam" autoplay muted playsinline></video>
               <canvas id="loginOverlay"></canvas>
@@ -180,13 +168,11 @@
               </div>
             </div>
 
-            <!-- Liveness instruction -->
             <div class="liveness-instruction" id="livenessInstruction">
               <i class="fa-solid fa-eye"></i>
-              <span id="instructionText">Blink once when ready…</span>
+              <span id="instructionText">Loading challenge…</span>
             </div>
 
-            <!-- Progress dots -->
             <div class="capture-dots">
               <span class="capture-dot" id="dot1"></span>
               <span class="capture-dot" id="dot2"></span>
@@ -201,12 +187,12 @@
               </button>
             </div>
 
-          </div><!-- /loginStep2 -->
+          </div>
 
         </form>
 
       </div>
-    </div><!-- /login-main -->
+    </div>
 
   </div>
 </section>
@@ -215,5 +201,5 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
-<script src="{% static 'js/login.js' %}?v=6"></script>
+<script src="{% static 'js/login.js' %}?v=9"></script>
 {% endblock %}
