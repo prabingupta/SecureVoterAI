@@ -14,5 +14,9 @@ staticfiles/
 # MacOS
 .DS_Store
 
+media/
+
+.DS_Store
+
 # Environment variables
 .env
