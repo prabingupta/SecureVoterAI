@@ -12,7 +12,6 @@
 
 <div class="notif-page">
 
-  <!-- Header -->
   <div class="section-header">
     <div>
       <span class="section-tag">Inbox</span>
@@ -36,7 +35,7 @@
         <div class="notif-item {% if not notif.is_read %}unread{% endif %}"
              id="notif-{{ notif.id }}">
 
-          <!-- Icon -->
+     
           <div class="notif-icon
             {% if notif.notif_type == 'election_open' %}open
             {% elif notif.notif_type == 'election_close' %}close
@@ -54,7 +53,7 @@
             {% endif %}
           </div>
 
-          <!-- Body -->
+      
           <div class="notif-body">
 
             <div class="notif-title">
@@ -83,7 +82,6 @@
 
           </div>
 
-          <!-- Actions -->
           <div class="notif-actions">
             {% if not notif.is_read %}
               <button class="notif-btn"

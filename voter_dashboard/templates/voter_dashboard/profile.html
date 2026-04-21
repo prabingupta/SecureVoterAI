@@ -11,7 +11,7 @@
 {% block content %}
 <div class="profile-page">
 
-  <!-- ── Profile header ──────────────────────────────────────────── -->
+  
   <div class="profile-header">
     <div class="profile-avatar-wrap">
       {% if student.profile_photo %}
@@ -44,7 +44,7 @@
     </div>
   </div>
 
-  <!-- ── Account details ─────────────────────────────────────────── -->
+ 
   <div class="settings-card">
     <h4><i class="fa-solid fa-id-card"></i> Account Details</h4>
     <div class="info-grid">
@@ -83,7 +83,7 @@
     </div>
   </div>
 
-  <!-- ── Voting history ──────────────────────────────────────────── -->
+
   <div class="settings-card">
     <h4><i class="fa-solid fa-check-to-slot"></i> Voting History</h4>
 
@@ -124,7 +124,6 @@
                     </span>
                   </td>
                   <td class="td-timestamp">
-                    {# Vote model uses 'timestamp' (auto_now_add), not 'created_at' #}
                     {% if vote.timestamp %}
                       {{ vote.timestamp|date:"d M Y" }}
                       <br>

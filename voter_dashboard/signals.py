@@ -18,8 +18,6 @@ def _fmt_dt(value) -> str:
     return value.strftime('%d %b %Y, %H:%M')
 
 
-# Track previous is_active value 
-
 @receiver(pre_save, sender=Election)
 def _cache_election_state(sender, instance, **kwargs):
     """Store the previous is_active on the instance before it is overwritten."""
@@ -38,7 +36,6 @@ def _election_notification(sender, instance, created, **kwargs):
     prev = getattr(instance, '_prev_active', False)
 
     if instance.is_active and (created or not prev):
-        # Election just opened
         Notification.send_to_all_approved(
             election   = instance,
             notif_type = 'election_open',
@@ -51,7 +48,6 @@ def _election_notification(sender, instance, created, **kwargs):
         )
 
     elif not instance.is_active and prev and not created:
-        # Election just closed
         Notification.send_to_all_approved(
             election   = instance,
             notif_type = 'election_close',

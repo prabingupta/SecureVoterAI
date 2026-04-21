@@ -10,15 +10,13 @@
 
 {% block content %}
 
-<!-- ── Inline toast feedback ─────────────────────────────────── -->
+
 <div class="toast-bar" id="toastBar">
   <i class="fa-solid fa-circle-check" id="toastIcon"></i>
   <span id="toastMsg"></span>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SETTINGS PAGE WRAPPER
-════════════════════════════════════════════════════════════ -->
+
 <div style="
   display:        flex;
   flex-direction: column;
@@ -27,7 +25,7 @@
   margin:         0 auto;
 ">
 
-  <!-- ── 1. Notification Preferences ──────────────────────── -->
+ 
   <form id="prefsForm" method="POST" action="{% url 'voter_dashboard:settings' %}">
     {% csrf_token %}
     <input type="hidden" name="form_type" value="preferences">
@@ -80,7 +78,7 @@
   </form>
 
 
-  <!-- ── 2. Change Phone Number ────────────────────────────── -->
+ 
   <form id="phoneForm" method="POST" action="{% url 'voter_dashboard:settings' %}">
     {% csrf_token %}
     <input type="hidden" name="form_type" value="change_phone">
@@ -113,7 +111,7 @@
   </form>
 
 
-  <!-- ── 3. Change Password ────────────────────────────────── -->
+
   <form id="passwordForm" method="POST" action="{% url 'voter_dashboard:settings' %}">
     {% csrf_token %}
     <input type="hidden" name="form_type" value="change_password">
@@ -149,7 +147,7 @@
   </form>
 
 
-  <!-- ── 4. Account Actions ────────────────────────────────── -->
+
   <div class="settings-card">
     <h4><i class="fa-solid fa-user-gear"></i> Account</h4>
 
@@ -165,12 +163,7 @@
 
   </div>
 
-</div><!-- /settings page wrapper -->
+</div>
 
 {% endblock %}
 
-{# ─── NO extra_js block here ───────────────────────────────────────────────── #}
-{# main.js already calls wireSettingsForm('prefsForm'), wireSettingsForm('phoneForm'), #}
-{# and wireSettingsForm('passwordForm') on DOMContentLoaded.                          #}
-{# Adding a second block here causes both handlers to fire simultaneously,            #}
-{# making the second one capture origHtml = "Saving…" and reset to that on finish.   #}

@@ -11,14 +11,14 @@
 {% block content %}
 <div class="voters-page">
 
-  <!-- Page Header -->
+  
   <div class="page-header">
     <p class="page-eyebrow"><i class="fas fa-id-card"></i> Voters</p>
     <h1>Manage Voters</h1>
     <p>Review AI face-verified registrations and approve or reject voter access.</p>
   </div>
 
-  <!-- Stats Row -->
+ 
   <div class="voter-stats-row">
     <div class="voter-stat">
       <div class="voter-stat-icon gold"><i class="fas fa-users"></i></div>
@@ -43,7 +43,7 @@
     </div>
   </div>
 
-  <!-- Action Bar -->
+ 
   <div class="page-actions">
     <div class="page-actions-left">
       <div class="search-bar">
@@ -167,7 +167,7 @@
 </div>
 
 
-<!-- ══ REJECT MODAL ══════════════════════════════════════════════ -->
+
 <div class="modal-overlay" id="rejectModal" role="dialog" aria-modal="true" aria-labelledby="rejectHeading">
   <div class="modal">
     <button class="modal-close" id="closeRejectModal"><i class="fas fa-xmark"></i></button>
@@ -202,14 +202,13 @@
 
 {% block extra_js %}
 <script>
-  // ── Search ─────────────────────────────────────────────────────
   const voterRows = document.querySelectorAll('#votersTable tbody tr');
   document.getElementById('voterSearch')?.addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();
     voterRows.forEach(r => { r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'; });
   });
 
-  // ── Filter pills ──────────────────────────────────────────────
+  
   document.querySelectorAll('.filter-pill').forEach(pill => {
     pill.addEventListener('click', () => {
       document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
@@ -219,7 +218,7 @@
     });
   });
 
-  // ── Voter stat counters ───────────────────────────────────────
+  
   let approved = 0, pending = 0;
   voterRows.forEach(r => {
     if (r.dataset.status === 'approved') approved++;
@@ -228,7 +227,7 @@
   document.getElementById('approvedCount').textContent = approved;
   document.getElementById('pendingCount').textContent  = pending;
 
-  // ── Reject modal ──────────────────────────────────────────────
+  
   const rejectModal   = document.getElementById('rejectModal');
   const rejectForm    = document.getElementById('rejectForm');
   const rejectNameEl  = document.getElementById('rejectVoterName');

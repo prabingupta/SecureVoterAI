@@ -11,14 +11,14 @@
 {% block content %}
 <div class="fraud-page">
 
-  <!-- Page Header -->
+
   <div class="page-header">
     <p class="page-eyebrow"><i class="fas fa-triangle-exclamation"></i> Security</p>
     <h1>Fraud Alerts</h1>
     <p>Monitor suspicious activity and review flagged incidents in Islington College elections.</p>
   </div>
 
-  <!-- Summary cards -->
+
   <div class="fraud-summary">
     <div class="fraud-summary-card">
       <div class="fraud-summary-icon red"><i class="fas fa-triangle-exclamation"></i></div>
@@ -43,7 +43,7 @@
     </div>
   </div>
 
-  <!-- Alerts Table -->
+ 
   {% if fraud_alerts %}
     <div class="table-wrapper" role="region" aria-label="Fraud alerts table">
       <table>
@@ -69,7 +69,7 @@
                 </span>
               </td>
 
-              <!-- Voter — FK is 'voter' on the model -->
+              
               <td>
                 {% if alert.voter %}
                   <div class="voter-cell" style="gap:.65rem;">
@@ -90,14 +90,14 @@
                 {% endif %}
               </td>
 
-              <!-- Election -->
+              
               <td>
                 <span style="font-size:.875rem; font-weight:500;">
                   {{ alert.election.title|default:"—" }}
                 </span>
               </td>
 
-              <!-- Alert type badge with distinct icon per type -->
+              
               <td>
                 {% if alert.alert_type == 'spoof_attempt' %}
                   <span class="badge badge-rejected" style="white-space:nowrap;">
@@ -122,21 +122,21 @@
                 {% endif %}
               </td>
 
-              <!-- Description -->
+         
               <td style="max-width:220px;">
                 <span style="font-size:.8rem; color:rgba(238,242,255,.75);">
                   {{ alert.description|truncatechars:80 }}
                 </span>
               </td>
 
-              <!-- IP Address -->
+             
               <td>
                 <span class="font-mono" style="font-size:.75rem; color:var(--clr-muted);">
                   {{ alert.ip_address|default:"—" }}
                 </span>
               </td>
 
-              <!-- Timestamp -->
+              
               <td>
                 <span class="font-mono" style="font-size:.75rem; color:var(--clr-muted);">
                   {{ alert.timestamp|date:"M d, Y" }}<br/>
@@ -144,7 +144,7 @@
                 </span>
               </td>
 
-              <!-- Status — field is 'reviewed' on the model -->
+              
               <td>
                 {% if alert.reviewed %}
                   <span class="badge badge-approved">
@@ -157,7 +157,7 @@
                 {% endif %}
               </td>
 
-              <!-- Action -->
+              
               <td>
                 {% if not alert.reviewed %}
                   <form class="review-form" method="post"

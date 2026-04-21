@@ -1,25 +1,12 @@
-/* ═══════════════════════════════════════════════════════════════════
+/* 
    SecureVoter AI — Admin Dashboard / voters.css
-   Requires: base.css
-   Covers: voter stats row, voter table enhancements,
-           approval status badges, reject modal
-═══════════════════════════════════════════════════════════════════ */
-
-
-/* ─────────────────────────────────────────────────────────────────
-   PAGE WRAPPER
-───────────────────────────────────────────────────────────────── */
+   */
 
 .voters-page {
   display:        flex;
   flex-direction: column;
   gap:            1.5rem;
 }
-
-
-/* ─────────────────────────────────────────────────────────────────
-   1. VOTER STATS ROW
-───────────────────────────────────────────────────────────────── */
 
 .voter-stats-row {
   display:               grid;
@@ -104,18 +91,14 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   2. VOTER TABLE ENHANCEMENTS
-      Base table styles come from base.css (.table-wrapper, table).
-      These additions handle voter-specific columns.
-───────────────────────────────────────────────────────────────── */
 
-/* Voter name cell — matches base voter-cell but with hover state */
+
+
 #votersTable .voter-cell {
   cursor: default;
 }
 
-/* Profile photo inside voter avatar */
+
 #votersTable .voter-avatar img {
   width:         100%;
   height:        100%;
@@ -124,7 +107,7 @@
   display:       block;
 }
 
-/* Highlight pending rows subtly */
+
 #votersTable tbody tr[data-status="pending"] {
   background: rgba(253,243,199,0.35);
 }
@@ -133,7 +116,7 @@
   background: rgba(253,243,199,0.55);
 }
 
-/* Highlight approved rows subtly */
+
 #votersTable tbody tr[data-status="approved"] {
   background: rgba(240,253,244,0.40);
 }
@@ -142,15 +125,11 @@
   background: rgba(240,253,244,0.65);
 }
 
-/* Reject form inside table */
+
 #votersTable .td-actions form { display: inline; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   3. REJECT MODAL FORM
-      Modal shell comes from base.css (.modal-overlay, .modal).
-      This section styles the inner rejection note field.
-───────────────────────────────────────────────────────────────── */
+
 
 #rejectModal .modal { border-top-color: var(--c-error); }
 
@@ -179,9 +158,7 @@
 #rejectNote::placeholder { color: var(--c-ink-400); }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   RESPONSIVE
-───────────────────────────────────────────────────────────────── */
+
 
 @media (max-width: 768px) {
   .voter-stats-row { grid-template-columns: 1fr 1fr; }

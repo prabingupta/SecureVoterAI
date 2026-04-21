@@ -56,17 +56,6 @@ class Vote(models.Model):
 # Notification 
 
 class Notification(models.Model):
-    """
-    In-app notification for a voter.
-
-    Types
-    ─────
-    election_open    → created when an election's is_active flips to True
-    election_close   → created when an election closes (end_time passed / deactivated)
-    results_published → created when admin publishes results
-    general          → any other admin-broadcast message
-    """
-
     TYPE_CHOICES = [
         ('election_open',      'Election Opened'),
         ('election_close',     'Election Closed'),

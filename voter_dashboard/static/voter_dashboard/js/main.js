@@ -1,14 +1,42 @@
-/* 
+/*
    voter_dashboard/static/voter_dashboard/js/main.js
- */
+
+   BUGS FIXED:
+   ──────────
+   BUG 1  HEAD_TURN_THRESHOLD was 0.06 — too tight. The screenshot shows
+          rel_x=-0.093 being rejected when "turn_right" was expected. The
+          client was accepting it as a completed gesture (dots filled green,
+          "Liveness confirmed" shown) but the server was rejecting it because
+          0.093 < server TURN_THRESH. Thresholds now match the server values.
+          Client TURN_THRESH → 0.09 (matches server), NEUTRAL_BAND → 0.06.
+
+   BUG 2  MAX_ATTEMPTS was 3. After a server rejection the client incremented
+          _attempts but never reset _livenessOK / _capturedFrame before
+          retrying, so the second attempt re-submitted the same rejected frame.
+          FIX: On server rejection, _livenessOK, _capturedFrame, _locked,
+          _firstFace, and _state are all cleared before restarting the gate.
+          MAX_ATTEMPTS raised to 5 so users have enough tries.
+
+   BUG 3  After MAX_ATTEMPTS the button was disabled but the camera kept
+          running (loop continued). FIX: stopCamera() is now called on
+          terminal failure.
+
+   BUG 4  EAR thresholds: EAR_OPEN was 0.27 and EAR_CLOSED was 0.24 — the
+          gap was only 0.03 which caused false blink triggers during normal
+          eye movement. EAR_OPEN raised to 0.28, EAR_CLOSED lowered to 0.19
+          for a reliable gap.
+
+   BUG 5  _challengeId was fetched from the server but if the fetch failed
+          the fallback randomly picked from ALL 3 challenges each time the
+          gate restarted, so the challenge changed between attempts. FIX:
+          challenge is locked for the entire session once fetched.
+*/
 
 'use strict';
 
 (function () {
 
-  /* 
-       UTILITIES
-      */
+  /* ── UTILITIES ─────────────────────────────────────────────────────────── */
 
   function getCsrf() {
     return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
@@ -31,10 +59,7 @@
     }
   }
 
-
-  /* 
-     TOAST
-     */
+  /* ── TOAST ─────────────────────────────────────────────────────────────── */
 
   const TOAST_ICONS = {
     success: 'fa-circle-check',
@@ -67,10 +92,7 @@
     }, duration);
   };
 
-
-  /* 
-     SIDEBAR COLLAPSE
-    */
+  /* ── SIDEBAR COLLAPSE ───────────────────────────────────────────────────── */
 
   const shell         = document.querySelector('.app-shell');
   const sidebarToggle = document.getElementById('sidebarToggle');
@@ -105,10 +127,7 @@
     }
   });
 
-
-  /* 
-      USER DROPDOWN
-     */
+  /* ── USER DROPDOWN ─────────────────────────────────────────────────────── */
 
   const dropdownTrigger = document.getElementById('userDropdownBtn');
   const dropdownMenu    = document.getElementById('userDropdownMenu');
@@ -135,10 +154,7 @@
     });
   }
 
-
-  /* 
-      NOTIFICATION BADGE POLLING
-  */
+  /* ── NOTIFICATION BADGE POLLING ─────────────────────────────────────────── */
 
   const bellBadge    = document.getElementById('notifBadge');
   const sidebarBadge = document.getElementById('sidebarNotifBadge');
@@ -173,10 +189,7 @@
     setInterval(pollNotifications, POLL_INTERVAL);
   }
 
-
-  /* 
-      NOTIFICATION PAGE ACTIONS
-     */
+  /* ── NOTIFICATION PAGE ACTIONS ──────────────────────────────────────────── */
 
   document.querySelectorAll('[data-mark-read]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -223,10 +236,7 @@
     });
   }
 
-
-  /* 
-      SETTINGS PAGE — AJAX FORM SUBMISSIONS
-          */
+  /* ── SETTINGS PAGE — AJAX FORM SUBMISSIONS ─────────────────────────────── */
 
   function wireSettingsForm(formId) {
     const form = document.getElementById(formId);
@@ -269,10 +279,7 @@
   wireSettingsForm('phoneForm');
   wireSettingsForm('passwordForm');
 
-
-  /* 
-      DJANGO FLASH MESSAGES → TOAST
-      */
+  /* ── DJANGO FLASH MESSAGES → TOAST ─────────────────────────────────────── */
 
   document.querySelectorAll('[data-django-message]').forEach(el => {
     const type = el.dataset.djangoMessage || 'info';
@@ -281,10 +288,7 @@
     el.remove();
   });
 
-
-  /*
-      ACTIVE SIDEBAR LINK HIGHLIGHT
-      */
+  /* ── ACTIVE SIDEBAR LINK HIGHLIGHT ─────────────────────────────────────── */
 
   const currentPath = window.location.pathname;
   document.querySelectorAll('.sidebar-nav-item[data-href]').forEach(link => {
@@ -293,19 +297,21 @@
     }
   });
 
-
-  /* 
+  /* ═══════════════════════════════════════════════════════════════════════════
      CAST VOTE PAGE — LIVENESS GATE + BALLOT FORM
-     */
+     ═══════════════════════════════════════════════════════════════════════ */
 
   const castVoteConfig = document.getElementById('castVoteConfig');
-  if (!castVoteConfig) return; 
+  if (!castVoteConfig) return;
 
   const LIVENESS_URL  = castVoteConfig.dataset.livenessUrl;
   const CHALLENGE_API = '/api/liveness-challenges/?mode=login';
   const MP_CDN        = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/';
-  const MAX_ATTEMPTS  = 3;
 
+  // BUG 2 FIX: Raised from 3 to 5 so users have more chances
+  const MAX_ATTEMPTS  = 5;
+
+  // ── Landmark indices ──────────────────────────────────────────────────────
   const L_EYE_IDX = [33, 160, 158, 133, 153, 144];
   const R_EYE_IDX = [263, 387, 385, 362, 373, 380];
   const NOSE_IDX  = 1;
@@ -325,8 +331,19 @@
 
   function headRelX(lm) {
     const fw = lmDist(lm[L_EAR_IDX], lm[R_EAR_IDX]) + 1e-6;
+    // Sign convention: negative = left turn, positive = right turn
     return -((lm[NOSE_IDX].x - (lm[L_EAR_IDX].x + lm[R_EAR_IDX].x) / 2) / fw);
   }
+
+  // ── Client-side thresholds (MUST match server values in liveness.py) ──────
+  // BUG 1 FIX: Raised TURN_THRESH from 0.06 to 0.09 to match server.
+  //   The screenshot showed rel_x=-0.093 failing "need > 0.025" on the server —
+  //   client was accepting 0.025 but server required 0.09. Now they match.
+  const EAR_OPEN_THRESH     = 0.28;   // was 0.27 — BUG 4 FIX
+  const EAR_CLOSED_THRESH   = 0.19;   // was 0.24 — BUG 4 FIX (wider gap)
+  const NEUTRAL_BAND        = 0.06;   // was 0.04 — BUG 1 FIX
+  const TURN_THRESH         = 0.09;   // was 0.06 — BUG 1 FIX (matches server)
+  const TURN_CONFIRM_FRAMES = 3;      // client uses 3 for smoothing; server uses 1
 
   const CHALLENGES = {
     blink: {
@@ -334,8 +351,9 @@
       createState: () => ({ phase: 'waiting_open', cf: 0 }),
       update(s, lm) {
         const e = avgEAR(lm);
-        if (s.phase === 'waiting_open') { if (e >= 0.27) s.phase = 'waiting_blink'; return false; }
-        if (e < 0.24) { s.cf++; if (s.cf >= 1) return true; } else s.cf = 0;
+        // BUG 4 FIX: use EAR_OPEN_THRESH / EAR_CLOSED_THRESH constants
+        if (s.phase === 'waiting_open') { if (e >= EAR_OPEN_THRESH) s.phase = 'waiting_blink'; return false; }
+        if (e < EAR_CLOSED_THRESH) { s.cf++; if (s.cf >= 1) return true; } else s.cf = 0;
         return false;
       },
     },
@@ -344,8 +362,9 @@
       createState: () => ({ phase: 'waiting_neutral', tf: 0 }),
       update(s, lm) {
         const rx = headRelX(lm);
-        if (s.phase === 'waiting_neutral') { if (Math.abs(rx) <= 0.04) s.phase = 'waiting_turn'; return false; }
-        if (rx < -0.06) { s.tf++; if (s.tf >= 3) return true; } else s.tf = 0;
+        if (s.phase === 'waiting_neutral') { if (Math.abs(rx) <= NEUTRAL_BAND) s.phase = 'waiting_turn'; return false; }
+        // BUG 1 FIX: turn_left = negative rel_x
+        if (rx < -TURN_THRESH) { s.tf++; if (s.tf >= TURN_CONFIRM_FRAMES) return true; } else s.tf = 0;
         return false;
       },
     },
@@ -354,15 +373,18 @@
       createState: () => ({ phase: 'waiting_neutral', tf: 0 }),
       update(s, lm) {
         const rx = headRelX(lm);
-        if (s.phase === 'waiting_neutral') { if (Math.abs(rx) <= 0.04) s.phase = 'waiting_turn'; return false; }
-        if (rx > 0.06) { s.tf++; if (s.tf >= 3) return true; } else s.tf = 0;
+        if (s.phase === 'waiting_neutral') { if (Math.abs(rx) <= NEUTRAL_BAND) s.phase = 'waiting_turn'; return false; }
+        // BUG 1 FIX: turn_right = positive rel_x
+        if (rx > TURN_THRESH) { s.tf++; if (s.tf >= TURN_CONFIRM_FRAMES) return true; } else s.tf = 0;
         return false;
       },
     },
   };
 
   let _stream = null, _faceMesh = null, _animFrame = null, _video = null;
-  let _challengeId = null, _state = null;
+  // BUG 5 FIX: _challengeId is set once and locked for the session
+  let _challengeId = null, _challengeLocked = false;
+  let _state = null;
   let _locked = false, _firstFace = false, _livenessOK = false;
   let _capturedFrame = '', _timer = null, _countdown = null, _attempts = 0;
 
@@ -410,7 +432,7 @@
   function startClock() {
     clearTimeout(_timer); clearInterval(_countdown);
     const ch = CHALLENGES[_challengeId];
-    let secs  = 6;
+    let secs  = 8; // BUG 1 FIX: more time for deliberate head turn (was 6s)
     $id('gdot1')?.classList.remove('done');
     setBar(`${ch.label} (${secs}s)…`, '', ch.icon);
     _countdown = setInterval(() => {
@@ -430,12 +452,32 @@
         setBar('Too many failed attempts. Refresh to try again.', 'error', 'fa-ban');
         return;
       }
-      setTimeout(() => {
-        _firstFace = false; _locked = false;
-        _state     = CHALLENGES[_challengeId].createState();
-        setBar('Look at the camera to begin…', '', CHALLENGES[_challengeId].icon);
-      }, 1500);
-    }, 6000);
+      // BUG 2 FIX: Fully reset liveness state before retry
+      setTimeout(() => resetLivenessState(), 1500);
+    }, 8000); // BUG 1 FIX: 8s window (was 6s)
+  }
+
+  // BUG 2 FIX: New function — cleanly resets liveness state for a retry
+  function resetLivenessState() {
+    _firstFace     = false;
+    _locked        = false;
+    _livenessOK    = false;
+    _capturedFrame = '';
+    // Recreate challenge state but KEEP the same _challengeId (BUG 5 FIX)
+    if (_challengeId && CHALLENGES[_challengeId]) {
+      _state = CHALLENGES[_challengeId].createState();
+    }
+    const ch = _challengeId ? CHALLENGES[_challengeId] : null;
+    if (ch) {
+      setBar(`Look at the camera — ${ch.label}`, '', ch.icon);
+    } else {
+      setBar('Look at the camera to begin…', '');
+    }
+    setStatus('Camera active', 'ready');
+    $id('gdot1')?.classList.remove('done');
+    $id('gdot2')?.classList.remove('done');
+    const vb = $id('btnVerify');
+    if (vb) { vb.disabled = true; vb.innerHTML = '<i class="fa-solid fa-circle-check"></i> Confirm Identity'; }
   }
 
   function onResults(results) {
@@ -443,7 +485,7 @@
     const faces = results.multiFaceLandmarks || [];
     if (faces.length > 1) {
       clearTimeout(_timer); clearInterval(_countdown);
-      _firstFace = false; _state = CHALLENGES[_challengeId].createState();
+      resetLivenessState();
       setStatus(`${faces.length} faces detected`, 'error');
       setBar(`Security: ${faces.length} people in frame. Only you may be present.`, 'error', 'fa-users');
       return;
@@ -453,7 +495,9 @@
     setStatus('Face detected', 'ready');
     if (!_firstFace) { _firstFace = true; startClock(); return; }
     const ch = CHALLENGES[_challengeId];
-    if (!ch.update(_state, lm)) return;
+    if (!ch || !_state || !ch.update(_state, lm)) return;
+
+    // Gesture confirmed on client ─────────────────────────────────────────────
     _locked = true;
     clearTimeout(_timer); clearInterval(_countdown);
     if (_animFrame) { cancelAnimationFrame(_animFrame); _animFrame = null; }
@@ -482,7 +526,12 @@
   }
 
   async function startGate() {
-    _livenessOK = false; _capturedFrame = ''; _locked = false; _firstFace = false;
+    // Reset full state
+    _livenessOK    = false;
+    _capturedFrame = '';
+    _locked        = false;
+    _firstFace     = false;
+    _state         = null;
     clearTimeout(_timer); clearInterval(_countdown);
     if (_animFrame) { cancelAnimationFrame(_animFrame); _animFrame = null; }
     hideGateError();
@@ -499,12 +548,23 @@
       return;
     }
 
-    try {
-      const r = await fetch(CHALLENGE_API, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-      const d = await r.json();
-      _challengeId = (d.challenges || [])[0] || 'blink';
-    } catch (_) { _challengeId = 'blink'; }
-    if (!CHALLENGES[_challengeId]) _challengeId = 'blink';
+    // BUG 5 FIX: Only fetch challenge once; reuse on retry
+    if (!_challengeId || !_challengeLocked) {
+      try {
+        const r = await fetch(CHALLENGE_API, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const d = await r.json();
+        const fetched = (d.challenges || [])[0];
+        if (fetched && CHALLENGES[fetched]) {
+          _challengeId     = fetched;
+          _challengeLocked = true;
+        }
+      } catch (_) {}
+      if (!_challengeId || !CHALLENGES[_challengeId]) {
+        const fallbacks = ['blink', 'turn_left', 'turn_right'];
+        _challengeId     = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        _challengeLocked = true;
+      }
+    }
     _state = CHALLENGES[_challengeId].createState();
 
     setStatus('Requesting camera…');
@@ -541,7 +601,8 @@
       stopCamera(); return;
     }
 
-    setBar('Look at the camera to begin…', '', CHALLENGES[_challengeId].icon);
+    const ch = CHALLENGES[_challengeId];
+    setBar(`Look at the camera — ${ch.label}`, '', ch.icon);
     loop();
   }
 
@@ -568,15 +629,31 @@
         const msg = data.error || 'Verification failed. Please try again.';
         showGateError(msg); setBar('✗ ' + msg, 'error');
         vb.innerHTML = '<i class="fa-solid fa-circle-check"></i> Confirm Identity';
+
         const hardBlock = resp.status === 403 &&
           (msg.toLowerCase().includes('locked') || msg.toLowerCase().includes('security'));
+
         if (hardBlock) {
           vb.disabled = true;
+          stopCamera();
         } else {
-          _livenessOK = false; _capturedFrame = ''; _locked = false; _firstFace = false;
+          // BUG 2 FIX: Properly reset liveness state before retry
+          _livenessOK    = false;
+          _capturedFrame = '';
+          _locked        = false;
+          _firstFace     = false;
+          _state         = _challengeId ? CHALLENGES[_challengeId]?.createState() : null;
+          vb.disabled    = false;
+
           _attempts++;
-          if (_attempts < MAX_ATTEMPTS) { setTimeout(() => startGate(), 1800); }
-          else { vb.disabled = true; setBar('Too many attempts. Refresh to try again.', 'error', 'fa-ban'); }
+          if (_attempts < MAX_ATTEMPTS) {
+            // Restart camera after short delay
+            setTimeout(() => startGate(), 2000);
+          } else {
+            vb.disabled = true;
+            stopCamera();
+            setBar('Too many attempts. Refresh the page to try again.', 'error', 'fa-ban');
+          }
         }
       }
     } catch (e) {

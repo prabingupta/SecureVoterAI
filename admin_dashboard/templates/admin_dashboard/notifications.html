@@ -11,14 +11,14 @@
 {% block content %}
 <div class="notifications-page">
 
-  <!-- Page header -->
+
   <div class="page-header">
     <p class="page-eyebrow"><i class="fas fa-bell"></i> Monitoring</p>
     <h1>Notifications</h1>
     <p>Real-time fraud &amp; security alerts — Islington College elections.</p>
   </div>
 
-  <!-- Summary cards -->
+  
   <div class="notif-summary">
     <div class="notif-sum-card">
       <div class="nsc-icon red"><i class="fas fa-triangle-exclamation"></i></div>
@@ -57,7 +57,7 @@
     </div>
   </div>
 
-  <!-- Action bar -->
+
   <div class="notif-bar">
     <div class="notif-bar-left">
       <button class="ntab active" data-filter="all">All</button>
@@ -80,7 +80,7 @@
     </div>
   </div>
 
-  <!-- Notification list -->
+
   {% if fraud_alerts %}
     <div class="notif-list" id="notifList">
       {% for alert in fraud_alerts %}
@@ -89,7 +89,7 @@
              data-reviewed="{{ alert.reviewed|yesno:'true,false' }}"
              data-text="{{ alert.description|lower }} {{ alert.voter.full_name|default:''|lower }} {{ alert.voter.student_id|default:''|lower }}">
 
-          <!-- Icon -->
+       
           <div class="nc-icon
             {% if alert.alert_type == 'spoof_attempt' %}red
             {% elif alert.alert_type == 'too_many_attempts' %}amber
@@ -109,7 +109,7 @@
             {% endif %}
           </div>
 
-          <!-- Body -->
+       
           <div class="nc-body">
             <div class="nc-title">
               {% if alert.alert_type == 'spoof_attempt' %}
@@ -155,7 +155,7 @@
             </div>
           </div>
 
-          <!-- Right: unread dot + review action -->
+
           <div class="nc-right">
             {% if not alert.reviewed %}
               <span class="nc-unread-dot"></span>
@@ -196,7 +196,6 @@
 
 {% block extra_js %}
 <script>
-  // ── Tab filters ────────────────────────────────────────────────────────────
   const cards      = document.querySelectorAll('.notif-card');
   const tabs       = document.querySelectorAll('.ntab');
   const searchInput = document.getElementById('notifSearch');
@@ -212,14 +211,14 @@
 
       let visible = true;
 
-      // Tab filter
+    
       if (activeTab === 'unread') {
         visible = reviewed === 'false';
       } else if (activeTab !== 'all') {
         visible = type === activeTab;
       }
 
-      // Search filter (applied on top of tab filter)
+     
       if (visible && query) {
         visible = text.includes(query) ||
                   card.textContent.toLowerCase().includes(query);

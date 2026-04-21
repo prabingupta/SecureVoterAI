@@ -30,8 +30,9 @@ DEBUG         = os.getenv("DEBUG", "True") == "True"
 ALLOWED_HOSTS = (
     os.getenv("ALLOWED_HOSTS", "").split(",")
     if os.getenv("ALLOWED_HOSTS")
-    else []
+    else ["localhost", "127.0.0.1"]
 )
+
 
 
 #  APPLICATIONS 
@@ -90,11 +91,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'securevoter.wsgi.application'
 
 
-# DATABASE 
+#  DATABASE 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME':   BASE_DIR / 'db.sqlite3',
+        'ENGINE':   'django.db.backends.postgresql',
+        'NAME':     os.getenv('DB_NAME',     'securevoterdb'),
+        'USER':     os.getenv('DB_USER',     'securevoter_user'),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST':     os.getenv('DB_HOST',     'localhost'),
+        'PORT':     os.getenv('DB_PORT',     '5432'),
+        'OPTIONS': {
+            'connect_timeout': 10,
+        },
+        'CONN_MAX_AGE': 60,   
     }
 }
 
@@ -118,7 +127,7 @@ USE_TZ        = True
 
 # settings.py
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'   # collectstatic destination — never serve this in dev
+STATIC_ROOT = BASE_DIR / 'staticfiles'   
 
 STATICFILES_DIRS = [
     BASE_DIR / 'core' / 'static',

@@ -9,7 +9,7 @@
 
 {% block content %}
 
-<!-- ══ PAGE HEADER ═══════════════════════════════════════════════════ -->
+
 <div class="analytics-header">
   <div class="analytics-header-left">
     <h1><i class="fas fa-chart-mixed" style="color:var(--c-primary-400);margin-right:.45rem;font-size:1.4rem;"></i>Analytics Dashboard</h1>
@@ -23,11 +23,11 @@
 </div>
 
 
-<!-- ══ KPI ROW 1 — Voter Overview ════════════════════════════════════ -->
+
 <p class="analytics-section-label">Voter Overview</p>
 <div class="kpi-grid">
 
-  <!-- Total Registered -->
+ 
   <div class="kpi-card">
     <div class="kpi-top">
       <div class="kpi-icon"><i class="fas fa-users"></i></div>
@@ -38,7 +38,7 @@
     <div class="kpi-sub"><i class="fas fa-circle-info"></i> Includes all approval statuses</div>
   </div>
 
-  <!-- Approved -->
+
   <div class="kpi-card accent-success">
     <div class="kpi-top">
       <div class="kpi-icon"><i class="fas fa-circle-check"></i></div>
@@ -54,7 +54,7 @@
     </div>
   </div>
 
-  <!-- Pending -->
+  
   <div class="kpi-card accent-warn">
     <div class="kpi-top">
       <div class="kpi-icon"><i class="fas fa-hourglass-half"></i></div>
@@ -67,7 +67,7 @@
     </div>
   </div>
 
-  <!-- Rejected -->
+ 
   <div class="kpi-card accent-error">
     <div class="kpi-top">
       <div class="kpi-icon"><i class="fas fa-circle-xmark"></i></div>
@@ -78,13 +78,13 @@
     <div class="kpi-sub"><i class="fas fa-circle-info"></i> Not permitted to vote</div>
   </div>
 
-</div><!-- /kpi-grid -->
+</div>
 
 
-<!-- ══ KPI ROW 2 — Biometrics & Votes ════════════════════════════════ -->
+
 <div class="kpi-grid" style="margin-bottom:var(--sp-7);">
 
-  <!-- With face -->
+ 
   <div class="kpi-card accent-info">
     <div class="kpi-top">
       <div class="kpi-icon"><i class="fas fa-face-viewfinder"></i></div>
@@ -100,7 +100,7 @@
     </div>
   </div>
 
-  <!-- Without face -->
+  
   <div class="kpi-card accent-ink">
     <div class="kpi-top">
       <div class="kpi-icon"><i class="fas fa-face-dotted"></i></div>
@@ -111,7 +111,7 @@
     <div class="kpi-sub"><i class="fas fa-circle-info"></i> Cannot log in to vote</div>
   </div>
 
-  <!-- Voted -->
+
   <div class="kpi-card accent-gold">
     <div class="kpi-top">
       <div class="kpi-icon"><i class="fas fa-ballot-check"></i></div>
@@ -127,7 +127,7 @@
     </div>
   </div>
 
-  <!-- Not voted -->
+ 
   <div class="kpi-card">
     <div class="kpi-top">
       <div class="kpi-icon"><i class="fas fa-circle-minus"></i></div>
@@ -143,7 +143,7 @@
 </div>
 
 
-<!-- ══ TREND LINE ═════════════════════════════════════════════════════ -->
+
 <p class="analytics-section-label">Registration Trend</p>
 <div class="charts-row" style="margin-bottom:var(--sp-7);">
   <div class="chart-card trend-card">
@@ -161,11 +161,11 @@
 </div>
 
 
-<!-- ══ DEMOGRAPHICS ROW ══════════════════════════════════════════════ -->
+
 <p class="analytics-section-label">Voter Demographics</p>
 <div class="charts-row three" style="margin-bottom:var(--sp-7);">
 
-  <!-- Gender Donut -->
+ 
   <div class="chart-card">
     <div class="chart-card-head">
       <div>
@@ -184,7 +184,7 @@
     <div class="chart-legend" id="genderLegend"></div>
   </div>
 
-  <!-- Age Group Bar -->
+ 
   <div class="chart-card">
     <div class="chart-card-head">
       <div>
@@ -198,7 +198,7 @@
     </div>
   </div>
 
-  <!-- Department Donut -->
+
   <div class="chart-card">
     <div class="chart-card-head">
       <div>
@@ -220,10 +220,10 @@
 </div>
 
 
-<!-- ══ APPROVAL + YEAR ROW ═══════════════════════════════════════════ -->
+
 <div class="charts-row two" style="margin-bottom:var(--sp-7);">
 
-  <!-- Approval Status Donut -->
+ 
   <div class="chart-card">
     <div class="chart-card-head">
       <div>
@@ -257,7 +257,7 @@
     </div>
   </div>
 
-  <!-- Year of Study horizontal bars -->
+  
   <div class="chart-card">
     <div class="chart-card-head">
       <div>
@@ -275,11 +275,10 @@
 </div>
 
 
-<!-- ══ VOTE PARTICIPATION + FRAUD ════════════════════════════════════ -->
+
 <p class="analytics-section-label">Participation &amp; Security</p>
 <div class="charts-row two" style="margin-bottom:var(--sp-7);">
 
-  <!-- Vote participation -->
   <div class="chart-card">
     <div class="chart-card-head">
       <div>
@@ -307,7 +306,7 @@
     </div>
   </div>
 
-  <!-- Fraud alert breakdown -->
+
   <div class="chart-card">
     <div class="chart-card-head">
       <div>
@@ -335,7 +334,7 @@
 </div>
 
 
-<!-- ══ PER-ELECTION TURNOUT BAR ═══════════════════════════════════════ -->
+
 <p class="analytics-section-label">Election Turnout</p>
 <div class="charts-row" style="margin-bottom:var(--sp-7);">
   <div class="chart-card">
@@ -353,11 +352,11 @@
 </div>
 
 
-<!-- ══ GENDER × APPROVAL TABLE ═══════════════════════════════════════ -->
+
 <p class="analytics-section-label">Detailed Breakdown</p>
 <div class="charts-row two" style="margin-bottom:var(--sp-9);">
 
-  <!-- Summary table -->
+
   <div class="chart-card">
     <div class="chart-card-head">
       <div>
@@ -418,7 +417,7 @@
     </table>
   </div>
 
-  <!-- Age × gender stacked bar -->
+
   <div class="chart-card">
     <div class="chart-card-head">
       <div>
@@ -438,11 +437,11 @@
 {% endblock %}
 
 
-<!-- ══ CHART.JS + INLINE SCRIPTS ═════════════════════════════════════ -->
+
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
-/* ── Data from Django ─────────────────────────────────────────────── */
+
 const GENDER    = {{ gender_json|safe }};
 const AGE       = {{ age_json|safe }};
 const DEPT      = {{ dept_json|safe }};
@@ -459,7 +458,6 @@ const REJECTED= {{ rejected_voters }};
 const VOTED   = {{ voted_voters }};
 const NOT_VOTED={{ not_voted }};
 
-/* ── Palette ──────────────────────────────────────────────────────── */
 const P = {
   maroon:  ['#9B1821','#BE3340','#D96470','#EDA5AB','#F8DEE1'],
   gold:    ['#C49A00','#E8B800','#F5D040','#F9E07A','#FEFAE8'],
@@ -469,7 +467,7 @@ const P = {
   neutral: ['#4A3829','#6B5240','#8F7060','#B59A8A','#D4C4BA'],
 };
 
-/* ── Chart.js global defaults ────────────────────────────────────── */
+
 Chart.defaults.font.family  = "'DM Sans', sans-serif";
 Chart.defaults.font.size    = 12;
 Chart.defaults.color        = '#6B5240';
@@ -481,7 +479,7 @@ Chart.defaults.plugins.tooltip.padding          = 10;
 Chart.defaults.plugins.tooltip.cornerRadius     = 8;
 Chart.defaults.plugins.tooltip.displayColors    = true;
 
-/* ── Helpers ──────────────────────────────────────────────────────── */
+
 function donut(id, labels, values, colors, opts = {}) {
   const ctx = document.getElementById(id)?.getContext('2d');
   if (!ctx) return null;
@@ -532,7 +530,7 @@ function hbars(containerId, labels, values, colors, max) {
     </div>`).join('');
 }
 
-/* ── 1. Registration trend (line) ────────────────────────────────── */
+
 (function() {
   const ctx = document.getElementById('trendChart')?.getContext('2d');
   if (!ctx) return;
@@ -580,13 +578,13 @@ function hbars(containerId, labels, values, colors, max) {
   });
 })();
 
-/* ── 2. Gender donut ─────────────────────────────────────────────── */
+
 donut('genderChart', GENDER.labels, GENDER.values,
   [P.maroon[0], P.blue[1], P.neutral[3]]);
 buildLegend('genderLegend', GENDER.labels, GENDER.values,
   [P.maroon[0], P.blue[1], P.neutral[3]]);
 
-/* ── 3. Age group bar chart ──────────────────────────────────────── */
+
 (function() {
   const ctx = document.getElementById('ageChart')?.getContext('2d');
   if (!ctx) return;
@@ -613,19 +611,19 @@ buildLegend('genderLegend', GENDER.labels, GENDER.values,
   });
 })();
 
-/* ── 4. Department donut ─────────────────────────────────────────── */
+
 donut('deptChart', DEPT.labels, DEPT.values,
   [P.maroon[0], P.blue[1], P.gold[0]]);
 buildLegend('deptLegend', DEPT.labels, DEPT.values,
   [P.maroon[0], P.blue[1], P.gold[0]]);
 
-/* ── 5. Approval status donut ────────────────────────────────────── */
+
 donut('approvalChart',
   ['Approved', 'Pending', 'Rejected'],
   [APPROVED, PENDING, REJECTED],
   [P.green[1], P.warn[1], P.maroon[0]]);
 
-/* ── 6. Year of study bars ───────────────────────────────────────── */
+
 hbars('yearBars', YEAR.labels, YEAR.values,
   [P.maroon[0], P.maroon[2], P.maroon[4]],
   Math.max(...YEAR.values, 1));
@@ -657,13 +655,13 @@ hbars('yearBars', YEAR.labels, YEAR.values,
   });
 })();
 
-/* ── 7. Participation donut ──────────────────────────────────────── */
+
 donut('participationChart',
   ['Voted', 'Not Voted'],
   [VOTED, NOT_VOTED],
   [P.gold[0], P.neutral[4]]);
 
-/* ── 8. Fraud bars + chart ───────────────────────────────────────── */
+
 if (FRAUD.values.length) {
   const maxFraud = Math.max(...FRAUD.values, 1);
   const fbEl = document.getElementById('fraudBars');
@@ -707,7 +705,6 @@ if (FRAUD.values.length) {
   })();
 }
 
-/* ── 9. Elections grouped bar ────────────────────────────────────── */
 (function() {
   const ctx = document.getElementById('electionsChart')?.getContext('2d');
   if (!ctx || !ELECTIONS.labels.length) return;
@@ -750,7 +747,7 @@ if (FRAUD.values.length) {
   });
 })();
 
-/* ── 10. Age hbars + pie ─────────────────────────────────────────── */
+
 hbars('ageBars', AGE.labels, AGE.values,
   [P.gold[0], P.gold[1], P.gold[2], P.neutral[3]],
   Math.max(...AGE.values, 1));
@@ -758,7 +755,7 @@ hbars('ageBars', AGE.labels, AGE.values,
 donut('agePieChart', AGE.labels, AGE.values,
   [P.gold[0], P.gold[1], P.gold[2], P.neutral[3]]);
 
-/* ── Animated KPI counters ───────────────────────────────────────── */
+
 function countUp(el, target, duration = 900) {
   const start = performance.now();
   const update = (now) => {
@@ -775,7 +772,7 @@ document.querySelectorAll('[data-count]').forEach(el => {
   countUp(el, parseInt(el.dataset.count, 10));
 });
 
-/* Animate KPI progress bars */
+
 document.querySelectorAll('.kpi-bar-fill[data-pct]').forEach(el => {
   setTimeout(() => {
     el.style.width = Math.min(parseFloat(el.dataset.pct), 100) + '%';

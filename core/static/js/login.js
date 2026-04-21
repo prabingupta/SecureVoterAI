@@ -31,7 +31,7 @@ const NEUTRAL_BAND        = 0.04;
 const TURN_THRESH         = 0.06;
 const TURN_CONFIRM_FRAMES = 3;
 
-//  Challenge catalogue — look_up intentionally absent 
+//  Challenge catalogue
 const CHALLENGES = {
   blink: {
     icon:  'fa-eye',
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let sessionWarnTimer   = null;
   let sessionExpireTimer = null;
 
-  // Off-screen canvas for optical-flow
+  // Off-screen canvas 
   const _offCanvas  = document.createElement('canvas');
   _offCanvas.width  = 64;
   _offCanvas.height = 48;
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setStatus('Requesting camera…', '');
     setInstr('Allow camera access to continue.', '');
 
-    // Fetch server-issued challenge (1 random from blink/turn_left/turn_right)
+    // Fetch server issued challenge 
     try {
       const res  = await fetch('/api/liveness-challenges/?mode=login');
       const data = await res.json();
@@ -283,8 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setInstr('Enable camera permissions, then go Back and try again.', 'error');
       return;
     }
-
-    // Load FaceMesh with maxNumFaces=4 for multi-face detection
+    
     setInstr('Loading face detection…', '');
     try {
       faceMesh = new window.FaceMesh({ locateFile: f => `${MP_CDN}${f}` });
@@ -328,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!_livenessOK) {
         dot1?.classList.remove('active');
         setInstr(
-          `Timed out — "${ch.label}" not detected. Press Back to retry.`,
+          `Timed out : "${ch.label}" not detected. Press Back to retry.`,
           'error',
         );
         setStatus('Timed out', 'error');
@@ -410,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    setStatus('Face detected — complete the gesture', 'ready');
+    setStatus('Face detected : complete the gesture', 'ready');
     const ch = CHALLENGES[_challengeId];
     if (!ch || !_challengeState) return;
     if (!ch.update(_challengeState, lm)) return;

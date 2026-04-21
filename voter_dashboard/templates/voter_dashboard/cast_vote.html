@@ -18,7 +18,7 @@
     </div>
   {% endif %}
 
-  <!-- Election Info -->
+ 
   <div class="election-info">
     <h2>{{ election.title }}</h2>
     {% if election.description %}
@@ -40,7 +40,6 @@
     </div>
   </div>
 
-  <!-- Security Bar -->
   <div class="security-bar">
     <div class="security-item">
       <i class="fa-solid fa-lock"></i> AES-256 Encrypted
@@ -59,7 +58,7 @@
     </div>
   </div>
 
-  <!-- STEP 1: Liveness + Face Gate -->
+
   <div class="liveness-gate" id="livenessGate">
 
     <div class="gate-head">
@@ -74,13 +73,13 @@
       </div>
     </div>
 
-    <!-- Error banner (gate-level) -->
+    
     <div class="error-banner" id="gateError">
       <i class="fa-solid fa-circle-xmark"></i>
       <span id="gateErrorMsg">Verification failed.</span>
     </div>
 
-    <!-- Camera -->
+    
     <div class="cam-wrap">
       <video id="voteWebcam" autoplay muted playsinline></video>
       <div class="cam-status" id="camStatus">
@@ -89,13 +88,12 @@
       </div>
     </div>
 
-    <!-- Challenge instruction -->
     <div class="challenge-bar" id="challengeBar">
       <i class="fa-solid fa-eye" id="challengeIcon"></i>
       <span id="challengeText">Loading face detection…</span>
     </div>
 
-    <!-- Actions -->
+   
     <div class="gate-actions">
       <button class="btn-verify" id="btnVerify" disabled>
         <i class="fa-solid fa-circle-check"></i> Confirm Identity
@@ -106,15 +104,15 @@
       </div>
     </div>
 
-  </div><!-- /liveness-gate -->
+  </div>
 
-  <!-- Verified Banner (shown after gate passes) -->
+
   <div class="verified-banner" id="verifiedBanner">
     <i class="fa-solid fa-shield-check"></i>
     Identity confirmed — you may now cast your vote below.
   </div>
 
-  <!-- STEP 2: Ballot Form (hidden until liveness passes) -->
+ 
   <div class="candidate-form-section" id="candidateFormSection">
 
     <form method="post" id="voteForm"
@@ -183,9 +181,9 @@
       </div>
 
     </form>
-  </div><!-- /candidate-form-section -->
+  </div>
 
-  <!-- Confirmation Modal -->
+
   <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
       <div class="modal-icon"><i class="fa-solid fa-shield-halved"></i></div>
@@ -207,7 +205,7 @@
     </div>
   </div>
 
-</div><!-- /vote-page -->
+</div>
 
 <div id="castVoteConfig"
      data-liveness-url="{% url 'voter_dashboard:vote_liveness_verify' election.id %}"

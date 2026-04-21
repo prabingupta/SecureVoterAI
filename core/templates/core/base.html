@@ -9,18 +9,18 @@
   <meta name="description" content="SecureVoter AI — AI‑Secured Online Election Platform for Islington College, Kathmandu.">
   <meta name="author" content="Islington College">
 
-  <!-- Fonts -->
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Font Awesome -->
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
 
-  <!-- AOS -->
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css">
 
-  <!-- Base CSS (navbar + footer live here) -->
+  
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
 
   {% block extra_css %}{% endblock %}
@@ -28,9 +28,7 @@
 
 <body>
 
-<!-- ═══════════════════════════════════════════════
-     NAVBAR — shared across every page
-═══════════════════════════════════════════════ -->
+
 <header class="navbar" id="navbar">
   <div class="container navbar-container">
 
@@ -67,25 +65,20 @@
 </header>
 
 
-<!-- ═══════════════════════════════════════════════
-     MAIN CONTENT
-═══════════════════════════════════════════════ -->
 <main>
   {% block content %}{% endblock %}
 </main>
 
 
-<!-- ═══════════════════════════════════════════════
-     FOOTER — shared across every page
-═══════════════════════════════════════════════ -->
+
 <footer class="site-footer">
 
-  <!-- Gold shimmer top line -->
+ 
   <div class="footer-shimmer"></div>
 
   <div class="container footer-inner">
 
-    <!-- Left: brand + badges -->
+ 
     <div class="footer-col footer-brand">
       <h3 class="footer-brand-name">SecureVoter AI</h3>
       <p class="footer-brand-desc">
@@ -99,7 +92,6 @@
       </div>
     </div>
 
-    <!-- Centre: link columns -->
     <div class="footer-col footer-links-wrap">
       <div class="footer-link-group">
         <div class="footer-link-label">Platform</div>
@@ -117,7 +109,7 @@
       </div>
     </div>
 
-    <!-- Right: contact info -->
+    
     <div class="footer-col footer-contact">
       <p><i class="fa-solid fa-location-dot"></i> Kumari Block, Kamal Pokhari, Kathmandu 44600</p>
       <p><i class="fa-solid fa-envelope"></i> support@islingtoncollege.edu.np</p>
@@ -127,7 +119,7 @@
       </a>
     </div>
 
-  </div><!-- /footer-inner -->
+  </div>
 
   <div class="footer-bottom">
     <p>&copy; 2026 Islington College · SecureVoter AI · All rights reserved.</p>
@@ -136,9 +128,7 @@
 </footer>
 
 
-<!-- ═══════════════════════════════════════════════
-     SCRIPTS
-═══════════════════════════════════════════════ -->
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js" crossorigin="anonymous"></script>
 <script src="{% static 'js/index.js' %}"></script>
 {% block extra_js %}{% endblock %}

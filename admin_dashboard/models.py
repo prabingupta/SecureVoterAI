@@ -6,8 +6,6 @@ from voter_dashboard.models import Election
 
 
 class ElectionLog(models.Model):
-    """Audit log of admin actions on elections (created / opened / closed)."""
-
     election  = models.ForeignKey(Election, on_delete=models.CASCADE)
     action    = models.CharField(max_length=50)   # "created" | "opened" | "closed"
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -17,18 +15,6 @@ class ElectionLog(models.Model):
 
 
 class FraudAlert(models.Model):
-    """
-    Security event log — one row per suspicious login attempt.
-
-    ALERT TYPES
-    ───────────
-    face_mismatch       — live face did not match the registered embedding
-    spoof_attempt       — scores far beyond threshold (likely a photo/video)
-    too_many_attempts   — account locked after repeated face failures
-    multiple_faces      — more than one face visible in the frame
-    unknown_device      — login from an unrecognised device fingerprint
-    """
-
     ALERT_TYPES = [
         ('face_mismatch',     'Face Mismatch'),
         ('spoof_attempt',     'Spoof Attempt'),
@@ -37,7 +23,7 @@ class FraudAlert(models.Model):
         ('unknown_device',    'Unknown Device'),
     ]
 
-    # SET_NULL so deleting a student doesn't wipe the security record
+    
     voter = models.ForeignKey(
         Student,
         on_delete    = models.SET_NULL,
@@ -45,7 +31,7 @@ class FraudAlert(models.Model):
         blank        = True,
         related_name = 'fraud_alerts',
     )
-    # SET_NULL so closing/deleting an election doesn't wipe its fraud history
+    
     election = models.ForeignKey(
         Election,
         on_delete    = models.SET_NULL,
@@ -61,7 +47,6 @@ class FraudAlert(models.Model):
     description = models.TextField()
     ip_address  = models.GenericIPAddressField(null=True, blank=True)
 
-    # 'reviewed' is the single canonical name used in model + views + templates
     reviewed  = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
 

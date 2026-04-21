@@ -56,34 +56,32 @@ class Student(AbstractBaseUser, PermissionsMixin):
         upload_to='profile_photos/', blank=True, null=True
     )
 
-    #  Demographics (for analytics dashboard)
+    
     age = models.PositiveSmallIntegerField(null=True, blank=True)
 
-    # gender: Male or Female
+   
     gender = models.CharField(
         max_length=10, choices=GENDER_CHOICES, null=True, blank=True
     )
-
-    #  Face embedding storage (MediaPipe 1404-d vector, binary) 
+ 
     face_embedding = models.BinaryField(blank=True, null=True)
 
-    #  Admin approval 
+   
     approval_status = models.CharField(
         max_length=20, choices=APPROVAL_CHOICES, default='pending'
     )
     approval_note = models.TextField(blank=True, null=True)
 
-    #  Security / lockout 
+    
     failed_login_attempts = models.PositiveSmallIntegerField(default=0)
     locked_until          = models.DateTimeField(null=True, blank=True)
 
-    #  Device fingerprint (recorded at registration) 
+   
     registered_device = models.CharField(max_length=500, blank=True, null=True)
 
-    # Audit trail 
+   
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
 
-    # Notification preferences 
     
     notify_election_open    = models.BooleanField(default=True)
     notify_election_close   = models.BooleanField(default=True)
@@ -133,10 +131,6 @@ class Student(AbstractBaseUser, PermissionsMixin):
         return self.locked_until is not None and self.locked_until > timezone.now()
 
     def increment_failed_attempts(self, max_attempts=3, lockout_minutes=15):
-        """
-        Increment the failed-login counter.
-        If max_attempts is reached, set locked_until to now + lockout_minutes.
-        """
         self.failed_login_attempts += 1
         if self.failed_login_attempts >= max_attempts:
             self.locked_until = timezone.now() + timezone.timedelta(
@@ -145,18 +139,10 @@ class Student(AbstractBaseUser, PermissionsMixin):
         self.save(update_fields=['failed_login_attempts', 'locked_until'])
 
     def reset_failed_attempts(self):
-        """
-        Clear the failed-login counter and remove any lockout.
-        Called after a successful login.
-        """
         self.failed_login_attempts = 0
         self.locked_until          = None
         self.save(update_fields=['failed_login_attempts', 'locked_until'])
 
     def record_login(self, ip_address: str):
-        """
-        Persist the IP address of a successful login.
-        Called by face_verify_api immediately after login().
-        """
         self.last_login_ip = ip_address
         self.save(update_fields=['last_login_ip'])

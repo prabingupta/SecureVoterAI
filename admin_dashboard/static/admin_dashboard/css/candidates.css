@@ -1,16 +1,9 @@
-/* ═══════════════════════════════════════════════════════════════════
+/* 
    SecureVoter AI — Admin Dashboard / candidates.css
-   Requires: base.css
-   Covers: candidate grid + cards, fraud alerts + summary,
-           fraud log report (bar breakdown, toolbar, table),
-           notifications (tabs, cards, summary),
-           face chips, priority badges
-═══════════════════════════════════════════════════════════════════ */
+*/
 
 
-/* ─────────────────────────────────────────────────────────────────
-   PAGE WRAPPERS
-───────────────────────────────────────────────────────────────── */
+
 
 .candidates-page,
 .fraud-page,
@@ -22,9 +15,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   1. CANDIDATE CARDS GRID
-───────────────────────────────────────────────────────────────── */
+
 
 .candidates-grid {
   display:               grid;
@@ -161,9 +152,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   2. FACE CHIP
-───────────────────────────────────────────────────────────────── */
+
 
 .face-chip {
   display:         inline-flex;
@@ -192,9 +181,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   3. FRAUD ALERTS — SUMMARY STRIP
-───────────────────────────────────────────────────────────────── */
+
 
 .fraud-summary {
   display:               grid;
@@ -250,11 +237,9 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   4. FRAUD LOG REPORT
-───────────────────────────────────────────────────────────────── */
 
-/* Summary strip (report page) */
+
+/* Summary strip */
 .report-summary {
   display:               grid;
   grid-template-columns: repeat(5, 1fr);
@@ -528,9 +513,7 @@
 .rpt-empty i { font-size: 2.5rem; color: var(--c-success); opacity: 0.35; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   5. NOTIFICATIONS
-───────────────────────────────────────────────────────────────── */
+
 
 /* Summary strip */
 .notif-summary {
@@ -834,9 +817,7 @@
 .notif-empty i { font-size: 2.5rem; color: var(--c-ink-300); }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   RESPONSIVE
-───────────────────────────────────────────────────────────────── */
+
 
 @media (max-width: 1024px) {
   .report-summary  { grid-template-columns: repeat(3, 1fr); }

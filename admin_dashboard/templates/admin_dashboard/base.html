@@ -6,21 +6,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Admin | SecureVoter AI{% endblock %}</title>
 
-  <!-- Fonts: Syne (display) + DM Sans (body) + JetBrains Mono -->
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
-  <!-- Font Awesome -->
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" />
 
-  <!-- Base CSS -->
+  
   <link rel="stylesheet" href="{% static 'admin_dashboard/css/base.css' %}" />
   {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-<!-- ══ TOP NAVBAR ════════════════════════════════════════════════ -->
+
 <header class="navbar" id="adminNavbar">
   <div class="navbar-inner">
 
@@ -34,7 +34,7 @@
       </div>
     </a>
 
-    <!-- Center search -->
+
     <div class="navbar-search">
       <i class="fas fa-magnifying-glass"></i>
       <input type="text" placeholder="Search elections, voters, alerts…" id="globalSearch" autocomplete="off" />
@@ -43,7 +43,7 @@
 
     <div class="navbar-right">
 
-      <!-- Notification bell -->
+     
       <div class="nav-notif-wrap" id="notifWrap">
         <button class="nav-notif-btn {% if unresolved_fraud_count %}has-alerts{% endif %}"
                 id="notifToggle" aria-label="Notifications">
@@ -93,7 +93,7 @@
         </div>
       </div>
 
-      <!-- Admin profile pill -->
+     
       <div class="admin-pill">
         <div class="admin-avatar">
           {{ request.user.get_full_name|default:request.user.username|slice:":2"|upper }}
@@ -110,7 +110,7 @@
         <i class="fas fa-right-from-bracket"></i>
       </a>
 
-      <!-- Mobile hamburger -->
+
       <button class="nav-toggle" id="sidebarToggle"
               aria-label="Toggle sidebar" aria-expanded="false">
         <span></span><span></span><span></span>
@@ -121,7 +121,7 @@
 </header>
 
 
-<!-- ══ FLASH MESSAGES ════════════════════════════════════════════ -->
+
 {% if messages %}
   <div class="messages-list" aria-live="polite">
     {% for message in messages %}
@@ -145,14 +145,13 @@
 {% endif %}
 
 
-<!-- ══ LAYOUT ═════════════════════════════════════════════════════ -->
+
 <div class="admin-layout">
 
-  <!-- ══ SIDEBAR ══════════════════════════════════════════════════ -->
   <aside class="admin-sidebar" id="adminSidebar" aria-label="Admin navigation">
     <div class="sidebar-scroll">
 
-      <!-- Overview -->
+     
       <div class="sidebar-group">
         <p class="sidebar-section-label">Overview</p>
         <nav>
@@ -169,7 +168,6 @@
         </nav>
       </div>
 
-      <!-- Elections -->
       <div class="sidebar-group">
         <p class="sidebar-section-label">Elections</p>
         <nav>
@@ -186,7 +184,7 @@
         </nav>
       </div>
 
-      <!-- Voters -->
+  
       <div class="sidebar-group">
         <p class="sidebar-section-label">Voters</p>
         <nav>
@@ -201,7 +199,7 @@
         </nav>
       </div>
 
-      <!-- Monitoring -->
+    
       <div class="sidebar-group">
         <p class="sidebar-section-label">Monitoring</p>
         <nav>
@@ -226,7 +224,7 @@
         </nav>
       </div>
 
-    </div><!-- /sidebar-scroll -->
+    </div>
 
     <div class="sidebar-footer">
       <div class="sf-security">
@@ -236,18 +234,18 @@
       <div class="sf-copy">SecureVoter AI &copy; {% now "Y" %}</div>
     </div>
 
-  </aside><!-- /admin-sidebar -->
+  </aside>
 
 
-  <!-- ══ MAIN CONTENT ══════════════════════════════════════════════ -->
+  
   <main class="admin-main" id="adminMain">
     {% block content %}{% endblock %}
   </main>
 
-</div><!-- /admin-layout -->
+</div>
 
 
-<!-- ══ FOOTER ════════════════════════════════════════════════════ -->
+
 <footer class="admin-footer">
   <div class="footer-left">
     <strong>SecureVoter AI</strong> — Islington College Election Management System
@@ -260,10 +258,10 @@
 </footer>
 
 
-<!-- ══ SCRIPTS ════════════════════════════════════════════════════ -->
+
 <script src="{% static 'admin_dashboard/js/main.js' %}"></script>
 <script>
-  // Sidebar toggle (mobile)
+ 
   const toggle  = document.getElementById('sidebarToggle');
   const sidebar = document.getElementById('adminSidebar');
   toggle?.addEventListener('click', () => {
@@ -278,13 +276,13 @@
     }
   });
 
-  // Navbar scroll shadow
+ 
   const navbar = document.getElementById('adminNavbar');
   window.addEventListener('scroll', () => {
     navbar?.classList.toggle('navbar-scrolled', window.scrollY > 10);
   }, { passive: true });
 
-  // Notification dropdown
+
   const notifToggle   = document.getElementById('notifToggle');
   const notifDropdown = document.getElementById('notifDropdown');
   notifToggle?.addEventListener('click', (e) => {
@@ -293,7 +291,7 @@
   });
   document.addEventListener('click', () => notifDropdown?.classList.remove('open'));
 
-  // Auto-dismiss toasts after 5 seconds
+  
   document.querySelectorAll('.message-toast').forEach(toast => {
     setTimeout(() => {
       toast.style.cssText = 'opacity:0;transform:translateX(28px);transition:all .3s ease';

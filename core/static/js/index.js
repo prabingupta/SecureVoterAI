@@ -2,9 +2,7 @@
 (function () {
   'use strict';
 
-  /* 
-      AOS INIT
-     */
+  
   if (typeof AOS !== 'undefined') {
     AOS.init({
       duration: 820,
@@ -33,7 +31,7 @@
 
     if (!navToggle || !mainNav) return;
 
-    /* Open / close helpers */
+   
     function openNav() {
       mainNav.classList.add('nav-open');
       navToggle.setAttribute('aria-expanded', 'true');
@@ -78,7 +76,7 @@
       if (e.key === 'Escape' && isOpen()) closeNav();
     });
 
-    /* Close when viewport widens past mobile breakpoint */
+    
     window.matchMedia('(min-width: 769px)').addEventListener('change', (e) => {
       if (e.matches && isOpen()) closeNav();
     });
@@ -140,9 +138,7 @@
   })();
 
 
-  /* 
-     TYPEWRITER
- */
+  
   (function initTypewriter() {
     const el     = document.getElementById('typewriterText');
     const cursor = document.querySelector('.typewriter-cursor');

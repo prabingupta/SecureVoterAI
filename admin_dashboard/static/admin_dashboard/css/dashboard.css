@@ -1,14 +1,10 @@
-/* ═══════════════════════════════════════════════════════════════════
+/* 
    SecureVoter AI — Admin Dashboard / dashboard.css
-   Requires: base.css
-   Covers: metrics cards, incident log table + filters + pagination,
-           incident timeline, active elections ticker, quick actions
-═══════════════════════════════════════════════════════════════════ */
+   
+ */
 
 
-/* ─────────────────────────────────────────────────────────────────
-   PAGE WRAPPER
-───────────────────────────────────────────────────────────────── */
+
 
 .dashboard-page {
   display:        flex;
@@ -17,9 +13,6 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   1. METRICS GRID
-───────────────────────────────────────────────────────────────── */
 
 .metrics-grid {
   display:               grid;
@@ -102,9 +95,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   2. INCIDENT LOG HEADER
-───────────────────────────────────────────────────────────────── */
+
 
 .ilog-header {
   background:    var(--c-surface);
@@ -254,9 +245,7 @@
 .ilog-date i { color: var(--c-gold-600); }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   3. INCIDENT LOG BODY (table + timeline side-by-side)
-───────────────────────────────────────────────────────────────── */
+
 
 .ilog-body-grid {
   display:               grid;
@@ -399,9 +388,7 @@
 .ilog-empty i { font-size: 2.5rem; color: var(--c-primary-200); }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   4. INCIDENT TIMELINE
-───────────────────────────────────────────────────────────────── */
+
 
 .ilog-timeline {
   background:    var(--c-surface);
@@ -473,9 +460,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   5. LOWER GRID — Active Elections + Quick Actions
-───────────────────────────────────────────────────────────────── */
+
 
 .dash-lower-grid {
   display:               grid;
@@ -593,9 +578,7 @@
 .quick-action-btn:hover i { color: var(--c-primary-600); transform: scale(1.12); }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   RESPONSIVE
-───────────────────────────────────────────────────────────────── */
+
 
 @media (max-width: 1200px) {
   .metrics-grid    { grid-template-columns: repeat(3, 1fr); }

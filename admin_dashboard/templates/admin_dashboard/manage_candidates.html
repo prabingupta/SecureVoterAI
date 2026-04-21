@@ -11,21 +11,21 @@
 {% block content %}
 <div class="candidates-page">
 
-  <!-- Page Header -->
+  
   <div class="page-header">
     <p class="page-eyebrow"><i class="fas fa-users"></i> Candidates</p>
     <h1>Manage Candidates</h1>
     <p>Add, update, and remove candidates assigned to Islington College elections.</p>
   </div>
 
-  <!-- Action bar -->
+
   <div class="page-actions">
     <div class="page-actions-left">
       <div class="search-bar">
         <i class="fas fa-magnifying-glass"></i>
         <input type="text" id="candidateSearch" placeholder="Search candidates…" aria-label="Search candidates" />
       </div>
-      <!-- Election filter -->
+      
       <select class="form-control" id="electionFilter" style="max-width:200px; padding:.55rem 1rem; font-size:.82rem;">
         <option value="all">All Elections</option>
         {% for election in elections %}
@@ -38,7 +38,7 @@
     </a>
   </div>
 
-  <!-- Candidates grid -->
+
   {% if candidates %}
     <div class="candidates-grid" id="candidatesGrid">
       {% for candidate in candidates %}
@@ -69,11 +69,11 @@
           </div>
 
           <div class="candidate-admin-actions">
-            <!-- Edit -->
+          
             <a href="{% url 'admin_dashboard:edit_candidate' candidate.id %}" class="btn btn-ghost btn-sm">
               <i class="fas fa-pen"></i> Edit
             </a>
-            <!-- Delete -->
+            
             <button
               class="btn btn-danger btn-sm"
               data-modal="deleteCandidateModal"
@@ -103,7 +103,7 @@
 </div>
 
 
-<!-- ══ DELETE CANDIDATE MODAL ════════════════════════════════════ -->
+
 <div class="modal-overlay" id="deleteCandidateModal" role="dialog" aria-modal="true" aria-labelledby="delCandHeading">
   <div class="modal">
     <button class="modal-close" id="closeDeleteCandModal"><i class="fas fa-xmark"></i></button>
@@ -127,20 +127,20 @@
 
 {% block extra_js %}
 <script>
-  // ── Search ─────────────────────────────────────────────────────
+  
   const cards = document.querySelectorAll('.candidate-admin-card');
   document.getElementById('candidateSearch')?.addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();
     cards.forEach(c => { c.style.display = c.dataset.name.includes(q) ? '' : 'none'; });
   });
 
-  // ── Election filter ───────────────────────────────────────────
+  
   document.getElementById('electionFilter')?.addEventListener('change', (e) => {
     const val = e.target.value;
     cards.forEach(c => { c.style.display = (val === 'all' || c.dataset.election === val) ? '' : 'none'; });
   });
 
-  // ── Delete modal ──────────────────────────────────────────────
+  
   const deleteCandModal = document.getElementById('deleteCandidateModal');
   const deleteCandName  = document.getElementById('deleteCandidateName');
   const confirmDeleteCand = document.getElementById('confirmDeleteCand');

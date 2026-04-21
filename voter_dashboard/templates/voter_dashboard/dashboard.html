@@ -11,14 +11,14 @@
 {% block content %}
 <div class="dashboard-page">
 
-  <!-- ── Welcome banner ──────────────────────────────────────────── -->
+ 
   <div class="welcome-banner">
     <div class="welcome-text">
       <h2>Welcome back, <span>{{ user.full_name }}</span></h2>
       <p>
         You are logged into the <strong>Islington College</strong> secure election
         portal. Your identity has been verified via AI face recognition.
-        Cast your vote below — each vote is encrypted and anonymous.
+        Cast your vote below and each vote is encrypted and anonymous.
       </p>
     </div>
     <div class="welcome-badges">
@@ -31,7 +31,7 @@
     </div>
   </div>
 
-  <!-- ── Stat cards ──────────────────────────────────────────────── -->
+ 
   <div class="stat-grid">
     <div class="stat-card">
       <div class="stat-icon red">
@@ -62,7 +62,7 @@
     </div>
   </div>
 
-  <!-- ── Active elections ────────────────────────────────────────── -->
+ 
   <div class="section-header">
     <div>
       <span class="section-tag">Live Now</span>
@@ -115,7 +115,7 @@
     </div>
   {% endif %}
 
-  <!-- ── Past elections ──────────────────────────────────────────── -->
+  
   {% if past_elections %}
     <div class="section-header">
       <div>
@@ -142,7 +142,7 @@
     </div>
   {% endif %}
 
-  <!-- ── Info alert ──────────────────────────────────────────────── -->
+ 
   <div class="alert-info-block">
     <i class="fa-solid fa-shield-halved"></i>
     <p>

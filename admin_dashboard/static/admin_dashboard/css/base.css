@@ -1,17 +1,11 @@
-/* ═══════════════════════════════════════════════════════════════════
+/* 
    SecureVoter AI — Admin Dashboard / base.css
-   Design tokens, reset, app shell, navbar, sidebar,
-   shared buttons, badges, modals, toasts.
-   All other admin CSS files depend on this one.
-═══════════════════════════════════════════════════════════════════ */
+    */
 
 
-/* ─────────────────────────────────────────────────────────────────
-   DESIGN TOKENS
-───────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── Primary palette (burgundy — mirrors voter dashboard) ──── */
+  /*  Primary palette */
   --c-primary-950:  #1a0305;
   --c-primary-900:  #2e0609;
   --c-primary-800:  #420a0f;
@@ -24,7 +18,7 @@
   --c-primary-100:  #f8e4e5;
   --c-primary-50:   #fdf2f2;
 
-  /* ── Gold accent ─────────────────────────────────────────── */
+
   --c-gold-900:   #5a3d00;
   --c-gold-800:   #7d5500;
   --c-gold-700:   #a37000;
@@ -36,7 +30,7 @@
   --c-gold-100:   #fdf7e0;
   --c-gold-50:    #fffdf5;
 
-  /* ── Semantic ─────────────────────────────────────────────── */
+  
   --c-success:    #16a34a;
   --c-success-dk: #166534;
   --c-success-bg: #f0fdf4;
@@ -48,7 +42,7 @@
   --c-info:       #2563eb;
   --c-info-bg:    #eff6ff;
 
-  /* ── Ink scale ─────────────────────────────────────────────── */
+  
   --c-ink-900:  #0f0306;
   --c-ink-800:  #1c0a0b;
   --c-ink-700:  #2d1114;
@@ -59,7 +53,7 @@
   --c-ink-200:  #e8d8da;
   --c-ink-100:  #f5eeef;
 
-  /* ── Sidebar (dark) ────────────────────────────────────────── */
+  
   --c-sidebar-bg:      #140407;
   --c-sidebar-border:  rgba(241,225,148,0.07);
   --c-sidebar-item:    rgba(255,255,255,0.60);
@@ -67,22 +61,21 @@
   --c-sidebar-active:  rgba(241,225,148,0.13);
   --c-sidebar-w:       248px;
 
-  /* ── Surface / backgrounds ─────────────────────────────────── */
+  
   --c-bg:       #f4eeec;
   --c-surface:  #ffffff;
   --c-warm:     #fdf8f5;
   --c-border:   #ece4e0;
   --c-border-strong: #e0d4d0;
 
-  /* ── Navbar ────────────────────────────────────────────────── */
-  --c-navbar-h: 62px;
+  
 
-  /* ── Typography ────────────────────────────────────────────── */
+  
   --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
   --font-mono:    'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   --font-display: 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* ── Radius ─────────────────────────────────────────────────── */
+  
   --r-xs:   4px;
   --r-sm:   8px;
   --r-md:   10px;
@@ -90,7 +83,6 @@
   --r-xl:   18px;
   --r-full: 9999px;
 
-  /* ── Shadows ────────────────────────────────────────────────── */
   --shadow-xs:   0 1px 3px rgba(91,14,20,0.06);
   --shadow-sm:   0 2px 8px rgba(91,14,20,0.08);
   --shadow-card: 0 1px 3px rgba(91,14,20,0.06), 0 4px 14px rgba(91,14,20,0.05);
@@ -98,12 +90,12 @@
   --shadow-drop: 0 8px 40px rgba(91,14,20,0.14);
   --shadow-modal:0 24px 60px rgba(0,0,0,0.20);
 
-  /* ── Gradients ──────────────────────────────────────────────── */
+
   --grad-primary:  linear-gradient(135deg, #420a0f 0%, #5b0e14 55%, #7a1219 100%);
   --grad-gold:     linear-gradient(135deg, #c98b00 0%, #e8a800 100%);
   --grad-shimmer:  linear-gradient(90deg, transparent 0%, rgba(241,225,148,0.55) 50%, transparent 100%);
 
-  /* ── Spacing scale ─────────────────────────────────────────── */
+
   --sp-1: 0.25rem;
   --sp-2: 0.5rem;
   --sp-3: 0.75rem;
@@ -115,13 +107,13 @@
   --sp-9: 2.5rem;
   --sp-10: 3rem;
 
-  /* ── Transitions ────────────────────────────────────────────── */
+
   --ease:     cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 140ms;
   --dur-mid:  230ms;
   --dur-slow: 380ms;
 
-  /* ── Legacy aliases (templates reference these) ────────────── */
+
   --clr-primary:   var(--c-primary-700);
   --clr-gold:      var(--c-gold-500);
   --clr-gold-light:var(--c-gold-300);
@@ -135,9 +127,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   RESET
-───────────────────────────────────────────────────────────────── */
+
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -173,9 +163,7 @@ button { cursor: pointer; border: none; background: none; }
 .text-muted { color: var(--c-ink-400); }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   TOP NAVBAR
-───────────────────────────────────────────────────────────────── */
+
 
 .navbar {
   height:          var(--c-navbar-h);
@@ -207,7 +195,7 @@ button { cursor: pointer; border: none; background: none; }
 
 .navbar-scrolled { box-shadow: 0 2px 24px rgba(0,0,0,0.35); }
 
-/* ── Brand ────────────────────────────────────────────────────── */
+
 
 .brand {
   display:     flex;
@@ -265,7 +253,7 @@ button { cursor: pointer; border: none; background: none; }
   line-height:    1;
 }
 
-/* ── Search ───────────────────────────────────────────────────── */
+
 
 .navbar-search {
   flex:          1;
@@ -317,7 +305,7 @@ button { cursor: pointer; border: none; background: none; }
   pointer-events: none;
 }
 
-/* ── Navbar right cluster ─────────────────────────────────────── */
+
 
 .navbar-right {
   display:     flex;
@@ -586,9 +574,7 @@ button { cursor: pointer; border: none; background: none; }
 .nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   LAYOUT
-───────────────────────────────────────────────────────────────── */
+
 
 .admin-layout {
   display:   flex;
@@ -597,9 +583,8 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   SIDEBAR
-───────────────────────────────────────────────────────────────── */
+
+
 
 .admin-sidebar {
   width:          var(--c-sidebar-w);
@@ -763,9 +748,7 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   MAIN CONTENT
-───────────────────────────────────────────────────────────────── */
+
 
 .admin-main {
   flex:        1;
@@ -775,9 +758,7 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   FOOTER
-───────────────────────────────────────────────────────────────── */
+
 
 .admin-footer {
   margin-left:     var(--c-sidebar-w);
@@ -798,9 +779,6 @@ button { cursor: pointer; border: none; background: none; }
 .footer-right span { display: flex; align-items: center; gap: 0.35rem; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   PAGE HEADER (shared across all pages)
-───────────────────────────────────────────────────────────────── */
 
 .page-header {
   margin-bottom: 1.75rem;
@@ -847,9 +825,7 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   SHARED ACTION BAR
-───────────────────────────────────────────────────────────────── */
+
 
 .page-actions {
   display:         flex;
@@ -902,9 +878,7 @@ button { cursor: pointer; border: none; background: none; }
 .search-bar input::placeholder { color: var(--c-ink-400); }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   FILTER PILLS
-───────────────────────────────────────────────────────────────── */
+
 
 .filter-pills { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 
@@ -936,9 +910,6 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   SHARED BUTTONS
-───────────────────────────────────────────────────────────────── */
 
 .btn {
   display:         inline-flex;
@@ -1023,9 +994,6 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   SHARED BADGES
-───────────────────────────────────────────────────────────────── */
 
 .badge {
   display:         inline-flex;
@@ -1099,9 +1067,7 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   SHARED TABLE
-───────────────────────────────────────────────────────────────── */
+
 
 .table-wrapper {
   background:    var(--c-surface);
@@ -1169,9 +1135,6 @@ table.rpt-table tbody tr:hover td { background: var(--c-warm); }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   SHARED CARD
-───────────────────────────────────────────────────────────────── */
 
 .card {
   background:    var(--c-surface);
@@ -1181,9 +1144,7 @@ table.rpt-table tbody tr:hover td { background: var(--c-warm); }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   SHARED FORM CONTROLS
-───────────────────────────────────────────────────────────────── */
+
 
 .form-control {
   width:         100%;
@@ -1230,9 +1191,6 @@ textarea.form-control { resize: vertical; min-height: 90px; line-height: 1.6; }
 .form-group:last-child { margin-bottom: 0; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   FLASH MESSAGES / TOASTS
-───────────────────────────────────────────────────────────────── */
 
 .messages-list {
   position:  fixed;
@@ -1293,7 +1251,7 @@ textarea.form-control { resize: vertical; min-height: 90px; line-height: 1.6; }
 .toast-close:hover { opacity: 1; background: rgba(0,0,0,0.08); }
 
 
-/* ─────────────────────────────────────────────────────────────────
+
    MODALS
 ───────────────────────────────────────────────────────────────── */
 
@@ -1371,9 +1329,6 @@ textarea.form-control { resize: vertical; min-height: 90px; line-height: 1.6; }
 .modal-actions .btn { flex: 1; justify-content: center; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   VOTER CELL (shared across candidates / voters pages)
-───────────────────────────────────────────────────────────────── */
 
 .voter-cell {
   display:     flex;
@@ -1413,9 +1368,6 @@ textarea.form-control { resize: vertical; min-height: 90px; line-height: 1.6; }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   SECTION HEAD
-───────────────────────────────────────────────────────────────── */
 
 .section-head {
   display:         flex;
@@ -1444,9 +1396,8 @@ textarea.form-control { resize: vertical; min-height: 90px; line-height: 1.6; }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   EMPTY STATE
-───────────────────────────────────────────────────────────────── */
+
+
 
 .candidates-empty {
   display:         flex;
@@ -1482,9 +1433,7 @@ textarea.form-control { resize: vertical; min-height: 90px; line-height: 1.6; }
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   RESPONSIVE
-───────────────────────────────────────────────────────────────── */
+
 
 @media (max-width: 1024px) {
   :root { --c-sidebar-w: 220px; }

@@ -17,6 +17,7 @@ from django.http                  import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 from django.utils                 import timezone
+from datetime                     import timedelta
 from rest_framework.decorators    import api_view
 from rest_framework.response      import Response
 from rest_framework               import status
@@ -25,26 +26,39 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models                   import Student
 from .serializers              import RegisterSerializer, LoginSerializer
 from .services.face_embedding  import FaceEmbedding, EMBEDDING_QUALITY_MIN
-from .services.face_verifier   import FaceVerifier, SPOOF_COSINE_FLOOR
-from .services.liveness        import LivenessChallenge, generate_random_challenges
+from .services.face_verifier   import FaceVerifier, SPOOF_COSINE_FLOOR, COSINE_THRESHOLD
+from .services.anti_spoof      import AntiSpoofChecker
+from .services.liveness        import LivenessChallenge, generate_random_challenges, CHALLENGE_POOL
 from admin_dashboard.models    import FraudAlert
 
 logger = logging.getLogger(__name__)
 
-# ── Constants 
-FACE_MAX_ATTEMPTS        = 3
-FACE_LOCKOUT_MIN         = 15    
-PW_MAX_ATTEMPTS          = 5
-PW_LOCKOUT_MIN           = 15
+
+_anti_spoof_checker = None
 
 
+def _get_anti_spoof_checker() -> AntiSpoofChecker:
+    global _anti_spoof_checker
+    if _anti_spoof_checker is None:
+        _anti_spoof_checker = AntiSpoofChecker()
+    return _anti_spoof_checker
 
-# Login         → 1 selected at random via generate_random_challenges(1).
-CHALLENGE_POOL           = ['blink', 'turn_left', 'turn_right']
-REG_CHALLENGE_COUNT      = 3     
+
+MAX_LOGIN_ATTEMPTS = 3
+LOCKOUT_MINUTES    = 15
+
+PW_MAX_ATTEMPTS    = MAX_LOGIN_ATTEMPTS
+PW_LOCKOUT_MIN     = LOCKOUT_MINUTES
+FACE_MAX_ATTEMPTS  = MAX_LOGIN_ATTEMPTS
+FACE_LOCKOUT_MIN   = LOCKOUT_MINUTES
+
+# Registration: block session after this many liveness failures
+REG_MAX_LIVENESS_ATTEMPTS = 3
+REG_LIVENESS_BLOCK_SECS   = 900   
+
+REG_CHALLENGE_COUNT      = 3
 LOGIN_CHALLENGE_COUNT    = 1
-
-FACE_VERIFY_SESSION_SECS = 300   
+FACE_VERIFY_SESSION_SECS = 300    
 
 CHALLENGE_LABELS = {
     'blink':      'Blink your eyes',
@@ -53,16 +67,15 @@ CHALLENGE_LABELS = {
 }
 
 
-# ── Private helpers 
+# Private helpers 
 def _decode_b64(b64: str):
-    """Decode a base64 string or data-URI into an OpenCV BGR ndarray."""
     try:
         if ',' in b64:
             b64 = b64.split(',', 1)[1]
         arr = np.frombuffer(base64.b64decode(b64), dtype=np.uint8)
         return cv2.imdecode(arr, cv2.IMREAD_COLOR)
     except Exception as exc:
-        logger.error(f'_decode_b64: {exc}')
+        logger.error('_decode_b64: %s', exc)
         return None
 
 
@@ -77,9 +90,9 @@ def _role_redirect(user):
 
 
 def _get_ip(request) -> str:
-    forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
-    if forwarded:
-        return forwarded.split(',')[0].strip()
+    fwd = request.META.get('HTTP_X_FORWARDED_FOR')
+    if fwd:
+        return fwd.split(',')[0].strip()
     return request.META.get('REMOTE_ADDR', '')
 
 
@@ -90,37 +103,33 @@ def _device_fingerprint(request) -> str:
 
 
 def _is_face_verify_session_valid(request) -> 'tuple[bool, str]':
-    timestamp = request.session.get('face_verify_started_at')
-    if not timestamp:
+    """Return (valid, reason).  Clears stale keys when expired."""
+    ts = request.session.get('face_verify_started_at')
+    if not ts:
         return False, 'Session expired. Please log in again.'
-    elapsed = timezone.now().timestamp() - timestamp
+    elapsed = timezone.now().timestamp() - ts
     if elapsed > FACE_VERIFY_SESSION_SECS:
-        for key in ('pending_face_pk', 'face_verify_attempts', 'face_verify_started_at'):
-            request.session.pop(key, None)
+        for k in ('pending_face_pk', 'face_verify_attempts', 'face_verify_started_at'):
+            request.session.pop(k, None)
         return False, (
             f'Face verification session expired ({int(elapsed)}s). '
-            f'Please log in again.'
+            'Please log in again.'
         )
     return True, ''
 
 
-#  Home 
 
+
+
+# home
 def index(request):
     return render(request, 'core/index.html')
 
 
-# Liveness challenge API 
+
 
 @require_GET
 def get_liveness_challenges(request):
-    """
-    GET /api/liveness-challenges/
-
-    ?mode=register    → all 3 unique challenges in random order
-    ?mode=login       → 1 random challenge (requires pending_face_pk in session)
-    ?mode=re_register → all 3 unique challenges (requires authenticated user)
-    """
     mode = request.GET.get('mode', 'register')
 
     if mode == 'login':
@@ -140,12 +149,12 @@ def get_liveness_challenges(request):
     request.session['liveness_mode']       = mode
     request.session.save()
 
-    logger.debug(f'Liveness challenges ({mode}): {selected}')
+    logger.debug('Liveness challenges (%s): %s', mode, selected)
     return JsonResponse({'challenges': selected, 'mode': mode})
 
 
-#  Register 
 
+#  Register
 def register_view(request):
     if request.method == 'GET':
         return render(request, 'core/register.html')
@@ -158,7 +167,21 @@ def register_view(request):
         messages.error(request, msg)
         return redirect('core:register')
 
-    #  Form validation 
+    # Check registration liveness lockout
+    block_until = request.session.get('reg_liveness_blocked_until')
+    if block_until:
+        remaining = block_until - timezone.now().timestamp()
+        if remaining > 0:
+            mins = max(1, int(remaining / 60))
+            return err(
+                f'Too many failed liveness attempts during registration. '
+                f'Please try again in {mins} minute{"s" if mins != 1 else ""}.'
+            )
+        else:
+            request.session.pop('reg_liveness_blocked_until', None)
+            request.session.pop('reg_liveness_attempts', None)
+
+    #  Basic field validation 
     student_id    = request.POST.get('student_id',    '').strip()
     full_name     = request.POST.get('full_name',     '').strip()
     department    = request.POST.get('department',    '').strip()
@@ -186,7 +209,7 @@ def register_view(request):
         except ValueError:
             return err('Age must be a whole number.')
 
-    # Collect liveness frames 
+    # Liveness frames
     face_frames_raw = [
         request.POST.get(f'face_data_challenge_{i}', '').strip()
         for i in range(REG_CHALLENGE_COUNT)
@@ -207,45 +230,88 @@ def register_view(request):
             return err(f'Could not decode liveness frame {i + 1}. Please try again.')
         decoded_frames.append(frame)
 
-    #  Resolve challenge order from session
     challenges = request.session.get('liveness_challenges', [])
     if (
         len(challenges) != REG_CHALLENGE_COUNT
         or not all(c in CHALLENGE_POOL for c in challenges)
     ):
         logger.warning(
-            f'register_view: bad session challenges {challenges} '
-            f'for [{student_id}] — generating fresh set'
+            'register_view: bad session challenges %s for [%s] — regenerating',
+            challenges, student_id,
         )
         challenges = generate_random_challenges(REG_CHALLENGE_COUNT)
 
-    logger.info(f'register_view: verifying {challenges} for [{student_id}]')
+    logger.info('register_view: verifying %s for [%s]', challenges, student_id)
 
-    #  Run liveness sequence — all 3 challenges must pass 
+  
     liveness_checker = LivenessChallenge()
     embedder         = FaceEmbedding()
     quality_scores   = []
+
+    liveness_fail = False
+    fail_reason   = ''
 
     for i, (frame, ch_type) in enumerate(zip(decoded_frames, challenges)):
         label = CHALLENGE_LABELS.get(ch_type, ch_type)
         ok, reason = liveness_checker.verify(frame, ch_type)
         if not ok:
-            logger.warning(
-                f'register_view: FAIL [{student_id}] '
-                f'stage {i + 1} ({ch_type}): {reason}'
-            )
-            return err(
+            liveness_fail = True
+            fail_reason   = (
                 f'"{label}" not verified (stage {i + 1}): {reason} '
                 f'Please go back and complete all liveness stages again.'
             )
+            logger.warning(
+                'register_view: FAIL [%s] stage %d (%s): %s',
+                student_id, i + 1, ch_type, reason,
+            )
+            break
         _, q = embedder.get_embedding(frame)
         quality_scores.append(q)
 
+    if liveness_fail:
+        attempts = request.session.get('reg_liveness_attempts', 0) + 1
+        request.session['reg_liveness_attempts'] = attempts
+        remaining = REG_MAX_LIVENESS_ATTEMPTS - attempts
+
+        logger.warning(
+            'register_view: liveness fail attempt %d/%d for student_id=%s',
+            attempts, REG_MAX_LIVENESS_ATTEMPTS, student_id,
+        )
+
+        if attempts >= REG_MAX_LIVENESS_ATTEMPTS:
+            # Block the session for REG_LIVENESS_BLOCK_SECS seconds
+            block_until_ts = timezone.now().timestamp() + REG_LIVENESS_BLOCK_SECS
+            request.session['reg_liveness_blocked_until'] = block_until_ts
+            request.session['reg_liveness_attempts']      = 0  # reset for next window
+            request.session.save()
+            logger.warning(
+                'register_view: REGISTRATION LIVENESS BLOCKED for %d min — student_id=%s',
+                REG_LIVENESS_BLOCK_SECS // 60, student_id,
+            )
+            return err(
+                f'Registration blocked: {REG_MAX_LIVENESS_ATTEMPTS} consecutive '
+                f'liveness failures detected. '
+                f'Please try again in {REG_LIVENESS_BLOCK_SECS // 60} minutes.'
+            )
+
+        request.session.save()
+        hint = (
+            f' ({remaining} attempt{"s" if remaining != 1 else ""} remaining '
+            f'before a {REG_LIVENESS_BLOCK_SECS // 60}-minute block.)'
+            if remaining > 0 else ''
+        )
+        return err(fail_reason + hint)
+
+    # Liveness passed — reset the attempt counter
+    request.session.pop('reg_liveness_attempts', None)
+    request.session.pop('reg_liveness_blocked_until', None)
+
     logger.info(
-        f'register_view: all {REG_CHALLENGE_COUNT} stages PASSED [{student_id}]'
+        'register_view: all %d stages PASSED [%s]',
+        REG_CHALLENGE_COUNT, student_id,
     )
 
-    # Select best frame for embedding 
+ 
     embed_frame   = None
     embed_quality = 0.0
 
@@ -255,19 +321,11 @@ def register_view(request):
             _, embed_quality = embedder.get_embedding(neutral_frame)
             if embed_quality >= EMBEDDING_QUALITY_MIN:
                 embed_frame = neutral_frame
-                logger.info(
-                    f'register_view: using neutral frame '
-                    f'(quality={embed_quality:.3f}) [{student_id}]'
-                )
 
     if embed_frame is None:
         best_idx      = int(np.argmax(quality_scores))
         embed_frame   = decoded_frames[best_idx]
         embed_quality = quality_scores[best_idx]
-        logger.info(
-            f'register_view: using gesture frame {best_idx + 1} '
-            f'(quality={embed_quality:.3f}) [{student_id}]'
-        )
 
     if embed_quality < EMBEDDING_QUALITY_MIN:
         return err(
@@ -283,7 +341,7 @@ def register_view(request):
             'Ensure good lighting and try again.'
         )
 
-    # Create Student 
+    # Create account 
     try:
         student = Student.objects.create_user(
             student_id    = student_id,
@@ -294,7 +352,7 @@ def register_view(request):
             password      = password,
         )
     except Exception as exc:
-        logger.error(f'Registration DB error [{student_id}]: {exc}')
+        logger.error('Registration DB error [%s]: %s', student_id, exc)
         return err('Server error while creating your account. Please try again.')
 
     student.face_embedding    = embedding.astype(np.float64).tobytes()
@@ -313,8 +371,8 @@ def register_view(request):
     request.session.pop('liveness_mode', None)
 
     logger.info(
-        f'REGISTERED (pending, challenges={challenges}, '
-        f'dim={embedding.shape[0]}, quality={embed_quality:.3f}): {student_id}'
+        'REGISTERED (pending, challenges=%s, dim=%d, quality=%.3f): %s',
+        challenges, embedding.shape[0], embed_quality, student_id,
     )
 
     if is_ajax:
@@ -331,7 +389,9 @@ def register_view(request):
     return redirect('core:login')
 
 
-# Re-register face 
+
+#  Re-register face
+
 
 def re_register_face_view(request):
     if not request.user.is_authenticated:
@@ -433,10 +493,6 @@ def re_register_face_view(request):
     request.session.pop('liveness_challenges', None)
     request.session.pop('liveness_mode', None)
 
-    logger.info(
-        f'RE-REGISTERED face for [{student.student_id}] quality={embed_quality:.3f}'
-    )
-
     if is_ajax:
         return JsonResponse({
             'success':  True,
@@ -447,7 +503,8 @@ def re_register_face_view(request):
     return redirect('voter_dashboard:dashboard')
 
 
-# Login — Step 1: credentials 
+
+#  Login credentials
 
 def login_view(request):
     if request.method == 'GET':
@@ -477,14 +534,15 @@ def login_view(request):
     except Student.DoesNotExist:
         return err('Invalid credentials.')
 
+    # Lockout checked before password auth 
     if not obj.is_staff:
         if obj.is_locked():
             mins = max(1, int(
                 (obj.locked_until - timezone.now()).total_seconds() / 60
             ))
             return err(
-                f'Account locked. Try again in '
-                f'{mins} minute{"s" if mins != 1 else ""}.',
+                f'Account locked due to too many failed attempts. '
+                f'Try again in {mins} minute{"s" if mins != 1 else ""}.',
                 warn=True,
             )
         if obj.approval_status == 'pending':
@@ -497,28 +555,37 @@ def login_view(request):
 
     if user is None:
         if obj.is_staff:
-            logger.warning(f'Failed admin login [{student_id}]')
+            logger.warning('Failed admin login [%s]', student_id)
             return err('Invalid credentials.')
+
+        # Increment password failure counter
         obj.increment_failed_attempts(
-            max_attempts    = PW_MAX_ATTEMPTS,
-            lockout_minutes = PW_LOCKOUT_MIN,
+            max_attempts    = PW_MAX_ATTEMPTS,   
+            lockout_minutes = PW_LOCKOUT_MIN,    
         )
         left = max(0, PW_MAX_ATTEMPTS - obj.failed_login_attempts)
-        if left > 0:
-            return err(
-                f'Invalid credentials. '
-                f'{left} attempt{"s" if left != 1 else ""} remaining.'
-            )
-        return err(
-            f'Too many failed attempts. '
-            f'Account locked for {PW_LOCKOUT_MIN} minutes.'
+
+        logger.warning(
+            'login_view: wrong password [%s] attempt=%d/%d left=%d',
+            student_id, obj.failed_login_attempts, PW_MAX_ATTEMPTS, left,
         )
 
-    # Admin 
+        if obj.is_locked():
+            return err(
+                f'Too many failed attempts. '
+                f'Account locked for {PW_LOCKOUT_MIN} minutes.'
+            )
+
+        return err(
+            f'Invalid credentials. '
+            f'{left} attempt{"s" if left != 1 else ""} remaining before lockout.'
+        )
+
+    # Admin bypass 
     if user.is_staff or user.is_superuser:
         user.reset_failed_attempts()
         login(request, user)
-        logger.info(f'Admin login OK: {student_id}')
+        logger.info('Admin login OK: %s', student_id)
         if is_ajax:
             return JsonResponse({
                 'success':  True,
@@ -527,27 +594,35 @@ def login_view(request):
             })
         return redirect('admin_dashboard:dashboard')
 
-    # Voter — needs face step
-    if not obj.face_embedding:
-        return err(
-            'No face data found for your account. '
-            'Please re-register or contact the administrator.'
+    #  Voter: require face verification 
+    if not user.face_embedding:
+        logger.error(
+            'login_view: voter %s has no face embedding — cannot proceed.',
+            student_id,
         )
+        return err(
+            'No biometric data found for your account. '
+            'Please contact the administrator to re-register your face.'
+        )
+
+   
+    # The face-verify stage maintains its own independent session counter.
+    user.reset_failed_attempts()
 
     request.session['pending_face_pk']        = user.pk
     request.session['face_verify_attempts']   = 0
     request.session['face_verify_started_at'] = timezone.now().timestamp()
     request.session.save()
 
-    logger.info(f'Step-1 OK [{student_id}] → face verify')
+    logger.info('Step-1 OK [%s] → face verify', student_id)
 
     if is_ajax:
         return JsonResponse({'success': True, 'require_face': True})
     return redirect('core:face_verify')
 
 
-# Face verify 
 
+#  Face verify page
 def face_verify_view(request):
     pk = request.session.get('pending_face_pk')
     if not pk:
@@ -574,11 +649,12 @@ def face_verify_view(request):
     })
 
 
-# Face verify — API 
 
+#  Face verify
 @csrf_exempt
 @require_POST
 def face_verify_api(request):
+    # Session validation 
     pk = request.session.get('pending_face_pk')
     if not pk:
         return _jerr('Session expired. Please log in again.', 401)
@@ -587,19 +663,34 @@ def face_verify_api(request):
     if not valid:
         return _jerr(reason, 401)
 
+    #  Load student
     try:
         student = Student.objects.get(pk=pk)
     except Student.DoesNotExist:
         return _jerr('Account not found.', 404)
 
     if student.is_staff:
-        for key in ('pending_face_pk', 'face_verify_attempts', 'face_verify_started_at'):
-            request.session.pop(key, None)
+        for k in ('pending_face_pk', 'face_verify_attempts', 'face_verify_started_at'):
+            request.session.pop(k, None)
         return _jerr('Invalid session state.', 400)
+
+    # Re-check lockout 
+    if student.is_locked():
+        remaining_secs = (student.locked_until - timezone.now()).total_seconds()
+        mins = max(1, int(remaining_secs / 60))
+        logger.warning(
+            'face_verify_api: account already locked [%s] — %d min remaining',
+            student.student_id, mins,
+        )
+        return _jerr(
+            f'Account is locked due to too many failed attempts. '
+            f'Try again in {mins} minute{"s" if mins != 1 else ""}.',
+            403,
+        )
 
     ip = _get_ip(request)
 
-    
+    # Parse request body 
     try:
         body               = json.loads(request.body)
         frame_b64          = body.get('frame', '').strip()
@@ -613,11 +704,50 @@ def face_verify_api(request):
     if not liveness_confirmed:
         return _jerr('Liveness check not confirmed. Please complete the gesture first.')
 
+    # Decode frame 
     frame = _decode_b64(frame_b64)
     if frame is None:
         return _jerr('Could not decode the submitted image.')
 
-    #  Server-side liveness re-check 
+    # Server-side anti-spoof 
+    spoof_checker                    = _get_anti_spoof_checker()
+    spoof_ok, spoof_msg, spoof_type  = spoof_checker.check(frame)
+
+    if not spoof_ok:
+        logger.warning(
+            'face_verify_api: anti-spoof BLOCKED voter=%s reason=%s ip=%s',
+            student.student_id, spoof_msg, ip,
+        )
+        quality_reasons = {
+            'no_face_detected', 'face_too_small',
+            'invalid_frame', 'frame_too_small', 'invalid_bbox',
+        }
+        is_attack = spoof_type not in quality_reasons
+
+        if is_attack:
+            try:
+                FraudAlert.objects.create(
+                    voter       = student,
+                    election    = FraudAlert._active_election(),
+                    alert_type  = 'spoof_attempt',
+                    ip_address  = ip,
+                    description = (
+                        f'Anti-spoof block during login. '
+                        f'Reason: {spoof_type}. Details: {spoof_msg}'
+                    ),
+                )
+            except Exception as exc:
+                logger.error('face_verify_api: FraudAlert create error: %s', exc)
+            return _jerr(
+                spoof_msg or 'Spoof attempt detected. Please use your live camera.',
+                403,
+            )
+        return _jerr(
+            spoof_msg or 'Face not clearly visible. Please adjust your camera.',
+            400,
+        )
+
+    # Server-side liveness gesture check 
     login_challenges = request.session.get('liveness_challenges', [])
     challenge_type   = (
         login_challenges[0]
@@ -630,24 +760,26 @@ def face_verify_api(request):
 
     if not liveness_ok:
         logger.warning(
-            f'face_verify_api: liveness FAIL [{student.student_id}] '
-            f'challenge={challenge_type}: {liveness_msg}'
+            'face_verify_api: liveness FAIL [%s] challenge=%s: %s',
+            student.student_id, challenge_type, liveness_msg,
         )
         spoof_keywords = ('photo', 'screen', 'multiple', 'replay', 'printout', 'pixel-grid')
         if any(kw in liveness_msg.lower() for kw in spoof_keywords):
-            FraudAlert.log_spoof_attempt(student, ip, euc=0.0, cos=0.0)
+            try:
+                FraudAlert.log_spoof_attempt(student, ip, euc=0.0, cos=0.0)
+            except Exception as exc:
+                logger.error('face_verify_api: FraudAlert log error: %s', exc)
             return _jerr(f'Security check failed: {liveness_msg}', 403)
-        
         logger.info(
-            f'face_verify_api: soft liveness miss [{student.student_id}], '
-            f'continuing to face match'
+            'face_verify_api: soft liveness miss [%s] — continuing to face match',
+            student.student_id,
         )
 
-    #  Device fingerprint (soft warning — never blocks login) 
+    #  Device fingerprint check 
     current_device = _device_fingerprint(request)
     if student.registered_device and current_device != student.registered_device:
         logger.warning(
-            f'face_verify_api: UNKNOWN DEVICE [{student.student_id}] IP={ip}'
+            'face_verify_api: UNKNOWN DEVICE [%s] IP=%s', student.student_id, ip,
         )
         try:
             FraudAlert.objects.create(
@@ -663,105 +795,151 @@ def face_verify_api(request):
                 ),
             )
         except Exception as exc:
-            logger.error(f'face_verify_api: FraudAlert create error: {exc}')
+            logger.error('face_verify_api: FraudAlert create error: %s', exc)
 
-    #  Attempt counter
+    # Increment attempt counter BEFORE face match 
+    
     attempt   = request.session.get('face_verify_attempts', 0) + 1
     remaining = max(0, FACE_MAX_ATTEMPTS - attempt)
     request.session['face_verify_attempts'] = attempt
     request.session.save()
 
-    #  Face matching
-    verifier          = FaceVerifier(bytes(student.face_embedding))
+    logger.info(
+        'face_verify_api: voter=%s attempt=%d/%d',
+        student.student_id, attempt, FACE_MAX_ATTEMPTS,
+    )
+
+    #  Verify stored embedding is valid 
+    if not student.face_embedding:
+        for k in ('pending_face_pk', 'face_verify_attempts', 'face_verify_started_at'):
+            request.session.pop(k, None)
+        return _jerr(
+            'No biometric data found for this account. '
+            'Please contact an administrator.',
+            403,
+        )
+
+    verifier = FaceVerifier(bytes(student.face_embedding))
+    if not verifier.is_valid:
+        for k in ('pending_face_pk', 'face_verify_attempts', 'face_verify_started_at'):
+            request.session.pop(k, None)
+        return _jerr(
+            'Biometric data for this account is corrupted. '
+            'Please re-register or contact an administrator.',
+            403,
+        )
+
+    #  Face embedding comparison 
     matched, euc, cos = verifier.verify_with_score(frame)
 
     logger.info(
-        f'face_verify [{student.student_id}] '
-        f'attempt={attempt}/{FACE_MAX_ATTEMPTS} '
-        f'cos={cos:.4f} euc={euc:.4f} '
-        f'→ {"MATCH" if matched else "REJECT"}'
+        'face_verify_api: voter=%s cos=%.4f matched=%s attempt=%d/%d',
+        student.student_id, cos, matched, attempt, FACE_MAX_ATTEMPTS,
     )
 
-    # Handle mismatch 
-    if not matched:
-        if cos < SPOOF_COSINE_FLOOR:
-            logger.warning(
-                f'face_verify_api: SPOOF/DIFFERENT PERSON '
-                f'[{student.student_id}] cos={cos:.4f} < {SPOOF_COSINE_FLOOR}'
-            )
-            try:
-                FraudAlert.log_spoof_attempt(student, ip, euc, cos)
-            except Exception as exc:
-                logger.error(f'face_verify_api: FraudAlert.log_spoof_attempt error: {exc}')
-        else:
-        
-            try:
-                FraudAlert.log_face_mismatch(
-                    student      = student,
-                    ip           = ip,
-                    euc          = euc,
-                    cos          = cos,
-                    attempt      = attempt,
-                    max_attempts = FACE_MAX_ATTEMPTS,
-                )
-            except Exception as exc:
-                logger.error(f'face_verify_api: FraudAlert.log_face_mismatch error: {exc}')
+    # SUCCESS 
+    if matched:
+        student.reset_failed_attempts()      
+        login(request, student)              
 
-        if attempt >= FACE_MAX_ATTEMPTS:
-            student.locked_until = (
-                timezone.now()
-                + timezone.timedelta(minutes=FACE_LOCKOUT_MIN)
-            )
-            student.failed_login_attempts = FACE_MAX_ATTEMPTS
-            student.save(update_fields=['locked_until', 'failed_login_attempts'])
+        try:
+            student.record_login(ip)
+        except Exception as exc:
+            logger.error('face_verify_api: record_login error: %s', exc)
 
-            for key in ('pending_face_pk', 'face_verify_attempts', 'face_verify_started_at'):
-                request.session.pop(key, None)
+        for k in ('pending_face_pk', 'face_verify_attempts', 'face_verify_started_at'):
+            request.session.pop(k, None)
 
-            try:
-                FraudAlert.log_account_locked(student, ip, FACE_LOCKOUT_MIN)
-            except Exception as exc:
-                logger.error(f'face_verify_api: FraudAlert.log_account_locked error: {exc}')
+        logger.info(
+            'Voter login SUCCESS: [%s] cos=%.4f IP=%s',
+            student.student_id, cos, ip,
+        )
+        return JsonResponse({
+            'success':  True,
+            'message':  f'Face matched! Welcome, {student.full_name}.',
+            'redirect': '/voter-dashboard/',
+        })
 
-            logger.warning(
-                f'Voter [{student.student_id}] BLOCKED '
-                f'{FACE_LOCKOUT_MIN} min after {FACE_MAX_ATTEMPTS} failures.'
-            )
-            return _jerr(
-                f'Face verification failed {FACE_MAX_ATTEMPTS} times. '
-                f'Account blocked for {FACE_LOCKOUT_MIN} minutes. '
-                f'Contact the administrator if this is a mistake.',
-                403,
-            )
-
-        return _jerr(
-            f'Face does not match. '
-            f'{remaining} attempt{"s" if remaining != 1 else ""} remaining. '
-            f'Ensure good lighting and look directly at the camera.'
+    # FAILURE 
+    if cos < SPOOF_COSINE_FLOOR:
+        alert_type = 'spoof_attempt'
+        alert_desc = (
+            f'Cosine similarity {cos:.4f} is below SPOOF_COSINE_FLOOR '
+            f'({SPOOF_COSINE_FLOOR}) — possible impersonation or photo attack.'
+        )
+    else:
+        alert_type = 'face_mismatch'
+        alert_desc = (
+            f'Cosine similarity {cos:.4f} is below COSINE_THRESHOLD '
+            f'({COSINE_THRESHOLD}) — face does not match registered voter.'
         )
 
-    # Match — complete login 
-    student.reset_failed_attempts()
-    login(request, student)
     try:
-        student.record_login(ip)
+        FraudAlert.objects.create(
+            voter       = student,
+            election    = FraudAlert._active_election(),
+            alert_type  = alert_type,
+            ip_address  = ip,
+            description = alert_desc,
+        )
     except Exception as exc:
-        logger.error(f'face_verify_api: record_login error: {exc}')
+        logger.error('face_verify_api: FraudAlert create error: %s', exc)
 
-    for key in ('pending_face_pk', 'face_verify_attempts', 'face_verify_started_at'):
-        request.session.pop(key, None)
+    # Lockout after FACE_MAX_ATTEMPTS 
+    if attempt >= FACE_MAX_ATTEMPTS:
+        lockout_until = timezone.now() + timedelta(minutes=FACE_LOCKOUT_MIN)
 
-    logger.info(
-        f'Voter login SUCCESS: [{student.student_id}] cos={cos:.4f} IP={ip}'
+        # Persist lockout on the model 
+        student.locked_until          = lockout_until
+        student.failed_login_attempts = attempt
+        student.save(update_fields=['locked_until', 'failed_login_attempts'])
+
+        try:
+            FraudAlert.log_account_locked(student, ip, FACE_LOCKOUT_MIN)
+        except Exception as exc:
+            logger.error('face_verify_api: FraudAlert.log_account_locked error: %s', exc)
+
+        # Clear face-verify session keys
+        for k in ('pending_face_pk', 'face_verify_attempts', 'face_verify_started_at'):
+            request.session.pop(k, None)
+        request.session.save()
+
+        logger.warning(
+            'face_verify_api: ACCOUNT LOCKED voter=%s after %d attempts — '
+            'locked until %s (%d min)',
+            student.student_id,
+            FACE_MAX_ATTEMPTS,
+            lockout_until.strftime('%H:%M'),
+            FACE_LOCKOUT_MIN,
+        )
+        return _jerr(
+            f'Face verification failed {FACE_MAX_ATTEMPTS} times. '
+            f'Account locked for {FACE_LOCKOUT_MIN} minutes. '
+            f'Contact the administrator if this is a mistake.',
+            403,
+        )
+
+    
+    student.failed_login_attempts = attempt
+    student.save(update_fields=['failed_login_attempts'])
+
+    logger.warning(
+        'face_verify_api: FACE MISMATCH voter=%s cos=%.4f alert=%s '
+        'attempt=%d/%d remaining=%d',
+        student.student_id, cos, alert_type,
+        attempt, FACE_MAX_ATTEMPTS, remaining,
     )
-    return JsonResponse({
-        'success':  True,
-        'message':  f'Face matched! Welcome, {student.full_name}.',
-        'redirect': '/voter-dashboard/',
-    })
+    return _jerr(
+        f'Face does not match. '
+        f'{remaining} attempt{"s" if remaining != 1 else ""} remaining '
+        f'before account lockout. '
+        f'Ensure good lighting and look directly at the camera.'
+    )
 
 
-#  Logout 
+
+#  Logout
+
 
 def logout_view(request):
     name = (
@@ -777,7 +955,8 @@ def logout_view(request):
     return redirect('core:login')
 
 
-# JWT REST API 
+
+#  JWT REST API
 
 @api_view(['POST'])
 def register_api(request):

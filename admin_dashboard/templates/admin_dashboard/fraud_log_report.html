@@ -11,14 +11,14 @@
 {% block content %}
 <div class="report-page">
 
-  <!-- Page header -->
+ 
   <div class="page-header">
     <p class="page-eyebrow"><i class="fas fa-file-chart-column"></i> Reports</p>
     <h1>Fraud Log Report</h1>
     <p>Complete security event log for Islington College elections. Export or print for records.</p>
   </div>
 
-  <!-- Summary cards -->
+
   <div class="report-summary">
     <div class="rsc">
       <div class="rsc-icon" style="color:var(--c-error);"><i class="fas fa-triangle-exclamation"></i></div>
@@ -47,7 +47,7 @@
     </div>
   </div>
 
-  <!-- Type breakdown bars (populated by main.js) -->
+
   {% if fraud_alerts %}
     <div class="breakdown-section">
       <div class="breakdown-label">Alert Type Breakdown</div>
@@ -55,7 +55,6 @@
     </div>
   {% endif %}
 
-  <!-- Report toolbar -->
   <div class="report-bar">
     <div class="report-bar-left">
       <div class="rpt-search">

@@ -1,19 +1,17 @@
-/* ═══════════════════════════════════════════════════════════════
-   SecureVoter AI — Admin Dashboard · main.js
-   Shared JS: pagination, search filtering, CSV export,
-   breakdown bars, date display, keyboard shortcuts
-   ═══════════════════════════════════════════════════════════════ */
+/* 
+   SecureVoter AI  Admin Dashboard · main.js
+   */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ── Today's date display ──────────────────────────────────── */
+
   const todayEl = document.getElementById('todayStr');
   if (todayEl) {
     const opts = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
     todayEl.textContent = new Date().toLocaleDateString('en-GB', opts);
   }
 
-  /* ── Dashboard: incident table search + filter ─────────────── */
+
   const dashSearch       = document.getElementById('dashSearch');
   const dashStatusFilter = document.getElementById('dashStatusFilter');
   const dashTypeFilter   = document.getElementById('dashTypeFilter');
@@ -49,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updatePgInfo();
 
 
-  /* ── Fraud Log Report: search + filter + CSV export ────────── */
   const rptSearch      = document.getElementById('rptSearch');
   const rptTypeFilter  = document.getElementById('rptTypeFilter');
   const rptStatusFilter= document.getElementById('rptStatusFilter');
@@ -76,9 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
   rptSearch?.addEventListener('input',  filterReport);
   rptTypeFilter?.addEventListener('change',   filterReport);
   rptStatusFilter?.addEventListener('change', filterReport);
-  filterReport(); // init
+  filterReport(); 
 
-  /* CSV Export */
+ 
   document.getElementById('rptExportCsv')?.addEventListener('click', exportCSV);
   function exportCSV() {
     const table = document.getElementById('rptTable');
@@ -102,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ── Notifications: tab filter + search ────────────────────── */
+  
   const notifCards = document.querySelectorAll('.notif-card');
   document.querySelectorAll('.ntab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -128,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  /* ── Breakdown bars (fraud log report) ─────────────────────── */
+  
   const grid = document.getElementById('breakdownGrid');
   if (grid && rptRows.length > 0) {
     const counts = { spoof_attempt:0, face_mismatch:0, too_many_attempts:0, multiple_faces:0, unknown_device:0 };
@@ -158,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>`;
       grid.appendChild(div);
     });
-    // Animate bars
+    
     requestAnimationFrame(() => {
       document.querySelectorAll('.bbc-fill').forEach(bar => {
         bar.style.width = bar.dataset.target + '%';
@@ -167,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  /* ── Keyboard shortcut: ⌘K / Ctrl+K focus search ────────────── */
+  
   document.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
@@ -176,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  /* ── Election table: search + filter pills ─────────────────── */
+  
   const electionSearch = document.getElementById('electionSearch');
   const electionRows   = document.querySelectorAll('#electionsTable tbody tr');
   electionSearch?.addEventListener('input', () => {
@@ -195,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  /* ── Voters: search + filter pills + stat counters ─────────── */
+  
   const voterRows = document.querySelectorAll('#votersTable tbody tr');
   document.getElementById('voterSearch')?.addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();
@@ -221,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (pendingEl)  pendingEl.textContent  = pending;
 
 
-  /* ── Candidate search + election filter ─────────────────────── */
+ 
   const candCards = document.querySelectorAll('.candidate-admin-card');
   document.getElementById('candidateSearch')?.addEventListener('input', (e) => {
     const q = e.target.value.toLowerCase();
@@ -233,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  /* ── Delete Election Modal ────────────────────────────────────── */
+  
   const deleteElecModal = document.getElementById('deleteElectionModal');
   const deleteElecTitle = document.getElementById('deleteElectionTitle');
   const confirmDelElec  = document.getElementById('confirmDeleteElec');
@@ -249,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
   deleteElecModal?.addEventListener('click', e => { if (e.target === deleteElecModal) deleteElecModal.classList.remove('active'); });
 
 
-  /* ── Delete Candidate Modal ─────────────────────────────────── */
+
   const delCandModal = document.getElementById('deleteCandidateModal');
   const delCandName  = document.getElementById('deleteCandidateName');
   const confirmDelCand = document.getElementById('confirmDeleteCand');
@@ -265,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
   delCandModal?.addEventListener('click', e => { if (e.target === delCandModal) delCandModal.classList.remove('active'); });
 
 
-  /* ── Reject Voter Modal ──────────────────────────────────────── */
+  
   const rejectModal  = document.getElementById('rejectModal');
   const rejectForm   = document.getElementById('rejectForm');
   const rejectNameEl = document.getElementById('rejectVoterName');
@@ -281,14 +278,14 @@ document.addEventListener('DOMContentLoaded', () => {
   rejectModal?.addEventListener('click', e => { if (e.target === rejectModal) rejectModal.classList.remove('active'); });
 
 
-  /* ── Escape closes any open modal ──────────────────────────── */
+  
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
   });
 
 
-  /* ── Candidate photo preview ────────────────────────────────── */
+
   document.getElementById('id_photo')?.addEventListener('change', function () {
     const file = this.files[0];
     if (!file) return;

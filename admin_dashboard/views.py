@@ -124,7 +124,7 @@ def add_election(request):
         end_time_raw     = request.POST.get('end_time', '')
         is_active        = request.POST.get('is_active') == 'on'
 
-        # Keep raw strings for re-rendering the form on validation failure
+        
         form_data = {
             'title':       title,
             'description': description,
@@ -365,7 +365,7 @@ def notifications(request):
     return render(request, 'admin_dashboard/notifications.html', ctx)
 
 
-#  LIVE RESULTS + REPORTS 
+#  LIVE RESULTS 
 def live_results(request, election_id):
     election   = get_object_or_404(Election, pk=election_id)
     candidates = Candidate.objects.filter(election=election)

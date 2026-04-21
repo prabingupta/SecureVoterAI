@@ -8,5 +8,5 @@ class VoterDashboardConfig(AppConfig):
     name               = 'voter_dashboard'
 
     def ready(self):
-        # Import signals so the @receiver decorators are registered at startup
-        import voter_dashboard.signals  # noqa: F401
+        
+        import voter_dashboard.signals  

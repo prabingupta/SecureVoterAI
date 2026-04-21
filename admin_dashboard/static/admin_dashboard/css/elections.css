@@ -1,15 +1,8 @@
-/* ═══════════════════════════════════════════════════════════════════
+/* 
    SecureVoter AI — Admin Dashboard / elections.css
-   Requires: base.css
-   Covers: elections table, open/close toggle buttons,
-           election form card (add/edit), form inputs,
-           candidate photo preview
-═══════════════════════════════════════════════════════════════════ */
+   */
 
 
-/* ─────────────────────────────────────────────────────────────────
-   PAGE WRAPPERS
-───────────────────────────────────────────────────────────────── */
 
 .elections-page,
 .election-form-page {
@@ -19,9 +12,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   PAGE HEADER
-───────────────────────────────────────────────────────────────── */
+
 
 .page-header {
   padding:       1.5rem 0 0.5rem;
@@ -60,9 +51,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   ACTION BAR
-───────────────────────────────────────────────────────────────── */
+
 
 .page-actions {
   display:         flex;
@@ -79,7 +68,7 @@
   flex-wrap:   wrap;
 }
 
-/* Search bar */
+
 .search-bar {
   display:       flex;
   align-items:   center;
@@ -115,7 +104,7 @@
 
 .search-bar input::placeholder { color: #c4a8aa; }
 
-/* Filter pills */
+
 .filter-pills {
   display:     flex;
   align-items: center;
@@ -149,7 +138,7 @@
   font-weight:  600;
 }
 
-/* New Election button */
+
 .btn.btn-gold {
   display:         inline-flex;
   align-items:     center;
@@ -177,9 +166,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   ELECTIONS TABLE
-───────────────────────────────────────────────────────────────── */
+
 
 .table-wrapper {
   background:    #ffffff;
@@ -229,26 +216,24 @@
   line-height: 1.5;
 }
 
-/* ── Title cell — THE FIX ── */
-/* The template has color:var(--clr-white) which makes text invisible
-   on light backgrounds. We override it here. */
+
 #electionsTable tbody td .election-title,
 #electionsTable tbody td div[style*="font-weight:600"],
 #electionsTable tbody td div[style*="font-weight: 600"] {
   font-weight:    600 !important;
-  color:          #1c0a0b !important;   /* dark ink — always visible */
+  color:          #1c0a0b !important;   
   font-size:      0.9375rem;
   line-height:    1.4;
   letter-spacing: -0.01em;
 }
 
-/* Force override the inline style on the title div */
+
 #electionsTable .election-title-wrap > div:first-child {
   color: #1c0a0b !important;
   font-weight: 600 !important;
 }
 
-/* General: any inline white text inside the table body is overridden */
+
 #electionsTable tbody [style*="color:var(--clr-white)"],
 #electionsTable tbody [style*="color: var(--clr-white)"] {
   color: #1c0a0b !important;
@@ -286,9 +271,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   BADGES
-───────────────────────────────────────────────────────────────── */
+
 
 .badge {
   display:        inline-flex;
@@ -340,9 +323,6 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   ACTION BUTTONS IN TABLE
-───────────────────────────────────────────────────────────────── */
 
 .td-actions {
   display:     flex;
@@ -452,9 +432,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   EMPTY STATE
-───────────────────────────────────────────────────────────────── */
+
 
 .candidates-empty {
   display:         flex;
@@ -491,9 +469,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   DELETE MODAL
-───────────────────────────────────────────────────────────────── */
+
 
 .modal-overlay {
   position:        fixed;
@@ -612,9 +588,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   ELECTION FORM CARD
-───────────────────────────────────────────────────────────────── */
+
 
 .form-card {
   background:    #ffffff;
@@ -681,9 +655,7 @@
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   FORM ELEMENTS
-───────────────────────────────────────────────────────────────── */
+
 
 .form-control {
   width:          100%;
@@ -752,9 +724,6 @@ input[type="datetime-local"].form-control {
 .alert-warning { background: rgba(217,119,6,0.07);  border-color: rgba(217,119,6,0.18); color: #92400e; }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   CANDIDATE PHOTO PREVIEW
-───────────────────────────────────────────────────────────────── */
 
 #photoPreviewWrap { animation: fade-in 200ms ease; }
 
@@ -771,9 +740,7 @@ input[type="datetime-local"].form-control {
 }
 
 
-/* ─────────────────────────────────────────────────────────────────
-   RESPONSIVE
-───────────────────────────────────────────────────────────────── */
+
 
 @media (max-width: 900px) {
   #electionsTable thead th:nth-child(3),

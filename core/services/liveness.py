@@ -1,5 +1,6 @@
 # core/services/liveness.py
 
+
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -8,18 +9,26 @@ import random
 
 logger = logging.getLogger(__name__)
 
-#  Landmark indices 
+
 LEFT_EYE      = [33, 160, 158, 133, 153, 144]
 RIGHT_EYE     = [263, 387, 385, 362, 373, 380]
 NOSE_TIP      = 1
 LEFT_EAR_IDX  = 234
 RIGHT_EAR_IDX = 454
 
-#  Gesture thresholds 
-BLINK_EAR_THRESHOLD = 0.26     
-HEAD_TURN_THRESHOLD = 0.025    
 
-#  Anti-spoof thresholds 
+
+EAR_OPEN_THRESH    = 0.22     
+EAR_CLOSED_THRESH  = 0.20     
+
+
+NEUTRAL_BAND       = 0.06     
+TURN_THRESH        = 0.09     
+
+
+TURN_CONFIRM_FRAMES = 1      
+
+
 LOW_TEXTURE  = 0.0006
 HIGH_TEXTURE = 0.20
 HIGH_FREQ    = 0.73
@@ -28,13 +37,10 @@ MAX_SAT      = 178
 MIN_FACE_H   = 0.10
 
 
-
-# Login uses one randomly selected from this pool.
 CHALLENGE_POOL = ['blink', 'turn_left', 'turn_right']
 
 
 def generate_random_challenges(count: int = 3) -> list:
-    
     if count > len(CHALLENGE_POOL):
         raise ValueError(
             f"count={count} exceeds pool size ({len(CHALLENGE_POOL)}). "
@@ -49,7 +55,6 @@ class LivenessChallenge:
 
     def __init__(self):
         mp_fm = mp.solutions.face_mesh
-        # Single-face model for gesture / embedding extraction
         self._fm_single = mp_fm.FaceMesh(
             static_image_mode        = True,
             max_num_faces            = 1,
@@ -57,7 +62,6 @@ class LivenessChallenge:
             min_detection_confidence = 0.4,
             min_tracking_confidence  = 0.4,
         )
-        # Multi-face model only for the "is more than 1 person present?" guard
         self._fm_multi = mp_fm.FaceMesh(
             static_image_mode        = True,
             max_num_faces            = 4,
@@ -66,9 +70,9 @@ class LivenessChallenge:
             min_tracking_confidence  = 0.4,
         )
 
-    #  Public API 
+    
 
-    def verify(self, frame, challenge_type: str) -> "tuple[bool, str]":
+    def verify(self, frame, challenge_type: str) -> 'tuple[bool, str]':
         """
         Verify one captured frame against a challenge type.
         Returns (passed: bool, reason: str).
@@ -115,23 +119,19 @@ class LivenessChallenge:
 
         lm = single_res.multi_face_landmarks[0].landmark
 
-        # 3. Anti-spoof checks
+        # Anti-spoof checks
         spoof_ok, spoof_reason = self._anti_spoof(frame, lm, h, w)
         if not spoof_ok:
             return False, spoof_reason
 
-        # 4. Gesture verification
+        # Gesture verification
         return self._check_gesture(lm, challenge_type)
 
     def run_liveness_sequence(
         self,
         frames: list,
         challenges: list,
-    ) -> "tuple[bool, str]":
-        """
-        Verify a list of (frame, challenge_type) pairs in order.
-        Returns (all_passed: bool, failure_reason: str).
-        """
+    ) -> 'tuple[bool, str]':
         if len(frames) != len(challenges):
             return False, "Frame / challenge count mismatch."
         for i, (frame, ch) in enumerate(zip(frames, challenges)):
@@ -141,9 +141,8 @@ class LivenessChallenge:
                 return False, f'Stage {i + 1} "{label}" failed: {reason}'
         return True, "All liveness challenges passed."
 
-    # Anti-spoof 
 
-    def _anti_spoof(self, frame, lm, h, w) -> "tuple[bool, str]":
+    def _anti_spoof(self, frame, lm, h, w) -> 'tuple[bool, str]':
         xs  = [p.x for p in lm]
         ys  = [p.y for p in lm]
         pad = 12
@@ -162,7 +161,6 @@ class LivenessChallenge:
         crop = frame[y1:y2, x1:x2]
         gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
 
-        # Laplacian texture variance
         tex_var = float(cv2.Laplacian(gray, cv2.CV_64F).var() / max(fh * fw, 1))
         logger.debug(f"anti-spoof tex_var={tex_var:.6f}")
         if tex_var < LOW_TEXTURE:
@@ -170,13 +168,11 @@ class LivenessChallenge:
         if tex_var > HIGH_TEXTURE:
             return False, "Screen or printed image detected. Use your live camera."
 
-        # DFT high-frequency ratio
         freq = self._dft_high_freq(gray)
         logger.debug(f"anti-spoof freq={freq:.4f}")
         if freq > HIGH_FREQ:
             return False, "Screen pixel-grid detected. Use your live camera."
 
-        # HSV saturation
         sat = float(cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)[:, :, 1].mean())
         logger.debug(f"anti-spoof sat={sat:.1f}")
         if sat < MIN_SAT:
@@ -195,7 +191,7 @@ class LivenessChallenge:
         dist      = np.sqrt((x_i - cx) ** 2 + (y_i - cy) ** 2)
         return float(1.0 - mag[dist <= 8].sum() / max(float(mag.sum()), 1e-6))
 
-    
+
     @staticmethod
     def _ear(lm, indices) -> float:
         p   = [np.array([lm[i].x, lm[i].y]) for i in indices]
@@ -205,28 +201,30 @@ class LivenessChallenge:
 
     @staticmethod
     def _head_rel_x(lm) -> float:
-        """Positive = turned right, negative = turned left."""
         nose_x  = lm[NOSE_TIP].x
         l_ear_x = lm[LEFT_EAR_IDX].x
         r_ear_x = lm[RIGHT_EAR_IDX].x
         face_w  = abs(l_ear_x - r_ear_x) + 1e-6
         return -(nose_x - (l_ear_x + r_ear_x) / 2.0) / face_w
 
-    def _check_gesture(self, lm, challenge_type: str) -> "tuple[bool, str]":
+    
+
+    def _check_gesture(self, lm, challenge_type: str) -> 'tuple[bool, str]':
 
         if challenge_type == "blink":
             ear_l = self._ear(lm, LEFT_EYE)
             ear_r = self._ear(lm, RIGHT_EYE)
             logger.debug(
                 f"blink: EAR L={ear_l:.3f} R={ear_r:.3f} "
-                f"threshold={BLINK_EAR_THRESHOLD}"
+                f"open_thresh={EAR_OPEN_THRESH} closed_thresh={EAR_CLOSED_THRESH}"
             )
-            if ear_l < BLINK_EAR_THRESHOLD or ear_r < BLINK_EAR_THRESHOLD:
+            avg_ear = (ear_l + ear_r) / 2.0
+            if avg_ear < EAR_CLOSED_THRESH or ear_l < EAR_CLOSED_THRESH or ear_r < EAR_CLOSED_THRESH:
                 return True, "Blink confirmed."
             return False, (
                 f"Blink not detected "
-                f"(EAR L={ear_l:.3f} R={ear_r:.3f}, "
-                f"need < {BLINK_EAR_THRESHOLD})."
+                f"(EAR avg={avg_ear:.3f}, L={ear_l:.3f} R={ear_r:.3f}, "
+                f"need < {EAR_CLOSED_THRESH})."
             )
 
         if challenge_type in ("turn_left", "turn_right"):
@@ -234,22 +232,22 @@ class LivenessChallenge:
             logger.debug(
                 f"head turn: rel_x={rel_x:.3f} "
                 f"challenge={challenge_type} "
-                f"threshold=±{HEAD_TURN_THRESHOLD}"
+                f"TURN_THRESH={TURN_THRESH} NEUTRAL_BAND={NEUTRAL_BAND}"
             )
+    
             if challenge_type == "turn_left":
-                if rel_x < -HEAD_TURN_THRESHOLD:
+                if rel_x < -TURN_THRESH:
                     return True, "Head-left turn confirmed."
                 return False, (
                     f"Head-left not detected "
-                    f"(rel_x={rel_x:.3f}, need < -{HEAD_TURN_THRESHOLD})."
+                    f"(rel_x={rel_x:.3f}, need < -{TURN_THRESH})."
                 )
-            else:
-                if rel_x > HEAD_TURN_THRESHOLD:
+            else:  
+                if rel_x > TURN_THRESH:
                     return True, "Head-right turn confirmed."
                 return False, (
                     f"Head-right not detected "
-                    f"(rel_x={rel_x:.3f}, need > {HEAD_TURN_THRESHOLD})."
+                    f"(rel_x={rel_x:.3f}, need > {TURN_THRESH})."
                 )
 
-        
         return False, f'Unhandled challenge type: "{challenge_type}".'

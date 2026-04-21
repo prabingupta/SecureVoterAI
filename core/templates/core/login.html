@@ -12,7 +12,7 @@
 <section id="login" class="login-section">
   <div class="login-wrapper">
 
-    <!-- LEFT PANEL -->
+  
     <div class="login-aside">
       <div class="aside-inner">
 
@@ -31,7 +31,7 @@
           <li><i class="fa-solid fa-clock-rotate-left"></i> Audit Logged</li>
         </ul>
 
-        <!-- Step indicators -->
+
         <div class="aside-steps" id="asideSteps">
           <div class="aside-step active" data-step="1">
             <div class="aside-step-num">1</div>
@@ -54,7 +54,6 @@
       </div>
     </div>
 
-    <!-- RIGHT PANEL -->
     <div class="login-main">
 
       <div class="progress-bar-wrap">
@@ -79,7 +78,7 @@
         <form id="loginForm" novalidate>
           {% csrf_token %}
 
-          <!-- STEP 1 -->
+          
           <div class="form-step active" id="loginStep1">
 
             <div class="step-header">
@@ -136,14 +135,14 @@
 
           </div>
 
-          <!-- STEP 2 -->
+      
           <div class="form-step" id="loginStep2" style="display:none;">
 
             <div class="step-header">
               <span class="step-tag">Step 2 of 2</span>
               <h2>Face Verification</h2>
               <p>Complete the on-screen gesture challenge, then click Verify &amp; Login.
-                 Only <strong>you</strong> — the registered voter — will pass.</p>
+                 Only <strong>the registered voter </strong> will pass</p>
             </div>
 
             <div class="attempts-badge" id="attemptsLeft" style="display:none;"></div>

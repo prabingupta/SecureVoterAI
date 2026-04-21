@@ -22,7 +22,7 @@ from .models import Election, Candidate, Vote, Notification
 logger = logging.getLogger(__name__)
 
 
-# Auth guard helper 
+# Auth guard
 
 def _voter_required(view_func):
     @login_required(login_url='core:login')
@@ -72,7 +72,7 @@ def dashboard(request):
     })
 
 
-#  Cast vote GET shows the gate; POST submits the ballot 
+#  Cast vote 
 
 @_voter_required
 def cast_vote(request, election_id):
@@ -112,7 +112,7 @@ def cast_vote(request, election_id):
         except IntegrityError:
             return redirect('voter_dashboard:dashboard')
 
-    # GET — clear any stale session flag, render the page
+    # GET 
     request.session.pop(f'vote_liveness_ok_{election_id}', None)
     return render(request, 'voter_dashboard/cast_vote.html', {
         'election': election, 'candidates': candidates,
@@ -124,19 +124,6 @@ def cast_vote(request, election_id):
 @require_POST
 @login_required(login_url='core:login')
 def vote_liveness_verify(request, election_id):
-    """
-    POST /voter-dashboard/vote/<id>/liveness/
-    JSON body: { frame: "<base64-jpeg>", liveness_confirmed: true }
-
-    Runs:
-      1. Decode the JPEG frame
-      2. Server-side liveness gesture check   (LivenessChallenge.verify)
-      3. Face identity match against student's stored embedding (FaceVerifier)
-
-    Returns:
-      { verified: true,  message: "..." }  — on success, also sets session flag
-      { verified: false, error:   "..." }  — on any failure
-    """
     student = request.user
     ip      = _get_ip(request)
 
@@ -206,7 +193,7 @@ def vote_liveness_verify(request, election_id):
             except Exception:
                 pass
             return jerr(f'Security alert: {live_msg}', 403)
-        # Non-spoof liveness fail — report to user, allow retry
+        
         return jerr(f'Liveness check failed: {live_msg}. Please try again.')
 
     #  Face identity match 
@@ -244,7 +231,7 @@ def vote_liveness_verify(request, election_id):
             403,
         )
 
-    #  Success — set session flag so the POST ballot submission is allowed
+    #  Success 
     request.session[f'vote_liveness_ok_{election_id}'] = True
     request.session.save()
 
@@ -275,7 +262,7 @@ def election_results(request, election_id):
 
     voter_voted = Vote.objects.filter(voter=request.user, election=election).exists()
 
-    # Winner / tie detection
+    # Winner 
     is_tie          = False
     winner          = None
     tied_candidates = []

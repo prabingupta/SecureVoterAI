@@ -13,21 +13,19 @@ from django.utils                           import timezone
 from core.models import Student
 
 
-# Helper 
 
 def _jdump(obj) -> str:
     """Safely dump a Python object to a JSON string for inline template use."""
     return json.dumps(obj, default=str)
 
 
-#  Main view 
 
 @staff_member_required(login_url='core:login')
 def analytics_dashboard(request):
 
     voters = Student.objects.filter(is_staff=False)
 
-    #  Voter overview 
+   
     total_voters    = voters.count()
     approved_voters = voters.filter(approval_status='approved').count()
     pending_voters  = voters.filter(approval_status='pending').count()
@@ -35,11 +33,11 @@ def analytics_dashboard(request):
     with_face       = voters.filter(face_embedding__isnull=False).count()
     without_face    = total_voters - with_face
 
-    # Profile photo coverage
+    
     with_photo      = voters.filter(profile_photo__isnull=False).exclude(profile_photo='').count()
     without_photo   = total_voters - with_photo
 
-    #  Gender distribution 
+   
     gender_qs = (
         voters
         .values('gender')
@@ -60,7 +58,7 @@ def analytics_dashboard(request):
         ],
     }
 
-    # Age group distribution 
+   
     age_groups = {'18-22': 0, '23-27': 0, '28-35': 0, 'Unknown': 0}
     for v in voters.values('age'):
         a = v['age']
@@ -78,7 +76,7 @@ def analytics_dashboard(request):
         'values': list(age_groups.values()),
     }
 
-    #  Department distribution 
+  
     dept_qs = (
         voters
         .values('department')
@@ -90,7 +88,7 @@ def analytics_dashboard(request):
         'values': [d['n'] for d in dept_qs],
     }
 
-    # Year of study distribution 
+     
     year_qs = (
         voters
         .values('year_of_study')
@@ -103,7 +101,7 @@ def analytics_dashboard(request):
         'values': [y['n'] for y in year_qs],
     }
 
-    #  Notification preference opt-in rates 
+
     notif_base = approved_voters if approved_voters else 1   
     notif_open_count    = voters.filter(notify_election_open=True).count()
     notif_close_count   = voters.filter(notify_election_close=True).count()
@@ -128,7 +126,7 @@ def analytics_dashboard(request):
         ],
     }
 
-    # Vote statistics 
+  
     total_votes    = 0
     voted_voters   = 0
     not_voted      = approved_voters
@@ -157,7 +155,7 @@ def analytics_dashboard(request):
     except Exception:
         pass   
 
-    # Fraud alert breakdown 
+   
     fraud_data  = {'labels': [], 'values': [], 'colors': []}
     total_fraud = 0
 
@@ -191,7 +189,7 @@ def analytics_dashboard(request):
     except Exception:
         pass
 
-    # Login activity trend — last 30 days 
+   
    
     today      = date.today()
     thirty_ago = today - timedelta(days=29)
@@ -217,19 +215,18 @@ def analytics_dashboard(request):
         trend_labels.append(d.strftime('%b %d'))
         trend_values.append(reg_map.get(d, 0))
 
-    # Derived KPI rates 
+    
     approval_rate = round(approved_voters / total_voters   * 100, 1) if total_voters   else 0
     turnout_rate  = round(voted_voters    / approved_voters * 100, 1) if approved_voters else 0
     face_rate     = round(with_face       / total_voters   * 100, 1) if total_voters   else 0
     photo_rate    = round(with_photo      / total_voters   * 100, 1) if total_voters   else 0
 
-    #  Locked / at-risk accounts 
+   
     now          = timezone.now()
     locked_count = voters.filter(locked_until__gt=now).count()
     high_fail    = voters.filter(failed_login_attempts__gte=2).count()
 
-    context = {
-        # Overview numbers 
+    context = { 
         'total_voters':    total_voters,
         'approved_voters': approved_voters,
         'pending_voters':  pending_voters,
@@ -244,14 +241,12 @@ def analytics_dashboard(request):
         'total_fraud':     total_fraud,
         'locked_count':    locked_count,
         'high_fail':       high_fail,
-
-        #  KPI rates 
+ 
         'approval_rate':   approval_rate,
         'turnout_rate':    turnout_rate,
         'face_rate':       face_rate,
         'photo_rate':      photo_rate,
 
-        # Chart data — JSON strings 
         'gender_json':    _jdump(gender_data),
         'age_json':       _jdump(age_data),
         'dept_json':      _jdump(dept_data),

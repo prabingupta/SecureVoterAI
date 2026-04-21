@@ -11,7 +11,6 @@
 {% block content %}
 <div class="results-page">
 
-  <!-- Page header -->
   <div class="page-header">
     <div class="page-header-meta">
       <a href="{% url 'voter_dashboard:dashboard' %}"
@@ -31,7 +30,7 @@
   </div>
 
 
-  <!-- Voted note -->
+  
   {% if voter_voted %}
   <div class="results-voted-note" role="status">
     <i class="fas fa-lock" aria-hidden="true"></i>
@@ -41,9 +40,7 @@
   {% endif %}
 
 
-  <!-- ============================================================
-       TIE CARD — shown when two or more candidates share top votes
-       ============================================================ -->
+  
   {% if is_tie %}
   <div class="tie-card" aria-label="Election result: Tie">
 
@@ -93,9 +90,9 @@
   </div>
 
 
-  <!-- ============================================================
-       WINNER CARD — shown only when there is a clear single winner
-       ============================================================ -->
+  <!-- 
+       WINNER CARD 
+      -->
   {% elif winner %}
   <div class="winner-card" aria-label="Election winner">
 
@@ -157,7 +154,7 @@
   </div>
 
 
-  <!-- Chart card -->
+ 
   <div class="chart-card">
     <div class="chart-card-header">
       <div>
@@ -173,7 +170,7 @@
   </div>
 
 
-  <!-- Full breakdown table -->
+ 
   <div class="results-table-card">
     <div class="results-table-head">
       <h3>Full Breakdown</h3>
@@ -255,7 +252,6 @@
   </div>
 
 
-  <!-- PDF download -->
   <div class="download-row">
     <a href="{% url 'voter_dashboard:results_pdf' election.id %}"
        class="btn-download"
